@@ -1,0 +1,14 @@
+{
+    "oauth": {
+        "github": {
+            "client_id": "fe59828a622bb69c58bd",
+            "client_secret": "Your Github Client Secret",
+            "callback_url": "https://gitran.com/auth/github/callback"
+        }
+    },
+    "database": {
+        "type": "mysql",
+        "source": ""
+    }
+
+}
