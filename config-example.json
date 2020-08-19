@@ -1,14 +1,21 @@
 {
-    "oauth": {
-        "github": {
-            "client_id": "fe59828a622bb69c58bd",
-            "client_secret": "Your Github Client Secret",
-            "callback_url": "https://gitran.com/auth/github/callback"
-        }
+    "github": {
+        "client_id": "fe59828a622bb69c58bd",
+        "client_secret": "Your Github Client Secret",
+        "callback_url": "https://gitran.com/auth/github/callback"
     },
     "database": {
         "type": "mysql",
-        "source": ""
+        "name": "gitran",
+        "source": "root:passwd@tcp(host:port)/?charset=utf8mb4&parseTime=True&loc=Local"
+    },
+    "jwt": {
+        "secret": "Your JWT secret",
+        "skipper_paths": [],
+        "valid_time": 86400
+    },
+    "app": {
+        "addr": "0.0.0.0:7000",
+        "api_prefix": ""
     }
-
 }
