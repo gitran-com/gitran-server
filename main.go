@@ -2,8 +2,8 @@ package main
 
 import (
 	"flag"
-	"fmt"
 
+	v1 "github.com/WangZhengru/gitran-be/api/v1"
 	"github.com/WangZhengru/gitran-be/config"
 	"github.com/WangZhengru/gitran-be/middleware"
 	"github.com/WangZhengru/gitran-be/model"
@@ -23,9 +23,15 @@ func main() {
 	}
 	//defer model.DB.Close()//无需Close
 	//API初始化
-	r := gin.Default()
+	r := gin.New()
 	r.Use(middleware.Logger())
-	fmt.Println("MAIN RETURN")
-	//v1 := r.Group("/api/v1")
-	//v1.Use(jwt.JWT())
+	api := r.Group(config.APP.APIPrefix + "/api")
+	{
+		apiv1 := api.Group("/v1")
+		{
+			v1.Init(apiv1)
+		}
+	}
+	r.Run(config.APP.Addr)
+	//fmt.Println("MAIN RETURN")
 }

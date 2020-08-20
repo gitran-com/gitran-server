@@ -36,10 +36,10 @@ type app struct {
 }
 
 type Config struct {
-	Github   oauth    `json:"github"`
-	Database database `json:"database"`
-	JWT      jwt      `json:"jwt"`
-	APP      app      `json:"app"`
+	Github oauth    `json:"github"`
+	DB     database `json:"database"`
+	JWT    jwt      `json:"jwt"`
+	APP    app      `json:"app"`
 }
 
 type logFormatter struct{}
@@ -47,11 +47,18 @@ type logFormatter struct{}
 var (
 	configFile  = flag.String("config", "config.json", "配置文件路径")
 	logPath     = "log/"
-	mainLogFile = logPath + "gitran.log"
-	GinLogFile  = logPath + "gin.log"
-	C           *Config
-	TimeFormat  = "2006/01/02 15:04:05"
 	DataPath    = "data/"
+	mainLogFile = logPath + "gitran.log"
+	GinLogFile  = logPath + "api.log"
+	TimeFormat  = "2006/01/02 15:04:05"
+)
+
+var (
+	C      *Config
+	DB     *database
+	Github *oauth
+	JWT    *jwt
+	APP    *app
 )
 
 func (s *logFormatter) Format(entry *log.Entry) ([]byte, error) {
@@ -81,6 +88,10 @@ func Init() error {
 		log.Fatalf("Config JSON unmarshal failed: %v", err)
 		return err
 	}
-	fmt.Printf("%v", *C)
+	Github = &C.Github
+	DB = &C.DB
+	JWT = &C.JWT
+	APP = &C.APP
+	//fmt.Printf("%v", *C)
 	return nil
 }

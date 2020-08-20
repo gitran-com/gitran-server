@@ -10,13 +10,14 @@ import (
 var DB *gorm.DB
 
 func Init() error {
-	DB, err := gorm.Open(config.C.Database.Type, config.C.Database.Source)
+	var err error
+	DB, err = gorm.Open(config.DB.Type, config.DB.Source)
 	if err != nil {
 		log.Fatalf("Database open ERROR : %v", err.Error())
 		return err
 	}
-	DB.Exec("CREATE DATABASE IF NOT EXISTS " + config.C.Database.Name)
-	DB.Exec("USE " + config.C.Database.Name)
+	DB.Exec("CREATE DATABASE IF NOT EXISTS " + config.DB.Name)
+	DB.Exec("USE " + config.DB.Name)
 	DB.AutoMigrate(&User{}, &Project{}, &Translation{})
 	return nil
 }
