@@ -16,3 +16,7 @@ func Register(ctx *gin.Context) {
 func AuthGithubCallback(ctx *gin.Context) {
 	service.AuthGithubCallback(ctx)
 }
+
+func Refresh(ctx *gin.Context) {
+	service.RefreshToken(ctx)
+}

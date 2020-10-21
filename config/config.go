@@ -43,10 +43,10 @@ type app struct {
 }
 
 type Lang struct {
-	LangID uint   `json:"language_id"`
-	Code   string `json:"code"`
-	ISO    string `json:"iso"`
-	Name   string `json:"name"`
+	ID   uint16 `json:"id"`
+	Code string `json:"code"`
+	ISO  string `json:"iso"`
+	Name string `json:"name"`
 }
 
 type Config struct {
@@ -64,11 +64,12 @@ var (
 	Mode        = flag.String("mode", constant.DebugMode, "运行模式")
 	IsDebug     = false
 	configFile  = flag.String("config", "config.json", "配置文件路径")
-	SQLPath     = "sql/"
-	logPath     = "log/"
-	DataPath    = "data/"
+	pwd, _      = os.Getwd()
+	SQLPath     = pwd + "/sql/"
+	logPath     = pwd + "/log/"
+	DataPath    = pwd + "/data/"
 	mainLogFile = logPath + "gitran.log"
-	GinLogFile  = logPath + "api.log"
+	GinLogFile  = logPath + "api"
 	TimeFormat  = "2006/01/02 15:04:05"
 )
 

@@ -4,19 +4,19 @@ import (
 	"os"
 	"time"
 
-	"github.com/wzru/gitran-server/config"
 	"github.com/gin-gonic/gin"
 	rotatelogs "github.com/lestrrat-go/file-rotatelogs"
 	"github.com/rifflock/lfshook"
 	"github.com/sirupsen/logrus"
 	log "github.com/sirupsen/logrus"
+	"github.com/wzru/gitran-server/config"
 )
 
 func Logger() gin.HandlerFunc {
 	// 写入文件
-	src, err := os.OpenFile(config.GinLogFile, os.O_CREATE|os.O_APPEND|os.O_WRONLY, os.ModeAppend)
+	src, err := os.OpenFile(config.GinLogFile+".log", os.O_CREATE|os.O_APPEND|os.O_WRONLY, os.ModeAppend)
 	if err != nil {
-		log.Warnf("Cannot open gin log file '%s'", config.GinLogFile)
+		log.Warnf("Cannot open gin log file '%s' : %v", config.GinLogFile, err)
 	}
 	// 实例化
 	logger := logrus.New()
@@ -27,7 +27,7 @@ func Logger() gin.HandlerFunc {
 		// 分割后的文件名称
 		config.GinLogFile+".%Y%m%d.log",
 		// 生成软链，指向最新日志文件
-		//rotatelogs.WithLinkName(config.GinLogFile),
+		rotatelogs.WithLinkName(config.GinLogFile+".log"),
 		// 设置最大保存时间(7天)
 		rotatelogs.WithMaxAge(7*24*time.Hour),
 		// 设置日志切割时间间隔(1天)

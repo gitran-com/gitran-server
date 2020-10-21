@@ -1,6 +1,8 @@
 package middleware
 
 import (
+	"errors"
+	"fmt"
 	"net/http"
 	"strings"
 	"time"
@@ -11,34 +13,40 @@ import (
 	"github.com/wzru/gitran-server/model"
 )
 
+var unauthResult = model.Result{
+	Success: false,
+	Msg:     "Unauthorized",
+	Data:    nil,
+}
+
+//AuthJWT verifies a token
 func AuthJWT() gin.HandlerFunc {
 	return func(ctx *gin.Context) {
-		result := model.Result{
-			Success: false,
-			Msg:     "Unauthorized",
-			Data:    nil,
-		}
 		auth := ctx.Request.Header.Get("Authorization")
 		if len(auth) == 0 {
+			ctx.JSON(http.StatusUnauthorized, unauthResult)
 			ctx.Abort()
-			ctx.JSON(http.StatusUnauthorized, result)
+			return
 		}
-		auth = strings.Fields(auth)[1]
-		_, err := parseToken(auth) // 校验token
+		token := strings.Fields(auth)[1]
+		clm, err := ParseToken(token) // 校验token
 		if err != nil {
+			ctx.JSON(http.StatusUnauthorized, unauthResult)
 			ctx.Abort()
-			ctx.JSON(http.StatusUnauthorized, result)
+			return
 		}
+		ctx.Set("user-id", clm.Id)
 		ctx.Next()
 	}
 }
 
-func GenJWT(user *model.User, subj string) *string {
+//GenTokenFromUser gen a token from User
+func GenTokenFromUser(user *model.User, subj string) string {
 	now := time.Now().Unix()
 	claims := jwt.StandardClaims{
-		Audience:  user.Name,                         // 受众
+		Audience:  user.Login,                        // 受众
 		ExpiresAt: now + int64(config.JWT.ValidTime), // 失效时间
-		Id:        string(user.ID),                   // 编号
+		Id:        fmt.Sprintf("%v", user.ID),        // 编号
 		IssuedAt:  now,                               // 签发时间
 		Issuer:    config.APP.Name,                   // 签发人
 		NotBefore: now,                               // 生效时间
@@ -46,26 +54,31 @@ func GenJWT(user *model.User, subj string) *string {
 	}
 	tokenClaims := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
 	token, _ := tokenClaims.SignedString([]byte(config.JWT.Secret))
-	return &token
+	return token
 }
 
-func HasPermission(ctx *gin.Context) bool {
+//HasUserPermission check if this user has permission to user "login" by checking JWT
+func HasUserPermission(ctx *gin.Context, login string) bool {
 	auth := ctx.Request.Header.Get("Authorization")
 	if len(auth) == 0 {
 		return false
 	}
-	auth = strings.Fields(auth)[1]
-	_, err := parseToken(auth)
-	return err == nil
+	token := strings.Fields(auth)[1]
+	clm, err := ParseToken(token)
+	return err == nil && login == clm.Audience
 }
 
-func parseToken(token string) (*jwt.StandardClaims, error) {
-	jwtToken, err := jwt.ParseWithClaims(token, &jwt.StandardClaims{}, func(token *jwt.Token) (i interface{}, e error) {
-		return []byte(config.C.JWT.Secret), nil
+//ParseToken parse token. Return nil claim when parse error
+func ParseToken(tokenStr string) (*jwt.StandardClaims, error) {
+	token, err := jwt.ParseWithClaims(tokenStr, &jwt.StandardClaims{}, func(token *jwt.Token) (i interface{}, e error) {
+		return []byte(config.JWT.Secret), nil
 	})
-	if err == nil && jwtToken != nil {
-		if claim, ok := jwtToken.Claims.(*jwt.StandardClaims); ok && jwtToken.Valid {
-			return claim, nil
+	if token != nil {
+		if claim, ok := token.Claims.(*jwt.StandardClaims); ok {
+			if token.Valid {
+				return claim, nil
+			}
+			return claim, errors.New("token is expired")
 		}
 	}
 	return nil, err

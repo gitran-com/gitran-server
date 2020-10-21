@@ -12,7 +12,3 @@ func GetUser(ctx *gin.Context) {
 func UpdateUser(ctx *gin.Context) {
 	service.UpdateUser(ctx)
 }
-
-func Refresh(ctx *gin.Context) {
-	service.RefreshToken(ctx)
-}

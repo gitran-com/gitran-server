@@ -9,26 +9,26 @@ import (
 )
 
 func GetUser(ctx *gin.Context) {
-	name := ctx.Param("name")
-	user := model.GetUserByName(&name)
-	info := model.GenUserInfoFromUser(user, middleware.HasPermission(ctx))
-	if info != nil && info.ID != 0 {
-		ctx.JSON(http.StatusOK,
-			model.Result{
-				Success: true,
-				Msg:     "success",
-				Data: gin.H{
-					"user_info": *info,
-				},
-			})
-	} else {
+	login := ctx.Param("login")
+	user := model.GetUserByLogin(login)
+	if user == nil {
 		ctx.JSON(http.StatusNotFound,
 			model.Result{
 				Success: false,
-				Msg:     "not found",
+				Msg:     "Not found",
 				Data:    nil,
 			})
+		return
 	}
+	info := model.GetUserInfoFromUser(user, middleware.HasUserPermission(ctx, login))
+	ctx.JSON(http.StatusOK,
+		model.Result{
+			Success: true,
+			Msg:     "success",
+			Data: gin.H{
+				"user_info": *info,
+			},
+		})
 }
 
 func UpdateUser(ctx *gin.Context) {
@@ -39,12 +39,8 @@ func UpdateUser(ctx *gin.Context) {
 		ctx.JSON(http.StatusBadRequest,
 			model.Result{
 				Success: false,
-				Msg:     "invalid arguments",
+				Msg:     "Invalid arguments",
 				Data:    nil,
 			})
 	}
-}
-
-func RefreshToken(ctx *gin.Context) {
-
 }
