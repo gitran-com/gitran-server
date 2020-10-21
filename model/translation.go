@@ -1,7 +1,8 @@
 package model
 
 type Translation struct {
-	UID        uint64 `gorm:"not_null"`
-	PID        uint64 `gorm:"not_null"`
-	TargetLang string `gorm:"type:char(3)"`
+	UserID     uint64 `json:"user_id" gorm:"not null"`
+	ProjID     uint64 `json:"project_id" gorm:"not null"`
+	PhrzID     uint64 `json:"phrase_id" gorm:"not null"`
+	TargetLang uint16 ``
 }

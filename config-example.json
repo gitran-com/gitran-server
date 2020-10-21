@@ -1,21 +1,70 @@
 {
-    "github": {
-        "client_id": "fe59828a622bb69c58bd",
-        "client_secret": "Your Github Client Secret",
-        "callback_url": "https://gitran.com/auth/github/callback"
+    "app": {
+        "name": "gitran",
+        "addr": "0.0.0.0:7000",
+        "api_prefix": ""
     },
     "database": {
         "type": "mysql",
         "name": "gitran",
-        "source": "root:passwd@tcp(host:port)/?charset=utf8mb4&parseTime=True&loc=Local"
+        "user": "Your DB User",
+        "password": "Your DB Password",
+        "host": "Your DB Host",
+        "table_prefix": ""
     },
     "jwt": {
-        "secret": "Your JWT secret",
+        "secret": "Your JWT Secret",
         "skipper_paths": [],
-        "valid_time": 86400
+        "valid_time": 604800,
+        "refresh_time": 1209600
     },
-    "app": {
-        "addr": "0.0.0.0:7000",
-        "api_prefix": ""
-    }
+    "github": {
+        "enable": true,
+        "client_id": "Your Client ID",
+        "client_secret": "Your Client Secret"
+    },
+    "langs": [
+        {
+            "language_id": 0,
+            "iso": "Chinese Simplified",
+            "name": "简体中文",
+            "code": "zho-CN"
+        },
+        {
+            "language_id": 1,
+            "iso": "English",
+            "name": "English",
+            "code": "eng"
+        },
+        {
+            "language_id": 2,
+            "iso": "Russian",
+            "name": "русский",
+            "code": "rus"
+        },
+        {
+            "language_id": 3,
+            "iso": "French",
+            "name": "français",
+            "code": "fra"
+        },
+        {
+            "language_id": 4,
+            "iso": "Arabic",
+            "name": "العربية",
+            "code": "ara"
+        },
+        {
+            "language_id": 5,
+            "iso": "Spanish, Castilian",
+            "name": "Español",
+            "code": "spa"
+        }
+    ],
+    "file_types": [
+        "txt",
+        "xml",
+        "html",
+        "json"
+    ]
 }

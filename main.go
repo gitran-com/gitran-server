@@ -2,12 +2,14 @@ package main
 
 import (
 	"flag"
+	"log"
 
-	v1 "github.com/WangZhengru/gitran-be/api/v1"
-	"github.com/WangZhengru/gitran-be/config"
-	"github.com/WangZhengru/gitran-be/middleware"
-	"github.com/WangZhengru/gitran-be/model"
+	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
+	v1 "github.com/wzru/gitran-server/api/v1"
+	"github.com/wzru/gitran-server/config"
+	"github.com/wzru/gitran-server/middleware"
+	"github.com/wzru/gitran-server/model"
 )
 
 func main() {
@@ -25,6 +27,7 @@ func main() {
 	//API初始化
 	r := gin.New()
 	r.Use(middleware.Logger())
+	r.Use(cors.Default())
 	api := r.Group(config.APP.APIPrefix + "/api")
 	{
 		apiv1 := api.Group("/v1")
@@ -32,6 +35,7 @@ func main() {
 			v1.Init(apiv1)
 		}
 	}
-	r.Run(config.APP.Addr)
-	//fmt.Println("MAIN RETURN")
+	if err := r.Run(config.APP.Addr); err != nil {
+		log.Fatalf("Server run error : %v\n", err)
+	}
 }

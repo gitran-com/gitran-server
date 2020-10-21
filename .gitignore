@@ -3,4 +3,7 @@ config.json
 
 bin/
 log/
+sql/
+output/
+data/
 .idea/

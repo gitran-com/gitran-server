@@ -3,9 +3,9 @@ package model
 import "time"
 
 type Authority struct {
-	UID         uint64    `gorm:"primary_key;auto_increment"`
-	PID         uint64    `gorm:"primary_key;auto_increment"`
-	Type        uint8     `gorm:"type:tinyint"`
-	CreatedTime time.Time ``
-	UpdatedTime time.Time ``
+	UserID    uint64    `json:"user_id" gorm:"primary_key;auto_increment"`
+	ProjID    uint64    `json:"project_id" gorm:"primary_key;auto_increment"`
+	Role      uint8     `gorm:"type:tinyint"`
+	CreatedAt time.Time ``
+	UpdatedAt time.Time ``
 }

@@ -1,2 +1,2 @@
-# gitran-be
+# gitran-server
 Backend of gitran

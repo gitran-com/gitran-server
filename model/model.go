@@ -1,23 +1,35 @@
 package model
 
 import (
-	"github.com/WangZhengru/gitran-be/config"
-	"github.com/jinzhu/gorm"
-	_ "github.com/jinzhu/gorm/dialects/mysql"
+	"fmt"
+
 	log "github.com/sirupsen/logrus"
+	"github.com/wzru/gitran-server/config"
+	"gorm.io/driver/mysql"
+	"gorm.io/gorm"
 )
 
 var DB *gorm.DB
 
 func Init() error {
 	var err error
-	DB, err = gorm.Open(config.DB.Type, config.DB.Source)
+	if config.DB.Type == "mysql" {
+		dsn := fmt.Sprintf("%s:%s@tcp(%s)/?charset=utf8mb4&parseTime=True&loc=Local", config.DB.User, config.DB.Password, config.DB.Host)
+		DB, err = gorm.Open(mysql.Open(dsn), &gorm.Config{})
+		if err != nil {
+			log.Fatalf("Database connect ERROR : %v", err)
+			return err
+		}
+		DB.Exec("CREATE DATABASE IF NOT EXISTS " + config.DB.Name)
+		dsn = fmt.Sprintf("%s:%s@tcp(%s)/%s?charset=utf8mb4&parseTime=True&loc=Local", config.DB.User, config.DB.Password, config.DB.Host, config.DB.Name)
+		DB, err = gorm.Open(mysql.Open(dsn), &gorm.Config{})
+	} else if config.DB.Type == "postgresql" {
+		//TODO
+	}
 	if err != nil {
-		log.Fatalf("Database open ERROR : %v", err.Error())
+		log.Fatalf("Database connect ERROR : %v", err)
 		return err
 	}
-	DB.Exec("CREATE DATABASE IF NOT EXISTS " + config.DB.Name)
-	DB.Exec("USE " + config.DB.Name)
-	DB.AutoMigrate(&User{}, &Project{}, &Translation{})
+	DB.AutoMigrate(&User{}, &Project{}, &Phrase{}, &Translation{})
 	return nil
 }

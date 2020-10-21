@@ -1,7 +1,7 @@
 package model
 
 type Result struct {
-	Code int         `json:"code"`
-	Msg  string      `json:"msg"`
-	Data interface{} `json:"data"`
+	Success bool                   `json:"success"`
+	Msg     string                 `json:"message"`
+	Data    map[string]interface{} `json:"data"`
 }
