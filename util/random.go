@@ -6,8 +6,8 @@ import (
 	"unsafe"
 )
 
-const letterBytes = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"
 const (
+	letterBytes   = "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"
 	letterIdxBits = 6                    // 6 bits to represent a letter index
 	letterIdxMask = 1<<letterIdxBits - 1 // All 1-bits, as many as letterIdxBits
 	letterIdxMax  = 63 / letterIdxBits   // # of letter indices fitting in 63 bits
@@ -15,6 +15,7 @@ const (
 
 var src = rand.NewSource(time.Now().UnixNano())
 
+//RandStringBytesMaskImprSrcUnsafe gen a n-byte rand string
 func RandStringBytesMaskImprSrcUnsafe(n int) string {
 	b := make([]byte, n)
 	// A src.Int63() generates 63 random bits, enough for letterIdxMax characters!
@@ -29,6 +30,5 @@ func RandStringBytesMaskImprSrcUnsafe(n int) string {
 		cache >>= letterIdxBits
 		remain--
 	}
-
 	return *(*string)(unsafe.Pointer(&b))
 }

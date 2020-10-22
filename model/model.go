@@ -9,20 +9,23 @@ import (
 	"gorm.io/gorm"
 )
 
-var DB *gorm.DB
+var (
+	db *gorm.DB
+)
 
+//Init initialize the model
 func Init() error {
 	var err error
 	if config.DB.Type == "mysql" {
 		dsn := fmt.Sprintf("%s:%s@tcp(%s)/?charset=utf8mb4&parseTime=True&loc=Local", config.DB.User, config.DB.Password, config.DB.Host)
-		DB, err = gorm.Open(mysql.Open(dsn), &gorm.Config{})
+		db, err = gorm.Open(mysql.Open(dsn), &gorm.Config{})
 		if err != nil {
 			log.Fatalf("Database connect ERROR : %v", err)
 			return err
 		}
-		DB.Exec("CREATE DATABASE IF NOT EXISTS " + config.DB.Name)
+		db.Exec("CREATE DATABASE IF NOT EXISTS " + config.DB.Name)
 		dsn = fmt.Sprintf("%s:%s@tcp(%s)/%s?charset=utf8mb4&parseTime=True&loc=Local", config.DB.User, config.DB.Password, config.DB.Host, config.DB.Name)
-		DB, err = gorm.Open(mysql.Open(dsn), &gorm.Config{})
+		db, err = gorm.Open(mysql.Open(dsn), &gorm.Config{})
 	} else if config.DB.Type == "postgresql" {
 		//TODO
 	}
@@ -30,6 +33,16 @@ func Init() error {
 		log.Fatalf("Database connect ERROR : %v", err)
 		return err
 	}
-	DB.AutoMigrate(&User{}, &Project{}, &Phrase{}, &Translation{})
+	err = db.AutoMigrate(&User{}, &Project{}, &Phrase{}, &Translation{})
+	if err != nil {
+		fmt.Printf("%v\n", err.Error())
+	}
+	// if config.IsDebug {
+	// db.Create(&User{Login: "wzru",
+	// 	Name:     "wangzhengru",
+	// 	Email:    "wzr@wzr.com",
+	// 	Salt:     make([]byte, 64),
+	// 	Password: HashSalt("123456", make([]byte, 64))})
+	// }
 	return nil
 }

@@ -9,4 +9,5 @@ func Init(g *gin.RouterGroup) {
 	g.GET("/ping", controller.PingV1)
 	authInit(g)
 	userInit(g)
+	projInit(g)
 }

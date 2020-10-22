@@ -8,6 +8,7 @@ import (
 	"github.com/wzru/gitran-server/model"
 )
 
+//GetUser get user info
 func GetUser(ctx *gin.Context) {
 	login := ctx.Param("login")
 	user := model.GetUserByLogin(login)
@@ -31,6 +32,7 @@ func GetUser(ctx *gin.Context) {
 		})
 }
 
+//UpdateUser update user info
 func UpdateUser(ctx *gin.Context) {
 	upd := &model.UserInfo{}
 	if ctx.BindJSON(upd) == nil {
