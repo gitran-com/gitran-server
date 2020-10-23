@@ -8,10 +8,10 @@ import (
 
 func userInit(g *gin.RouterGroup) {
 	gg := g.Group("/users")
-	gg.GET("/:login", controller.GetUser)
+	gg.GET("/:username", controller.GetUser)
 	gg.Use(middleware.AuthJWT())
 	{
-		gg.PUT("/:login", controller.UpdateUser)
-		gg.POST("/projects", controller.CreateProj)
+		gg.PUT("/:username", controller.UpdateUser)
+		gg.POST("/projects", controller.CreateUserProj)
 	}
 }

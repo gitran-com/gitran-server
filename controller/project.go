@@ -9,6 +9,10 @@ func GetProj(ctx *gin.Context) {
 	service.GetProj(ctx)
 }
 
-func CreateProj(ctx *gin.Context) {
-	service.CreateProj(ctx)
+func CreateUserProj(ctx *gin.Context) {
+	service.CreateUserProj(ctx)
+}
+
+func CreateOrgProj(ctx *gin.Context) {
+	service.CreateOrgProj(ctx)
 }

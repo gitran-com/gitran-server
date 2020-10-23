@@ -4,13 +4,12 @@ import (
 	"net/http"
 
 	"github.com/gin-gonic/gin"
-	"github.com/wzru/gitran-server/middleware"
 	"github.com/wzru/gitran-server/model"
 )
 
-//GetUser get user info
+//GetUser get a user info
 func GetUser(ctx *gin.Context) {
-	login := ctx.Param("login")
+	login := ctx.Param("username")
 	user := model.GetUserByLogin(login)
 	if user == nil {
 		ctx.JSON(http.StatusNotFound,
@@ -21,7 +20,7 @@ func GetUser(ctx *gin.Context) {
 			})
 		return
 	}
-	info := model.GetUserInfoFromUser(user, middleware.HasUserPermission(ctx, login))
+	info := model.GetUserInfoFromUser(user, hasUserPermission(ctx, login))
 	ctx.JSON(http.StatusOK,
 		model.Result{
 			Success: true,
@@ -32,7 +31,7 @@ func GetUser(ctx *gin.Context) {
 		})
 }
 
-//UpdateUser update user info
+//UpdateUser update a user info
 func UpdateUser(ctx *gin.Context) {
 	upd := &model.UserInfo{}
 	if ctx.BindJSON(upd) == nil {

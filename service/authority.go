@@ -55,7 +55,7 @@ func Register(ctx *gin.Context) {
 			Salt:     salt,
 		})
 		if err == nil {
-			ctx.JSON(http.StatusOK,
+			ctx.JSON(http.StatusCreated,
 				model.Result{
 					Success: true,
 					Msg:     "注册成功",
@@ -65,7 +65,7 @@ func Register(ctx *gin.Context) {
 				})
 			return
 		} else {
-			ctx.JSON(http.StatusOK,
+			ctx.JSON(http.StatusBadRequest,
 				model.Result{
 					Success: false,
 					Msg:     err.Error(),
@@ -80,7 +80,7 @@ func Register(ctx *gin.Context) {
 	} else {
 		msg = "邮箱不可用"
 	}
-	ctx.JSON(http.StatusOK,
+	ctx.JSON(http.StatusBadRequest,
 		model.Result{
 			Success: false,
 			Msg:     msg,
@@ -111,4 +111,15 @@ func RefreshToken(ctx *gin.Context) {
 			},
 		})
 	}
+}
+
+//hasUserPermission check if this user has permission to user "login" by checking JWT
+func hasUserPermission(ctx *gin.Context, login string) bool {
+	auth := ctx.Request.Header.Get("Authorization")
+	if len(auth) == 0 {
+		return false
+	}
+	token := strings.Fields(auth)[1]
+	clm, err := middleware.ParseToken(token)
+	return err == nil && login == clm.Audience
 }

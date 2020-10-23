@@ -57,17 +57,6 @@ func GenTokenFromUser(user *model.User, subj string) string {
 	return token
 }
 
-//HasUserPermission check if this user has permission to user "login" by checking JWT
-func HasUserPermission(ctx *gin.Context, login string) bool {
-	auth := ctx.Request.Header.Get("Authorization")
-	if len(auth) == 0 {
-		return false
-	}
-	token := strings.Fields(auth)[1]
-	clm, err := ParseToken(token)
-	return err == nil && login == clm.Audience
-}
-
 //ParseToken parse token. Return nil claim when parse error
 func ParseToken(tokenStr string) (*jwt.StandardClaims, error) {
 	token, err := jwt.ParseWithClaims(tokenStr, &jwt.StandardClaims{}, func(token *jwt.Token) (i interface{}, e error) {
