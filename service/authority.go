@@ -20,7 +20,7 @@ var unauthResult = model.Result{
 func Login(ctx *gin.Context) {
 	login := ctx.PostForm("login")
 	passwd := ctx.PostForm("password")
-	user := model.GetUserByLoginEmail(login, login)
+	user := model.GetUserByUnameEmail(login, login)
 	// fmt.Printf("user=%v\n", user)
 	if user != nil && model.CheckPasswordCorrect(passwd, user) {
 		ctx.JSON(http.StatusOK, model.Result{
@@ -44,7 +44,7 @@ func Register(ctx *gin.Context) {
 	login := ctx.PostForm("login")
 	email := ctx.PostForm("email")
 	passwd := ctx.PostForm("password")
-	user := model.GetUserByLoginEmail(login, email)
+	user := model.GetUserByUnameEmail(login, email)
 	if user == nil {
 		salt := []byte(model.GenSalt())
 		user, err := model.NewUser(&model.User{
@@ -113,13 +113,14 @@ func RefreshToken(ctx *gin.Context) {
 	}
 }
 
-//hasUserPermission check if this user has permission to user "login" by checking JWT
-func hasUserPermission(ctx *gin.Context, login string) bool {
+//hasUserPermission check if this user has permission to user uid by checking JWT
+func hasUserPermission(ctx *gin.Context, uid uint64) bool {
 	auth := ctx.Request.Header.Get("Authorization")
 	if len(auth) == 0 {
 		return false
 	}
 	token := strings.Fields(auth)[1]
 	clm, err := middleware.ParseToken(token)
-	return err == nil && login == clm.Audience
+	id, _ := strconv.ParseUint(clm.Id, 10, 64)
+	return err == nil && uid == id
 }

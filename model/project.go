@@ -10,13 +10,12 @@ import (
 type ProjInfo struct {
 	ID        uint64        `json:"id" gorm:"primaryKey;autoIncrement"`
 	OwnerID   uint64        `json:"owner_id" gorm:"index;notNull"`
-	IsUsers   bool          `json:"is_users" gorm:"index;notNull"`
+	OwnerType uint8         `json:"owner_type" gorm:"index;notNull"`
+	Type      uint8         `json:"type" gorm:"index;notNull"`
 	Name      string        `json:"name" gorm:"type:varchar(32);index;notNull"`
 	Desc      string        `json:"desc" gorm:"type:varchar(256)"`
 	IsPrivate bool          `json:"is_private"`
-	IsGit     bool          `json:"is_git" gorm:"type:notNull"`
 	GitURL    string        `json:"git_url,omitempty" gorm:"type:varchar(256)"`
-	GitBranch string        `json:"git_branch,omitempty" gorm:"type:varchar(32)"`
 	SyncTime  uint64        `json:"sync_time,omitempty"`
 	SrcLangs  []config.Lang `json:"src_langs"`
 	TgtLangs  []config.Lang `json:"tgt_langs"`
@@ -27,14 +26,13 @@ type ProjInfo struct {
 //Project means project model
 type Project struct {
 	ID        uint64    `json:"id" gorm:"primaryKey;autoIncrement"`
-	OwnerID   uint64    `json:"owner_id" gorm:"index;notNull"`
-	IsUsers   bool      `json:"is_users" gorm:"index;notNull"`
 	Name      string    `gorm:"type:varchar(32);index;notNull"`
+	OwnerID   uint64    `json:"owner_id" gorm:"index;notNull"`
+	OwnerType uint8     `json:"owner_type" gorm:"index;notNull"`
+	Type      uint8     `json:"type" gorm:"index;notNull"`
 	Desc      string    `json:"desc" gorm:"type:varchar(256)"`
 	IsPrivate bool      `json:"is_private" gorm:"notNull"`
-	IsGit     bool      `json:"is_git" gorm:"notNull"`
 	GitURL    string    `json:"git_url,omitempty" gorm:"type:varchar(256)"`
-	GitBranch string    `json:"git_branch,omitempty" gorm:"type:varchar(32)"`
 	SyncTime  uint64    `json:"sync_time,omitempty"`
 	SrcLangs  string    `json:"src_langs" gorm:"type:varchar(128)"`
 	TgtLangs  string    `json:"tgt_langs" gorm:"type:varchar(128)"`
@@ -47,7 +45,7 @@ func (*Project) TableName() string {
 	return config.DB.TablePrefix + "projects"
 }
 
-//GetProjByOwnerName get project by owner & name
+//GetProjByOIDName get project by oid & name
 func GetProjByOIDName(oid uint64, name string, self bool) *Project {
 	var proj []Project
 	if self {
@@ -67,4 +65,54 @@ func NewProj(proj *Project) (*Project, error) {
 		return nil, result.Error
 	}
 	return proj, nil
+}
+
+//GetProjInfoFromProj get a project info from a project
+func GetProjInfoFromProj(proj *Project) *ProjInfo {
+	if proj == nil {
+		return nil
+	}
+	return &ProjInfo{
+		ID:        proj.ID,
+		OwnerID:   proj.OwnerID,
+		OwnerType: proj.OwnerType,
+		Name:      proj.Name,
+		Desc:      proj.Desc,
+		IsPrivate: proj.IsPrivate,
+		Type:      proj.Type,
+		GitURL:    proj.GitURL,
+		SyncTime:  proj.SyncTime,
+		SrcLangs:  GetLangsFromString(proj.SrcLangs),
+		TgtLangs:  GetLangsFromString(proj.TgtLangs),
+		CreatedAt: proj.CreatedAt,
+		UpdatedAt: proj.UpdatedAt,
+	}
+}
+
+//GetProjInfosFromProjs get projects info from []project
+func GetProjInfosFromProjs(projs []Project) []ProjInfo {
+	var pi []ProjInfo
+	for _, proj := range projs {
+		pi = append(pi, *GetProjInfoFromProj(&proj))
+	}
+	return pi
+}
+
+//ListProjFromUser list all projects from a user
+func ListProjFromUser(user *User, priv bool) []Project {
+	if user == nil {
+		return nil
+	}
+	return ListProjFromOID(user.ID, priv)
+}
+
+//ListProjFromOID list all projects from an owner id
+func ListProjFromOID(oid uint64, priv bool) []Project {
+	var proj []Project
+	if priv {
+		db.Where("owner_id=?", oid).First(&proj)
+	} else {
+		db.Where("owner_id=? AND is_private=?", oid, false).First(&proj)
+	}
+	return proj
 }

@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"github.com/wzru/gitran-server/config"
+	"github.com/wzru/gitran-server/constant"
 	"github.com/wzru/gitran-server/util"
 )
 
@@ -45,8 +46,8 @@ func (*User) TableName() string {
 	return config.DB.TablePrefix + "users"
 }
 
-//GetUserByLoginEmail gets a user by login or email
-func GetUserByLoginEmail(login string, email string) *User {
+//GetUserByUnameEmail gets a user by login or email
+func GetUserByUnameEmail(login string, email string) *User {
 	var user []User
 	db.Where("login=? OR email=?", login, email).First(&user)
 	if len(user) > 0 {
@@ -56,14 +57,20 @@ func GetUserByLoginEmail(login string, email string) *User {
 	}
 }
 
-//GetUserByLogin gets a user by login
-func GetUserByLogin(name string) *User {
+//GetUserByUname gets a user by login(username)
+func GetUserByUname(name string) *User {
 	var user []User
 	db.Where("login=?", name).First(&user)
 	if len(user) > 0 {
 		return &user[0]
 	}
 	return nil
+}
+
+//GetOwnerByName gets a user or an org by name
+func GetOwnerByName(name string) (*User, *Organization, int) {
+	//TODO
+	return GetUserByUname(name), nil, constant.OwnerUsr
 }
 
 //GetUserByID gets a user by id

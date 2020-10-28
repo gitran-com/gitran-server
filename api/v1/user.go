@@ -11,7 +11,6 @@ func userInit(g *gin.RouterGroup) {
 	gg.GET("/:username", controller.GetUser)
 	gg.Use(middleware.AuthJWT())
 	{
-		gg.PUT("/:username", controller.UpdateUser)
-		gg.POST("/projects", controller.CreateUserProj)
+		// gg.PUT("/:username", controller.UpdateUser)
 	}
 }

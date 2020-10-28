@@ -7,6 +7,7 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/wzru/gitran-server/config"
+	"github.com/wzru/gitran-server/constant"
 	"github.com/wzru/gitran-server/model"
 )
 
@@ -39,7 +40,7 @@ func checkLangs(langs []config.Lang) bool {
 	return true
 }
 
-func checkGitURLBranch(url string, br string) bool {
+func checkGitURL(url string) bool {
 	//TODO
 	return true
 }
@@ -50,11 +51,11 @@ func createGitProj(ctx *gin.Context) error {
 
 //GetUserProjByName get a user project info
 func GetUserProjByName(ctx *gin.Context, owner string, name string) *model.Project {
-	user := model.GetUserByLogin(owner)
+	user := model.GetUserByUname(owner)
 	if user == nil {
 		return nil
 	}
-	self := (hasUserPermission(ctx, owner))
+	self := (hasUserPermission(ctx, user.ID))
 	return model.GetProjByOIDName(user.ID, name, self)
 }
 
@@ -80,46 +81,63 @@ func GetProj(ctx *gin.Context) {
 		})
 		return
 	}
-	projInfo := model.ProjInfo{
-		ID:        proj.ID,
-		OwnerID:   proj.OwnerID,
-		IsUsers:   proj.IsUsers,
-		Name:      proj.Name,
-		Desc:      proj.Desc,
-		IsPrivate: proj.IsPrivate,
-		IsGit:     proj.IsGit,
-		GitURL:    proj.GitURL,
-		GitBranch: proj.GitBranch,
-		SyncTime:  proj.SyncTime,
-		SrcLangs:  model.GetLangsFromString(proj.SrcLangs),
-		TgtLangs:  model.GetLangsFromString(proj.TgtLangs),
-		CreatedAt: proj.CreatedAt,
-		UpdatedAt: proj.UpdatedAt,
-	}
+	projInfo := model.GetProjInfoFromProj(proj)
 	ctx.JSON(http.StatusNotFound, model.Result{
-		Success: true,
+		Success: false,
 		Msg:     "",
 		Data: gin.H{
-			"proj_info": projInfo,
+			"proj_info": *projInfo,
 		},
 	})
+}
+
+//ListProj list all projects
+func ListProj(ctx *gin.Context) {
+	usr, org, tp := model.GetOwnerByName(ctx.Param("owner"))
+	if tp == constant.OwnerUsr {
+		if usr == nil {
+			ctx.JSON(http.StatusNotFound, model.Result{
+				Success: false,
+				Msg:     "Not Found",
+				Data:    nil,
+			})
+			return
+		}
+		ctx.JSON(http.StatusOK, model.Result{
+			Success: true,
+			Msg:     "",
+			Data: gin.H{
+				"projects:": model.GetProjInfosFromProjs(model.ListProjFromUser(usr, hasUserPermission(ctx, usr.ID))),
+			}})
+		return
+	} else {
+		//TODO
+		if org == nil {
+			ctx.JSON(http.StatusNotFound, model.Result{
+				Success: false,
+				Msg:     "Not Found",
+				Data:    nil,
+			})
+			return
+		}
+	}
+	// model.GetUserByUname("")
 }
 
 //CreateUserProj create a new user project
 func CreateUserProj(ctx *gin.Context) {
 	name := ctx.PostForm("name")
-	isUsers := true
+	ot := constant.OwnerUsr
 	desc := ctx.PostForm("desc")
 	userID, _ := strconv.Atoi(ctx.GetString("user-id"))
 	isPrvt := ctx.PostForm("is_private") == "true"
-	isGit := ctx.PostForm("is_git") == "true"
 	gitURL := ctx.PostForm("git_url")
-	gitBranch := ctx.PostForm("git_branch")
 	syncTime, _ := strconv.Atoi(ctx.PostForm("sync_time"))
 	src := ctx.PostForm("src_langs")
 	tgt := ctx.PostForm("tgt_langs")
 	srcLangs := model.GetLangsFromString(src)
 	tgtLangs := model.GetLangsFromString(tgt)
+	tp, _ := strconv.Atoi(ctx.PostForm("type"))
 	if !checkURLName(name) {
 		ctx.JSON(http.StatusBadRequest, model.Result{
 			Success: false,
@@ -152,7 +170,7 @@ func CreateUserProj(ctx *gin.Context) {
 		})
 		return
 	}
-	if !checkGitURLBranch(gitURL, gitBranch) {
+	if !checkGitURL(gitURL) {
 		ctx.JSON(http.StatusBadRequest, model.Result{
 			Success: false,
 			Msg:     "Git URL不合法",
@@ -164,11 +182,10 @@ func CreateUserProj(ctx *gin.Context) {
 		Name:      name,
 		Desc:      desc,
 		OwnerID:   uint64(userID),
-		IsUsers:   isUsers,
+		OwnerType: uint8(ot),
 		IsPrivate: isPrvt,
-		IsGit:     isGit,
+		Type:      uint8(tp),
 		GitURL:    gitURL,
-		GitBranch: gitBranch,
 		SyncTime:  uint64(syncTime),
 		SrcLangs:  src,
 		TgtLangs:  tgt,
