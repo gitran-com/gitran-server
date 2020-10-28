@@ -3,12 +3,9 @@ package model
 import (
 	"bytes"
 	"crypto/sha512"
-	"strings"
 	"time"
 
-	log "github.com/sirupsen/logrus"
 	"github.com/wzru/gitran-server/config"
-	"github.com/wzru/gitran-server/constant"
 	"github.com/wzru/gitran-server/util"
 )
 
@@ -31,7 +28,7 @@ type UserInfo struct {
 type User struct {
 	ID          uint64    `gorm:"primaryKey;autoIncrement"`
 	Login       string    `gorm:"type:varchar(32);uniqueIndex;notNull"`
-	Name        string    `gorm:"type:varchar(32)"`
+	Name        string    `gorm:"type:varchar(32);index"`
 	Email       string    `gorm:"type:varchar(64);uniqueIndex;notNull"`
 	AvatarURL   string    `gorm:"type:varchar(128)"`
 	Bio         string    `gorm:"type:varchar(128)"`
@@ -78,34 +75,6 @@ func GetUserByID(id uint64) *User {
 	} else {
 		return nil
 	}
-}
-
-//GetLangByCode gets a language by language code
-func GetLangByCode(code string) *config.Lang {
-	for _, lang := range config.Langs {
-		if lang.Code == code {
-			return &lang
-		}
-	}
-	return nil
-}
-
-//GetLangsFromString extract []Lang from string like "eng|zho-CN"
-func GetLangsFromString(s string) []config.Lang {
-	if s == "" {
-		return nil
-	}
-	ss := strings.Split(s, constant.Delimiter)
-	langs := make([]config.Lang, len(ss))
-	for i, code := range ss {
-		lang := GetLangByCode(code)
-		if lang == nil {
-			log.Warnf("Unknown language %v", code)
-		} else {
-			langs[i] = *GetLangByCode(code)
-		}
-	}
-	return langs
 }
 
 //GetUserInfoFromUser gen UserInfo from User

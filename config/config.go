@@ -43,10 +43,11 @@ type app struct {
 }
 
 type Lang struct {
-	ID   uint16 `json:"id"`
-	Code string `json:"code"`
-	ISO  string `json:"iso"`
-	Name string `json:"name"`
+	ID    uint   `json:"id"`
+	Code  string `json:"code"`
+	Code3 string `json:"code3"`
+	ISO   string `json:"iso"`
+	Name  string `json:"name"`
 }
 
 type Config struct {
@@ -65,7 +66,6 @@ var (
 	IsDebug     = false
 	configFile  = flag.String("config", "config.json", "配置文件路径")
 	pwd, _      = os.Getwd()
-	SQLPath     = pwd + "/sql/"
 	logPath     = pwd + "/log/"
 	DataPath    = pwd + "/data/"
 	mainLogFile = logPath + "gitran.log"
@@ -74,12 +74,17 @@ var (
 )
 
 var (
-	C      *Config
-	DB     *database
+	c *Config
+	//DB config
+	DB *database
+	//Github config
 	Github *oauth
-	JWT    *jwt
-	APP    *app
-	Langs  []Lang
+	//JWT config
+	JWT *jwt
+	//APP config
+	APP *app
+	//Langs config
+	Langs []Lang
 )
 
 func (s *logFormatter) Format(entry *log.Entry) ([]byte, error) {
@@ -87,6 +92,7 @@ func (s *logFormatter) Format(entry *log.Entry) ([]byte, error) {
 	return []byte(msg), nil
 }
 
+//Init init config
 func Init() error {
 	gin.SetMode(*Mode)
 	IsDebug = (*Mode == constant.DebugMode)
@@ -106,17 +112,17 @@ func Init() error {
 		return err
 	}
 	// fmt.Printf("%v\n", json.Valid(configData))
-	C = &Config{}
-	if err := json.Unmarshal(configData, C); err != nil {
+	c = &Config{}
+	if err := json.Unmarshal(configData, c); err != nil {
 		log.Fatalf("Config JSON unmarshal failed: %v", err)
 		return err
 	}
 	// fmt.Println("hello")
-	Github = &C.Github
-	DB = &C.DB
-	JWT = &C.JWT
-	APP = &C.APP
-	Langs = C.Langs
+	Github = &c.Github
+	DB = &c.DB
+	JWT = &c.JWT
+	APP = &c.APP
+	Langs = c.Langs
 	//fmt.Printf("%v", *C)
 	return nil
 }

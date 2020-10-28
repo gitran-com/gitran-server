@@ -10,4 +10,5 @@ func Init(g *gin.RouterGroup) {
 	authInit(g)
 	userInit(g)
 	projInit(g)
+	langInit(g)
 }
