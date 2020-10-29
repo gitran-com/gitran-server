@@ -8,15 +8,16 @@ import (
 
 //ProjInfo means project's infomation
 type ProjInfo struct {
-	ID        uint64        `json:"id" gorm:"primaryKey;autoIncrement"`
-	OwnerID   uint64        `json:"owner_id" gorm:"index;notNull"`
-	OwnerType uint8         `json:"owner_type" gorm:"index;notNull"`
-	Type      uint8         `json:"type" gorm:"index;notNull"`
-	Name      string        `json:"name" gorm:"type:varchar(32);index;notNull"`
-	Desc      string        `json:"desc" gorm:"type:varchar(256)"`
-	IsPrivate bool          `json:"is_private"`
-	GitURL    string        `json:"git_url,omitempty" gorm:"type:varchar(256)"`
-	SyncTime  uint64        `json:"sync_time,omitempty"`
+	ID        uint64 `json:"id" gorm:"primaryKey;autoIncrement"`
+	OwnerID   uint64 `json:"owner_id" gorm:"index;notNull"`
+	OwnerType uint8  `json:"owner_type" gorm:"index;notNull"`
+	Type      uint8  `json:"type" gorm:"index;notNull"`
+	Status    uint8  `json:"status" gorm:"notNull"`
+	Name      string `json:"name" gorm:"type:varchar(32);index;notNull"`
+	Desc      string `json:"desc" gorm:"type:varchar(256)"`
+	IsPrivate bool   `json:"is_private"`
+	GitURL    string `json:"git_url,omitempty" gorm:"type:varchar(256)"`
+	// SyncTime  uint64        `json:"sync_time,omitempty"`
 	SrcLangs  []config.Lang `json:"src_langs"`
 	TgtLangs  []config.Lang `json:"tgt_langs"`
 	CreatedAt time.Time     `json:"created_at"`
@@ -25,15 +26,17 @@ type ProjInfo struct {
 
 //Project means project model
 type Project struct {
-	ID        uint64    `json:"id" gorm:"primaryKey;autoIncrement"`
-	Name      string    `gorm:"type:varchar(32);index;notNull"`
-	OwnerID   uint64    `json:"owner_id" gorm:"index;notNull"`
-	OwnerType uint8     `json:"owner_type" gorm:"index;notNull"`
-	Type      uint8     `json:"type" gorm:"index;notNull"`
-	Desc      string    `json:"desc" gorm:"type:varchar(256)"`
-	IsPrivate bool      `json:"is_private" gorm:"notNull"`
-	GitURL    string    `json:"git_url,omitempty" gorm:"type:varchar(256)"`
-	SyncTime  uint64    `json:"sync_time,omitempty"`
+	ID        uint64 `json:"id" gorm:"primaryKey;autoIncrement"`
+	Name      string `gorm:"type:varchar(32);index;notNull"`
+	OwnerID   uint64 `json:"owner_id" gorm:"index;notNull"`
+	OwnerType uint8  `json:"owner_type" gorm:"index;notNull"`
+	Type      uint8  `json:"type" gorm:"index;notNull"`
+	Status    uint8  `json:"status" gorm:"notNull"`
+	Desc      string `json:"desc" gorm:"type:varchar(256)"`
+	IsPrivate bool   `json:"is_private" gorm:"notNull"`
+	GitURL    string `json:"git_url,omitempty" gorm:"type:varchar(256)"`
+	Path      string `gorm:"type:varchar(256)"`
+	// SyncTime  uint64    `json:"sync_time,omitempty"`
 	SrcLangs  string    `json:"src_langs" gorm:"type:varchar(128)"`
 	TgtLangs  string    `json:"tgt_langs" gorm:"type:varchar(128)"`
 	CreatedAt time.Time `json:"created_at"`
@@ -80,8 +83,9 @@ func GetProjInfoFromProj(proj *Project) *ProjInfo {
 		Desc:      proj.Desc,
 		IsPrivate: proj.IsPrivate,
 		Type:      proj.Type,
+		Status:    proj.Status,
 		GitURL:    proj.GitURL,
-		SyncTime:  proj.SyncTime,
+		// SyncTime:  proj.SyncTime,
 		SrcLangs:  GetLangsFromString(proj.SrcLangs),
 		TgtLangs:  GetLangsFromString(proj.TgtLangs),
 		CreatedAt: proj.CreatedAt,
@@ -115,4 +119,9 @@ func ListProjFromOID(oid uint64, priv bool) []Project {
 		db.Where("owner_id=? AND is_private=?", oid, false).First(&proj)
 	}
 	return proj
+}
+
+//UpdateProjStatus update a project status
+func UpdateProjStatus(proj *Project, status uint8) {
+	db.Model(proj).Select("status").Updates(map[string]interface{}{"status": status})
 }

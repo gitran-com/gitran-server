@@ -33,16 +33,9 @@ func Init() error {
 		log.Fatalf("Database connect ERROR : %v", err)
 		return err
 	}
-	err = db.AutoMigrate(&User{}, &Project{}, &Phrase{}, &Translation{})
+	err = db.AutoMigrate(&User{}, &Project{}, &ProjCfg{}, &Translation{})
 	if err != nil {
 		fmt.Printf("%v\n", err.Error())
 	}
-	// if config.IsDebug {
-	// db.Create(&User{Login: "wzru",
-	// 	Name:     "wangzhengru",
-	// 	Email:    "wzr@wzr.com",
-	// 	Salt:     make([]byte, 64),
-	// 	Password: HashSalt("123456", make([]byte, 64))})
-	// }
 	return nil
 }

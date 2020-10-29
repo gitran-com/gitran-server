@@ -10,16 +10,23 @@ const (
 
 const (
 	//OwnerUsr 属于个人的项目
-	OwnerUsr = 0
+	OwnerUsr = iota
 	//OwnerOrg 属于组织的项目
-	OwnerOrg = 1
+	OwnerOrg
 )
 
 const (
 	//ProjCmn 普通项目
-	ProjCmn = 0
+	ProjCmn = iota
 	//ProjGit git仓库引入的项目
-	ProjGit = 1
+	ProjGit
+)
+
+const (
+	//StatusCreated 已创建未初始化
+	StatusCreated = iota
+	//StatusInit 已初始化完成
+	StatusInit
 )
 
 const (

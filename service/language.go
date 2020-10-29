@@ -35,12 +35,7 @@ func GetLang(ctx *gin.Context) {
 	}
 	lang := model.GetLangByID(uint(id))
 	if lang == nil {
-		ctx.JSON(http.StatusNotFound,
-			model.Result{
-				Success: false,
-				Msg:     "Not Found",
-				Data:    nil,
-			})
+		ctx.JSON(http.StatusNotFound, model.Result404)
 		return
 	}
 	ctx.JSON(http.StatusOK,

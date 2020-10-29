@@ -32,8 +32,8 @@ type database struct {
 type jwt struct {
 	Secret       string   `json:"secret"`
 	SkipperPaths []string `json:"skipper_paths"`
-	ValidTime    int64    `json:"valid_time"`
-	RefreshTime  int64    `json:"refresh_time"`
+	ValidTime    uint     `json:"valid_time"`
+	RefreshTime  uint     `json:"refresh_time"`
 }
 
 type app struct {
@@ -52,7 +52,7 @@ type Lang struct {
 
 type Config struct {
 	Github    oauth    `json:"github"`
-	DB        database `json:"database"`
+	DB        database `json:"db"`
 	JWT       jwt      `json:"jwt"`
 	APP       app      `json:"app"`
 	Langs     []Lang   `json:"langs"`
@@ -67,7 +67,8 @@ var (
 	configFile  = flag.String("config", "config.json", "配置文件路径")
 	pwd, _      = os.Getwd()
 	logPath     = pwd + "/log/"
-	DataPath    = pwd + "/data/"
+	DataPath    = "data/"
+	ProjPath    = DataPath + "proj/"
 	mainLogFile = logPath + "gitran.log"
 	GinLogFile  = logPath + "api"
 	TimeFormat  = "2006/01/02 15:04:05"

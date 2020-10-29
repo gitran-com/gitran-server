@@ -12,12 +12,7 @@ func GetUser(ctx *gin.Context) {
 	login := ctx.Param("username")
 	user := model.GetUserByUname(login)
 	if user == nil {
-		ctx.JSON(http.StatusNotFound,
-			model.Result{
-				Success: false,
-				Msg:     "Not found",
-				Data:    nil,
-			})
+		ctx.JSON(http.StatusNotFound, model.Result404)
 		return
 	}
 	info := model.GetUserInfoFromUser(user, hasUserPermission(ctx, user.ID))

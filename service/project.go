@@ -2,10 +2,13 @@ package service
 
 import (
 	"net/http"
+	"os"
 	"regexp"
 	"strconv"
 
 	"github.com/gin-gonic/gin"
+	"github.com/go-git/go-git/v5"
+	log "github.com/sirupsen/logrus"
 	"github.com/wzru/gitran-server/config"
 	"github.com/wzru/gitran-server/constant"
 	"github.com/wzru/gitran-server/model"
@@ -74,15 +77,11 @@ func GetProj(ctx *gin.Context) {
 		proj = GetOrgProjByName(ctx, owner, name)
 	}
 	if proj == nil {
-		ctx.JSON(http.StatusNotFound, model.Result{
-			Success: false,
-			Msg:     "Not Found",
-			Data:    nil,
-		})
+		ctx.JSON(http.StatusNotFound, model.Result404)
 		return
 	}
 	projInfo := model.GetProjInfoFromProj(proj)
-	ctx.JSON(http.StatusNotFound, model.Result{
+	ctx.JSON(http.StatusOK, model.Result{
 		Success: false,
 		Msg:     "",
 		Data: gin.H{
@@ -96,11 +95,7 @@ func ListProj(ctx *gin.Context) {
 	usr, org, tp := model.GetOwnerByName(ctx.Param("owner"))
 	if tp == constant.OwnerUsr {
 		if usr == nil {
-			ctx.JSON(http.StatusNotFound, model.Result{
-				Success: false,
-				Msg:     "Not Found",
-				Data:    nil,
-			})
+			ctx.JSON(http.StatusNotFound, model.Result404)
 			return
 		}
 		ctx.JSON(http.StatusOK, model.Result{
@@ -113,11 +108,7 @@ func ListProj(ctx *gin.Context) {
 	} else {
 		//TODO
 		if org == nil {
-			ctx.JSON(http.StatusNotFound, model.Result{
-				Success: false,
-				Msg:     "Not Found",
-				Data:    nil,
-			})
+			ctx.JSON(http.StatusNotFound, model.Result404)
 			return
 		}
 	}
@@ -130,9 +121,10 @@ func CreateUserProj(ctx *gin.Context) {
 	ot := constant.OwnerUsr
 	desc := ctx.PostForm("desc")
 	userID, _ := strconv.Atoi(ctx.GetString("user-id"))
+	userName := ctx.GetString("user-name")
 	isPrvt := ctx.PostForm("is_private") == "true"
 	gitURL := ctx.PostForm("git_url")
-	syncTime, _ := strconv.Atoi(ctx.PostForm("sync_time"))
+	// syncTime, _ := strconv.Atoi(ctx.PostForm("sync_time"))
 	src := ctx.PostForm("src_langs")
 	tgt := ctx.PostForm("tgt_langs")
 	srcLangs := model.GetLangsFromString(src)
@@ -185,10 +177,12 @@ func CreateUserProj(ctx *gin.Context) {
 		OwnerType: uint8(ot),
 		IsPrivate: isPrvt,
 		Type:      uint8(tp),
+		Status:    uint8(constant.StatusCreated),
 		GitURL:    gitURL,
-		SyncTime:  uint64(syncTime),
-		SrcLangs:  src,
-		TgtLangs:  tgt,
+		Path:      config.ProjPath + userName + "/" + name + "/",
+		// SyncTime:  uint64(syncTime),
+		SrcLangs: src,
+		TgtLangs: tgt,
 	}
 	if findProj := model.GetProjByOIDName(proj.OwnerID, proj.Name, true); findProj != nil {
 		ctx.JSON(http.StatusBadRequest, model.Result{
@@ -206,12 +200,44 @@ func CreateUserProj(ctx *gin.Context) {
 			Data:    nil,
 		})
 		return
-	} else {
-		ctx.JSON(http.StatusCreated, model.Result{
-			Success: true,
-			Msg:     "创建项目成功",
-			Data:    nil,
+	}
+	ctx.JSON(http.StatusCreated, model.Result{
+		Success: true,
+		Msg:     "创建项目成功",
+		Data:    nil,
+	})
+	go initProj(proj)
+}
+
+//initUserProj init a new user project
+func initUserProj(proj *model.Project) {
+	if proj.Type == constant.ProjGit {
+		_, err := git.PlainClone(proj.Path, false, &git.CloneOptions{
+			URL:      proj.GitURL,
+			Progress: os.Stdout,
+			Depth:    1,
 		})
+		if err == nil {
+			model.UpdateProjStatus(proj, constant.StatusInit)
+		} else {
+			log.Warnf("Git clone error : %v", err.Error())
+		}
+	} else {
+		//TODO
+	}
+}
+
+//initOrgProj init a new org project
+func initOrgProj(proj *model.Project) {
+	//TODO
+}
+
+//initProj init a new project
+func initProj(proj *model.Project) {
+	if proj.OwnerType == constant.OwnerUsr {
+		initUserProj(proj)
+	} else if proj.OwnerType == constant.OwnerOrg {
+		initOrgProj(proj)
 	}
 }
 

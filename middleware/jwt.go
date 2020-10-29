@@ -13,29 +13,24 @@ import (
 	"github.com/wzru/gitran-server/model"
 )
 
-var unauthResult = model.Result{
-	Success: false,
-	Msg:     "Unauthorized",
-	Data:    nil,
-}
-
 //AuthJWT verifies a token
 func AuthJWT() gin.HandlerFunc {
 	return func(ctx *gin.Context) {
 		auth := ctx.Request.Header.Get("Authorization")
-		if len(auth) == 0 {
-			ctx.JSON(http.StatusUnauthorized, unauthResult)
+		if len(auth) <= 0 {
+			ctx.JSON(http.StatusUnauthorized, model.Result401)
 			ctx.Abort()
 			return
 		}
 		token := strings.Fields(auth)[1]
 		clm, err := ParseToken(token) // 校验token
 		if err != nil {
-			ctx.JSON(http.StatusUnauthorized, unauthResult)
+			ctx.JSON(http.StatusUnauthorized, model.Result401)
 			ctx.Abort()
 			return
 		}
 		ctx.Set("user-id", clm.Id)
+		ctx.Set("user-name", clm.Audience)
 		ctx.Next()
 	}
 }

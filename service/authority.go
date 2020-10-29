@@ -10,12 +10,6 @@ import (
 	"github.com/wzru/gitran-server/model"
 )
 
-var unauthResult = model.Result{
-	Success: false,
-	Msg:     "Unauthorized",
-	Data:    nil,
-}
-
 //Login make users login
 func Login(ctx *gin.Context) {
 	login := ctx.PostForm("login")
@@ -92,14 +86,14 @@ func Register(ctx *gin.Context) {
 func RefreshToken(ctx *gin.Context) {
 	auth := ctx.Request.Header.Get("Authorization")
 	if len(auth) == 0 {
-		ctx.JSON(http.StatusUnauthorized, unauthResult)
+		ctx.JSON(http.StatusUnauthorized, model.Result401)
 		ctx.Abort()
 		return
 	}
 	token := strings.Fields(auth)[1]
 	clm, _ := middleware.ParseToken(token) // 校验token
 	if clm == nil {
-		ctx.JSON(http.StatusUnauthorized, unauthResult)
+		ctx.JSON(http.StatusUnauthorized, model.Result401)
 	} else {
 		id, _ := strconv.Atoi(clm.Id)
 		user := model.GetUserByID(uint64(id))
