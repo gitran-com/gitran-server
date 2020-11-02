@@ -38,7 +38,7 @@ func GetLangsFromString(s string) []config.Lang {
 	if s == "" {
 		return nil
 	}
-	ss := strings.Split(s, constant.Delimiter)
+	ss := strings.Split(s, constant.Delim)
 	langs := make([]config.Lang, len(ss))
 	for i, code := range ss {
 		lang := GetLangByCode(code)

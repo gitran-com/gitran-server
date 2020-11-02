@@ -42,6 +42,7 @@ type app struct {
 	APIPrefix string `json:"api_prefix"`
 }
 
+//Lang 语言
 type Lang struct {
 	ID    uint   `json:"id"`
 	Code  string `json:"code"`
@@ -50,6 +51,7 @@ type Lang struct {
 	Name  string `json:"name"`
 }
 
+//Config 应用运行配置
 type Config struct {
 	Github    oauth    `json:"github"`
 	DB        database `json:"db"`
@@ -62,16 +64,22 @@ type Config struct {
 type logFormatter struct{}
 
 var (
-	Mode        = flag.String("mode", constant.DebugMode, "运行模式")
-	IsDebug     = false
-	configFile  = flag.String("config", "config.json", "配置文件路径")
-	pwd, _      = os.Getwd()
-	logPath     = pwd + "/log/"
-	DataPath    = "data/"
-	ProjPath    = DataPath + "proj/"
+	//Mode 运行模式
+	Mode = flag.String("mode", constant.DebugMode, "运行模式")
+	//IsDebug 是否是调试模式
+	IsDebug    = false
+	configFile = flag.String("config", "config.json", "配置文件路径")
+	pwd, _     = os.Getwd()
+	logPath    = pwd + "/log/"
+	//DataPath 数据目录
+	DataPath = "data/"
+	//ProjPath 项目目录
+	ProjPath    = DataPath + "project/"
 	mainLogFile = logPath + "gitran.log"
-	GinLogFile  = logPath + "api"
-	TimeFormat  = "2006/01/02 15:04:05"
+	//GinLogFile Gin日志目录
+	GinLogFile = logPath + "api"
+	//TimeFormat 日志时间格式
+	TimeFormat = "2006/01/02 15:04:05"
 )
 
 var (
@@ -90,6 +98,9 @@ var (
 
 func (s *logFormatter) Format(entry *log.Entry) ([]byte, error) {
 	msg := fmt.Sprintf("%s [%s] %s\n", time.Now().Local().Format(TimeFormat), strings.ToUpper(entry.Level.String()), entry.Message)
+	if IsDebug {
+		fmt.Printf("%s", msg)
+	}
 	return []byte(msg), nil
 }
 
@@ -118,7 +129,6 @@ func Init() error {
 		log.Fatalf("Config JSON unmarshal failed: %v", err)
 		return err
 	}
-	// fmt.Println("hello")
 	Github = &c.Github
 	DB = &c.DB
 	JWT = &c.JWT

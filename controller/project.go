@@ -20,3 +20,11 @@ func CreateUserProj(ctx *gin.Context) {
 func CreateOrgProj(ctx *gin.Context) {
 	service.CreateOrgProj(ctx)
 }
+
+func GetUserProjCfg(ctx *gin.Context) {
+	service.GetUserProjCfg(ctx)
+}
+
+func CreateUserProjCfg(ctx *gin.Context) {
+	service.CreateUserProjCfg(ctx)
+}

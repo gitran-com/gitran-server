@@ -106,15 +106,3 @@ func RefreshToken(ctx *gin.Context) {
 		})
 	}
 }
-
-//hasUserPermission check if this user has permission to user uid by checking JWT
-func hasUserPermission(ctx *gin.Context, uid uint64) bool {
-	auth := ctx.Request.Header.Get("Authorization")
-	if len(auth) == 0 {
-		return false
-	}
-	token := strings.Fields(auth)[1]
-	clm, err := middleware.ParseToken(token)
-	id, _ := strconv.ParseUint(clm.Id, 10, 64)
-	return err == nil && uid == id
-}

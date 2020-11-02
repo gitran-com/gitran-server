@@ -4,6 +4,7 @@ import (
 	"net/http"
 
 	"github.com/gin-gonic/gin"
+	"github.com/wzru/gitran-server/middleware"
 	"github.com/wzru/gitran-server/model"
 )
 
@@ -15,7 +16,7 @@ func GetUser(ctx *gin.Context) {
 		ctx.JSON(http.StatusNotFound, model.Result404)
 		return
 	}
-	info := model.GetUserInfoFromUser(user, hasUserPermission(ctx, user.ID))
+	info := model.GetUserInfoFromUser(user, middleware.HasUserPermission(ctx, user.ID))
 	ctx.JSON(http.StatusOK,
 		model.Result{
 			Success: true,

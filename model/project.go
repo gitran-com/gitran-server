@@ -48,8 +48,18 @@ func (*Project) TableName() string {
 	return config.DB.TablePrefix + "projects"
 }
 
-//GetProjByOIDName get project by oid & name
-func GetProjByOIDName(oid uint64, name string, self bool) *Project {
+//GetProjByID get project by id
+func GetProjByID(id uint64) *Project {
+	var proj []Project
+	db.Where("id=?", id).First(&proj)
+	if len(proj) > 0 {
+		return &proj[0]
+	}
+	return nil
+}
+
+//GetProjByOwnerIDName get project by oid & name
+func GetProjByOwnerIDName(oid uint64, name string, self bool) *Project {
 	var proj []Project
 	if self {
 		db.Where("owner_id=? AND name=?", oid, name).First(&proj)
@@ -107,11 +117,11 @@ func ListProjFromUser(user *User, priv bool) []Project {
 	if user == nil {
 		return nil
 	}
-	return ListProjFromOID(user.ID, priv)
+	return ListProjFromOwnerID(user.ID, priv)
 }
 
-//ListProjFromOID list all projects from an owner id
-func ListProjFromOID(oid uint64, priv bool) []Project {
+//ListProjFromOwnerID list all projects from an owner id
+func ListProjFromOwnerID(oid uint64, priv bool) []Project {
 	var proj []Project
 	if priv {
 		db.Where("owner_id=?", oid).First(&proj)

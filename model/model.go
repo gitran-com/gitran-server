@@ -30,12 +30,13 @@ func Init() error {
 		//TODO
 	}
 	if err != nil {
-		log.Fatalf("Database connect ERROR : %v", err)
+		log.Fatalf("Database connect ERROR : %v", err.Error())
 		return err
 	}
-	err = db.AutoMigrate(&User{}, &Project{}, &ProjCfg{}, &Translation{})
+	err = db.AutoMigrate(&User{}, &Project{}, &ProjCfg{}, &BrchRule{}, &Translation{})
 	if err != nil {
 		fmt.Printf("%v\n", err.Error())
+		log.Fatalf("Database migrate ERROR : %v", err.Error())
 	}
 	return nil
 }

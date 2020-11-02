@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
+	"strconv"
 	"strings"
 	"time"
 
@@ -13,8 +14,8 @@ import (
 	"github.com/wzru/gitran-server/model"
 )
 
-//AuthJWT verifies a token
-func AuthJWT() gin.HandlerFunc {
+//AuthUserJWT verifies a token
+func AuthUserJWT() gin.HandlerFunc {
 	return func(ctx *gin.Context) {
 		auth := ctx.Request.Header.Get("Authorization")
 		if len(auth) <= 0 {
@@ -31,6 +32,49 @@ func AuthJWT() gin.HandlerFunc {
 		}
 		ctx.Set("user-id", clm.Id)
 		ctx.Set("user-name", clm.Audience)
+		ctx.Next()
+	}
+}
+
+//AuthUserProjJWT verifies a jwt if can do something on a project
+func AuthUserProjJWT() gin.HandlerFunc {
+	return func(ctx *gin.Context) {
+		auth := ctx.Request.Header.Get("Authorization")
+		if len(auth) <= 0 {
+			ctx.JSON(http.StatusUnauthorized, model.Result401)
+			ctx.Abort()
+			return
+		}
+		token := strings.Fields(auth)[1]
+		clm, err := ParseToken(token) // 校验token
+		if err != nil {
+			ctx.JSON(http.StatusUnauthorized, model.Result401)
+			ctx.Abort()
+			return
+		}
+		owner, _, _ := model.GetOwnerByName(ctx.Param("owner"))
+		if owner == nil {
+			ctx.JSON(http.StatusNotFound, model.Result404)
+			ctx.Abort()
+			return
+		}
+		uid, _ := strconv.ParseUint(clm.Id, 10, 64)
+		if owner.ID != uid {
+			ctx.JSON(http.StatusUnauthorized, model.Result401)
+			ctx.Abort()
+			return
+		}
+		proj := model.GetProjByOwnerIDName(owner.ID, ctx.Param("project"), true)
+		if proj == nil {
+			ctx.JSON(http.StatusNotFound, model.Result404)
+			ctx.Abort()
+			return
+		}
+		ctx.Set("proj-id", proj.ID)
+		ctx.Set("user-id", clm.Id)
+		ctx.Set("user", owner)
+		ctx.Set("project", proj)
+		// ctx.Set("user-name", clm.Audience)
 		ctx.Next()
 	}
 }
@@ -67,3 +111,24 @@ func ParseToken(tokenStr string) (*jwt.StandardClaims, error) {
 	}
 	return nil, err
 }
+
+//HasUserPermission check if this user has permission to user uid by checking JWT
+func HasUserPermission(ctx *gin.Context, uid uint64) bool {
+	auth := ctx.Request.Header.Get("Authorization")
+	if len(auth) == 0 {
+		return false
+	}
+	token := strings.Fields(auth)[1]
+	clm, err := ParseToken(token)
+	id, _ := strconv.ParseUint(clm.Id, 10, 64)
+	return err == nil && uid == id
+}
+
+//HasUserPermission check if this user has permission to user uid by checking JWT
+// func HasUserProjPermission(uid uint64, pid uint64) bool {
+// 	proj := model.GetProjByID(pid)
+// 	if proj == nil || proj.OwnerType != constant.OwnerUsr || proj.OwnerID != uid {
+// 		return false
+// 	}
+// 	return true
+// }

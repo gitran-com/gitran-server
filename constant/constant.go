@@ -3,9 +3,12 @@ package constant
 import "github.com/gin-gonic/gin"
 
 const (
-	DebugMode   = gin.DebugMode
+	//DebugMode 调试模式
+	DebugMode = gin.DebugMode
+	//ReleaseMode 发布模式
 	ReleaseMode = gin.ReleaseMode
-	TestMode    = gin.TestMode
+	//TestMode 测试模式
+	TestMode = gin.TestMode
 )
 
 const (
@@ -16,20 +19,20 @@ const (
 )
 
 const (
-	//ProjCmn 普通项目
-	ProjCmn = iota
-	//ProjGit git仓库引入的项目
-	ProjGit
+	//ProjCommon 普通项目
+	ProjCommon = iota
+	//ProjGithub git仓库引入的项目
+	ProjGithub
 )
 
 const (
-	//StatusCreated 已创建未初始化
-	StatusCreated = iota
-	//StatusInit 已初始化完成
-	StatusInit
+	//ProjStatCreated 项目已创建未初始化
+	ProjStatCreated = iota
+	//ProjStatInit 项目已初始化完成
+	ProjStatInit
 )
 
 const (
-	//Delimiter 是数据库记录中的分隔符
-	Delimiter = "|"
+	//Delim 是数据库记录中的分隔符
+	Delim = "|"
 )

@@ -2,6 +2,7 @@ package main
 
 import (
 	"flag"
+	"fmt"
 	"log"
 
 	"github.com/gin-contrib/cors"
@@ -23,11 +24,17 @@ func main() {
 	if err := model.Init(); err != nil {
 		return
 	}
-	//defer model.DB.Close()//无需Close
 	//API初始化
-	r := gin.New()
-	r.Use(middleware.Logger())
-	r.Use(cors.Default())
+	var r *gin.Engine
+	if config.IsDebug {
+		r = gin.Default()
+		r.Use(cors.Default())
+	} else {
+		fmt.Println("Write log in file...")
+		r = gin.New()
+		r.Use(middleware.Logger())
+		r.Use(cors.Default())
+	}
 	api := r.Group(config.APP.APIPrefix + "/api")
 	{
 		apiv1 := api.Group("/v1")
@@ -36,6 +43,6 @@ func main() {
 		}
 	}
 	if err := r.Run(config.APP.Addr); err != nil {
-		log.Fatalf("Server run error : %v\n", err)
+		log.Fatalf("Server run error : %v\n", err.Error())
 	}
 }
