@@ -12,6 +12,7 @@ import (
 type ProjCfg struct {
 	ID         uint64 `json:"id" gorm:"primaryKey;autoIncrement"`
 	ProjID     uint64 `json:"project_id" gorm:"index;notNull"`
+	Changed    bool   `gorm:"index;notNull"`
 	SrcBr      string `json:"src_branch" gorm:"type:varchar(32);notNull"`
 	TrnBr      string `json:"trn_branch" gorm:"type:varchar(32);notNull"`
 	SyncTime   uint64 `json:"sync_time,omitempty" gorm:"notNull"`
@@ -26,21 +27,26 @@ type BrchRule struct {
 	ProjCfgID uint64 `json:"project_config_id" gorm:"index;notNull"`
 	Status    uint8  `gorm:"index;notNull"`
 	SrcFiles  string `yaml:"source_files" json:"src_files" gorm:"type:varchar(128);notNull"`
-	TrnFiles  string `yaml:"translation_files " json:"trn_files" gorm:"type:varchar(128);notNull"`
+	TrnFiles  string `yaml:"translation_files" json:"trn_files" gorm:"type:varchar(128);notNull"`
 	IgnFiles  string `yaml:"ignore_files" json:"ign_files" gorm:"type:varchar(256);"`
 	Extension string `json:"extension" gorm:"type:varchar(256)"`
 }
 
 //BrchRuleInfo means branch rules info
 type BrchRuleInfo struct {
-	ID        uint64                 `json:"id"`
-	ProjCfgID uint64                 `json:"project_config_id"`
-	Status    uint8                  `json:"status"`
+	ID        uint64                 `yaml:"-" json:"id"`
+	ProjCfgID uint64                 `yaml:"-" json:"project_config_id"`
+	Status    uint8                  `yaml:"-" json:"status"`
 	SrcFiles  string                 `yaml:"source_files" json:"src_files"`
-	TrnFiles  string                 `yaml:"translation_files " json:"trn_files"`
+	TrnFiles  string                 `yaml:"translation_files" json:"trn_files"`
 	IgnFiles  []string               `yaml:"ignore_files" json:"ign_files"`
 	Extension map[string]interface{} `yaml:"extension" json:"extension"`
 }
+
+// //NeedUpdate return whether the config need update config file
+// func (*ProjCfg) NeedUpdate() bool {
+// 	return config.DB.TablePrefix + "project_configs"
+// }
 
 //TableName return table name
 func (*ProjCfg) TableName() string {
@@ -117,4 +123,9 @@ func GetBrchRuleInfosFromBrchRules(rules []BrchRule) []BrchRuleInfo {
 		ri = append(ri, *GetBrchRuleInfoFromBrchRule(&rule))
 	}
 	return ri
+}
+
+//UpdateProjCfgChanged update a project cfg changed status
+func UpdateProjCfgChanged(cfg *ProjCfg, changed bool) {
+	db.Model(cfg).Select("changed").Updates(map[string]interface{}{"changed": changed})
 }

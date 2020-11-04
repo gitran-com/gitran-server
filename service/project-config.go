@@ -1,16 +1,23 @@
 package service
 
 import (
+	"fmt"
+	"io/ioutil"
 	"net/http"
+	"os"
 	"strconv"
 	"strings"
+	"time"
 
 	"github.com/gin-gonic/gin"
 	"github.com/go-git/go-git/v5"
 	"github.com/go-git/go-git/v5/plumbing"
+	"github.com/go-git/go-git/v5/plumbing/object"
+	log "github.com/sirupsen/logrus"
 	"github.com/wzru/gitran-server/constant"
 	"github.com/wzru/gitran-server/model"
 	"github.com/wzru/gitran-server/util"
+	"gopkg.in/yaml.v2"
 )
 
 var (
@@ -81,6 +88,7 @@ func CreateUserProjBrchRule(ctx *gin.Context) {
 		})
 		return
 	}
+	model.UpdateProjCfgChanged(cfg, true)
 	ctx.JSON(http.StatusCreated, model.Result{
 		Success: true,
 		Msg:     "分支规则创建成功",
@@ -132,6 +140,7 @@ func CreateUserProjCfg(ctx *gin.Context) {
 		ProjID:    proj.ID,
 		SrcBr:     ctx.PostForm("src_branch"),
 		TrnBr:     ctx.PostForm("trn_branch"),
+		Changed:   false,
 		SyncTime:  syncTime,
 		PushTrans: pushTrans,
 		FileName:  fileName,
@@ -152,6 +161,85 @@ func CreateUserProjCfg(ctx *gin.Context) {
 	})
 }
 
+//SaveUserProjCfg save a project config
 func SaveUserProjCfg(ctx *gin.Context) {
+	proj := ctx.Keys["project"].(*model.Project)
+	user := ctx.Keys["user"].(*model.User)
+	cfgs := model.ListProjCfgFromProjID(proj.ID)
+	projMutexMap.Lock(proj.ID)
+	defer projMutexMap.Unlock(proj.ID)
+	repo, err := git.PlainOpen(proj.Path)
+	wt, _ := repo.Worktree()
+	for _, cfg := range cfgs {
+		if cfg.Changed == false {
+			continue
+		}
+		srcBr := "refs/heads/" + cfg.SrcBr
+		err = wt.Checkout(&git.CheckoutOptions{
+			Branch: plumbing.ReferenceName(srcBr),
+		})
+		if err != nil {
+			ctx.JSON(http.StatusBadRequest, model.Result{
+				Success: false,
+				Msg:     err.Error(),
+				Data:    nil,
+			})
+			return
+		}
+		rules := model.ListBrchRuleByCfgID(cfg.ID)
+		err = ioutil.WriteFile(proj.Path+cfg.FileName, genCfgFileFromRuleInfos(model.GetBrchRuleInfosFromBrchRules(rules)), os.ModeAppend|os.ModePerm)
+		if err != nil {
+			ctx.JSON(http.StatusBadRequest, model.Result{
+				Success: false,
+				Msg:     err.Error(),
+				Data:    nil,
+			})
+			return
+		}
+		go model.UpdateProjCfgChanged(&cfg, false)
+		wt.Add(cfg.FileName)
+		status, _ := wt.Status()
+		if len(status) > 0 {
+			var msg string
+			if status[cfg.FileName].Staging == git.Added {
+				msg = fmt.Sprintf("feat: add Gitran config file '%s'", cfg.FileName)
+			} else {
+				msg = fmt.Sprintf("feat: update Gitran config file '%s'", cfg.FileName)
+			}
+			_, err := wt.Commit(msg, &git.CommitOptions{
+				Author: &object.Signature{
+					Name:  user.Name,
+					Email: user.Email,
+					When:  time.Now(),
+				}})
+			if err != nil {
+				log.Warn(err.Error())
+				ctx.JSON(http.StatusBadRequest, model.Result{
+					Success: false,
+					Msg:     err.Error(),
+					Data:    nil,
+				})
+				return
+			}
+		}
+	}
+	ctx.JSON(http.StatusCreated, model.Result{
+		Success: true,
+		Msg:     "项目配置更新成功",
+		Data:    nil,
+	})
+}
 
+func SaveUserProjBrchRule(ctx *gin.Context) {
+	//NO
+}
+
+func genCfgFileFromRuleInfos(rules []model.BrchRuleInfo) []byte {
+	data, err := yaml.Marshal(map[string]interface{}{
+		"rules": rules,
+	})
+	if err != nil {
+		log.Warn(err.Error())
+	}
+	return data
 }

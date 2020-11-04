@@ -32,3 +32,7 @@ func CreateUserProjBrchRule(ctx *gin.Context) {
 func SaveUserProjCfg(ctx *gin.Context) {
 	service.SaveUserProjCfg(ctx)
 }
+
+func SaveUserProjBrchRule(ctx *gin.Context) {
+	service.SaveUserProjBrchRule(ctx)
+}
