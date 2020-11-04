@@ -8,5 +8,5 @@ import (
 func langInit(g *gin.RouterGroup) {
 	gg := g.Group("/languages")
 	gg.GET("", controller.GetLangs)
-	gg.GET("/:id", controller.GetLang)
+	gg.GET("/:language_id", controller.GetLang)
 }

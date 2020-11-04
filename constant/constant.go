@@ -33,6 +33,13 @@ const (
 )
 
 const (
+	//RuleStatCreated 规则已创建未保存到配置文件
+	RuleStatCreated = iota
+	//RuleStatSaved 规则已保存到配置文件
+	RuleStatSaved
+)
+
+const (
 	//Delim 是数据库记录中的分隔符
 	Delim = "|"
 )

@@ -23,7 +23,7 @@ func GetLangs(ctx *gin.Context) {
 
 //GetLang get a language
 func GetLang(ctx *gin.Context) {
-	id, err := strconv.Atoi(ctx.Param("id"))
+	id, err := strconv.Atoi(ctx.Param("language_id"))
 	if err != nil {
 		ctx.JSON(http.StatusBadRequest,
 			model.Result{

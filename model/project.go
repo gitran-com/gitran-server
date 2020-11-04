@@ -4,6 +4,7 @@ import (
 	"time"
 
 	"github.com/wzru/gitran-server/config"
+	"github.com/wzru/gitran-server/constant"
 )
 
 //ProjInfo means project's infomation
@@ -19,7 +20,7 @@ type ProjInfo struct {
 	GitURL    string `json:"git_url,omitempty" gorm:"type:varchar(256)"`
 	// SyncTime  uint64        `json:"sync_time,omitempty"`
 	SrcLangs  []config.Lang `json:"src_langs"`
-	TgtLangs  []config.Lang `json:"tgt_langs"`
+	TrnLangs  []config.Lang `json:"trn_langs"`
 	CreatedAt time.Time     `json:"created_at"`
 	UpdatedAt time.Time     `json:"updated_at"`
 }
@@ -38,7 +39,7 @@ type Project struct {
 	Path      string `gorm:"type:varchar(256)"`
 	// SyncTime  uint64    `json:"sync_time,omitempty"`
 	SrcLangs  string    `json:"src_langs" gorm:"type:varchar(128)"`
-	TgtLangs  string    `json:"tgt_langs" gorm:"type:varchar(128)"`
+	TrnLangs  string    `json:"trn_langs" gorm:"type:varchar(128)"`
 	CreatedAt time.Time `json:"created_at"`
 	UpdatedAt time.Time `json:"updated_at"`
 }
@@ -97,7 +98,7 @@ func GetProjInfoFromProj(proj *Project) *ProjInfo {
 		GitURL:    proj.GitURL,
 		// SyncTime:  proj.SyncTime,
 		SrcLangs:  GetLangsFromString(proj.SrcLangs),
-		TgtLangs:  GetLangsFromString(proj.TgtLangs),
+		TrnLangs:  GetLangsFromString(proj.TrnLangs),
 		CreatedAt: proj.CreatedAt,
 		UpdatedAt: proj.UpdatedAt,
 	}
@@ -117,16 +118,22 @@ func ListProjFromUser(user *User, priv bool) []Project {
 	if user == nil {
 		return nil
 	}
-	return ListProjFromOwnerID(user.ID, priv)
+	var proj []Project
+	if priv {
+		db.Where("owner_id=? AND owner_type=?", user.ID, constant.OwnerUsr).Find(&proj)
+	} else {
+		db.Where("owner_id=? AND owner_type=? AND is_private=?", user.ID, constant.OwnerUsr, false).Find(&proj)
+	}
+	return proj
 }
 
 //ListProjFromOwnerID list all projects from an owner id
 func ListProjFromOwnerID(oid uint64, priv bool) []Project {
 	var proj []Project
 	if priv {
-		db.Where("owner_id=?", oid).First(&proj)
+		db.Where("owner_id=?", oid).Find(&proj)
 	} else {
-		db.Where("owner_id=? AND is_private=?", oid, false).First(&proj)
+		db.Where("owner_id=? AND is_private=?", oid, false).Find(&proj)
 	}
 	return proj
 }

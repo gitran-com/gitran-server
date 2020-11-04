@@ -1,7 +1,6 @@
 package service
 
 import (
-	"fmt"
 	"net/http"
 	"os"
 	"regexp"
@@ -10,7 +9,6 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/go-git/go-git/v5"
 	gitconfig "github.com/go-git/go-git/v5/config"
-	"github.com/go-git/go-git/v5/plumbing"
 	"github.com/go-git/go-git/v5/storage/memory"
 	log "github.com/sirupsen/logrus"
 	"github.com/wzru/gitran-server/config"
@@ -137,9 +135,9 @@ func CreateUserProj(ctx *gin.Context) {
 	gitURL := ctx.PostForm("git_url")
 	// syncTime, _ := strconv.Atoi(ctx.PostForm("sync_time"))
 	src := ctx.PostForm("src_langs")
-	tgt := ctx.PostForm("tgt_langs")
+	trn := ctx.PostForm("trn_langs")
 	srcLangs := model.GetLangsFromString(src)
-	tgtLangs := model.GetLangsFromString(tgt)
+	trnLangs := model.GetLangsFromString(trn)
 	tp, _ := strconv.Atoi(ctx.PostForm("type"))
 	if !checkURLName(name) {
 		ctx.JSON(http.StatusBadRequest, model.Result{
@@ -165,7 +163,7 @@ func CreateUserProj(ctx *gin.Context) {
 		})
 		return
 	}
-	if !checkLangs(tgtLangs) {
+	if !checkLangs(trnLangs) {
 		ctx.JSON(http.StatusBadRequest, model.Result{
 			Success: false,
 			Msg:     "目标语言不合法",
@@ -193,7 +191,7 @@ func CreateUserProj(ctx *gin.Context) {
 		Path:      config.ProjPath + userName + "/" + name + "/",
 		// SyncTime:  uint64(syncTime),
 		SrcLangs: src,
-		TgtLangs: tgt,
+		TrnLangs: trn,
 	}
 	if findProj := model.GetProjByOwnerIDName(proj.OwnerID, proj.Name, true); findProj != nil {
 		ctx.JSON(http.StatusBadRequest, model.Result{
@@ -256,70 +254,4 @@ func initProj(proj *model.Project) {
 //CreateOrgProj create a new organization project
 func CreateOrgProj(ctx *gin.Context) {
 	//TODO
-}
-
-//GetUserProjCfg get a user project config
-func GetUserProjCfg(ctx *gin.Context) {
-	//TODO
-}
-
-//CreateUserProjCfg create a new project config
-func CreateUserProjCfg(ctx *gin.Context) {
-	// projID, _ := strconv.Atoi(ctx.GetString("proj-id"))
-	proj := ctx.Keys["project"].(*model.Project)
-	srcBrName := "refs/heads/" + ctx.PostForm("src_branch")
-	tgtBrName := "refs/heads/" + ctx.PostForm("tgt_branch")
-	syncTime, _ := strconv.ParseUint(ctx.PostForm("sync_time"), 10, 64)
-	pushTrans := ctx.PostForm("push_trans") == "true"
-	filename := ctx.PostForm("filename")
-	// fmt.Printf("srcbr=%+v\n", srcBrName)
-	repo, err := git.PlainOpen(proj.Path)
-	wt, _ := repo.Worktree()
-	//先切换到src分支
-	err = wt.Checkout(&git.CheckoutOptions{
-		Branch: plumbing.ReferenceName(srcBrName),
-	})
-	if err != nil {
-		fmt.Println("HERE1")
-		ctx.JSON(http.StatusBadRequest, model.Result{
-			Success: false,
-			Msg:     err.Error(),
-			Data:    nil,
-		})
-		return
-	}
-	//然后新建tgt分支
-	srcHead, _ := repo.Head()
-	ref := plumbing.NewHashReference(plumbing.ReferenceName(tgtBrName), srcHead.Hash())
-	if err := repo.Storer.SetReference(ref); err != nil {
-		fmt.Println("HERE2")
-		ctx.JSON(http.StatusBadRequest, model.Result{
-			Success: false,
-			Msg:     err.Error(),
-			Data:    nil,
-		})
-		return
-	}
-	projCfg := &model.ProjCfg{
-		ProjID:    proj.ID,
-		SrcBr:     ctx.PostForm("src_branch"),
-		TgtBr:     ctx.PostForm("tgt_branch"),
-		SyncTime:  syncTime,
-		PushTrans: pushTrans,
-		FileName:  filename,
-	}
-	projCfg, err = model.NewProjCfg(projCfg)
-	if err != nil {
-		ctx.JSON(http.StatusBadRequest, model.Result{
-			Success: false,
-			Msg:     err.Error(),
-			Data:    nil,
-		})
-		return
-	}
-	ctx.JSON(http.StatusOK, model.Result{
-		Success: true,
-		Msg:     "项目分支配置新建成功",
-		Data:    nil,
-	})
 }
