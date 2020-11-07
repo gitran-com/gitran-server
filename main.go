@@ -2,8 +2,8 @@ package main
 
 import (
 	"flag"
-	"fmt"
-	"log"
+
+	log "github.com/sirupsen/logrus"
 
 	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
@@ -11,6 +11,7 @@ import (
 	"github.com/wzru/gitran-server/config"
 	"github.com/wzru/gitran-server/middleware"
 	"github.com/wzru/gitran-server/model"
+	"github.com/wzru/gitran-server/service"
 )
 
 func main() {
@@ -20,8 +21,12 @@ func main() {
 	if err := config.Init(); err != nil {
 		return
 	}
-	//数据库初始化
+	//数据库&语言文件初始化
 	if err := model.Init(); err != nil {
+		return
+	}
+	//服务初始化
+	if err := service.Init(); err != nil {
 		return
 	}
 	//API初始化
@@ -30,7 +35,7 @@ func main() {
 		r = gin.Default()
 		r.Use(cors.Default())
 	} else {
-		fmt.Println("Write log in file...")
+		log.Infof("writing log in file...")
 		r = gin.New()
 		r.Use(middleware.Logger())
 		r.Use(cors.Default())
@@ -43,6 +48,6 @@ func main() {
 		}
 	}
 	if err := r.Run(config.APP.Addr); err != nil {
-		log.Fatalf("Server run error : %v\n", err.Error())
+		log.Fatalf("server run error : %v\n", err.Error())
 	}
 }

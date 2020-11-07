@@ -4,18 +4,49 @@ import (
 	"strings"
 
 	log "github.com/sirupsen/logrus"
-	"github.com/wzru/gitran-server/config"
 	"github.com/wzru/gitran-server/constant"
 )
 
-//GetLangByID gets a language by language id
-func GetLangByID(id uint) *config.Lang {
-	if id < uint(len(config.Langs)) {
-		if config.Langs[id].ID == id {
-			return &(config.Langs[id])
+//Language 语言
+type Language struct {
+	ID    int    `json:"id"`
+	Code  string `json:"code"`
+	Code3 string `json:"code3"`
+	ISO   string `json:"iso"`
+	Name  string `json:"name"`
+}
+
+func GetLangs() []Language {
+	return langs
+}
+
+func CheckLang(lang *Language) bool {
+	for _, cfgLang := range langs {
+		if cfgLang.Code == lang.Code {
+			return true
 		}
 	}
-	for _, lang := range config.Langs {
+	return false
+}
+
+func CheckLangs(langs []Language) bool {
+	for _, lang := range langs {
+		ok := CheckLang(&lang)
+		if !ok {
+			return false
+		}
+	}
+	return true
+}
+
+//GetLangByID gets a language by language id
+func GetLangByID(id int) *Language {
+	if id < len(langs) {
+		if langs[id].ID == id {
+			return &(langs[id])
+		}
+	}
+	for _, lang := range langs {
 		if lang.ID == id {
 			return &lang
 		}
@@ -24,8 +55,8 @@ func GetLangByID(id uint) *config.Lang {
 }
 
 //GetLangByCode gets a language by language code
-func GetLangByCode(code string) *config.Lang {
-	for _, lang := range config.Langs {
+func GetLangByCode(code string) *Language {
+	for _, lang := range langs {
 		if lang.Code == code {
 			return &lang
 		}
@@ -33,17 +64,17 @@ func GetLangByCode(code string) *config.Lang {
 	return nil
 }
 
-//GetLangsFromString extract []Lang from string like "eng|zho-CN"
-func GetLangsFromString(s string) []config.Lang {
+//GetLangsFromString extract []Lang from string like "eng|zho"
+func GetLangsFromString(s string) []Language {
 	if s == "" {
 		return nil
 	}
 	ss := strings.Split(s, constant.Delim)
-	langs := make([]config.Lang, len(ss))
+	langs := make([]Language, len(ss))
 	for i, code := range ss {
 		lang := GetLangByCode(code)
 		if lang == nil {
-			log.Warnf("Unknown language %v", code)
+			log.Warnf("unknown language %v", code)
 		} else {
 			langs[i] = *GetLangByCode(code)
 		}

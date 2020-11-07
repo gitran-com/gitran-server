@@ -27,25 +27,6 @@ func checkURLName(name string) bool {
 	return ok
 }
 
-func checkLang(lang *config.Lang) bool {
-	for _, cfgLang := range config.Langs {
-		if cfgLang.Code == lang.Code {
-			return true
-		}
-	}
-	return false
-}
-
-func checkLangs(langs []config.Lang) bool {
-	for _, lang := range langs {
-		ok := checkLang(&lang)
-		if !ok {
-			return false
-		}
-	}
-	return true
-}
-
 func checkGitURL(url string) bool {
 	rmt := git.NewRemote(memory.NewStorage(), &gitconfig.RemoteConfig{
 		URLs: []string{url},
@@ -63,7 +44,7 @@ func createGitProj(ctx *gin.Context) error {
 
 //GetUserProjByName get a user project info
 func GetUserProjByName(ctx *gin.Context, owner string, name string) *model.Project {
-	user := model.GetUserByUname(owner)
+	user := model.GetUserByName(owner)
 	if user == nil {
 		return nil
 	}
@@ -121,7 +102,6 @@ func ListProj(ctx *gin.Context) {
 			return
 		}
 	}
-	// model.GetUserByUname("")
 }
 
 //CreateUserProj create a new user project
@@ -133,7 +113,6 @@ func CreateUserProj(ctx *gin.Context) {
 	userName := ctx.GetString("user-name")
 	isPrvt := ctx.PostForm("is_private") == "true"
 	gitURL := ctx.PostForm("git_url")
-	// syncTime, _ := strconv.Atoi(ctx.PostForm("sync_time"))
 	src := ctx.PostForm("src_langs")
 	trn := ctx.PostForm("trn_langs")
 	srcLangs := model.GetLangsFromString(src)
@@ -155,7 +134,7 @@ func CreateUserProj(ctx *gin.Context) {
 		})
 		return
 	}
-	if !checkLangs(srcLangs) {
+	if !model.CheckLangs(srcLangs) {
 		ctx.JSON(http.StatusBadRequest, model.Result{
 			Success: false,
 			Msg:     "源语言不合法",
@@ -163,7 +142,7 @@ func CreateUserProj(ctx *gin.Context) {
 		})
 		return
 	}
-	if !checkLangs(trnLangs) {
+	if !model.CheckLangs(trnLangs) {
 		ctx.JSON(http.StatusBadRequest, model.Result{
 			Success: false,
 			Msg:     "目标语言不合法",
@@ -189,9 +168,8 @@ func CreateUserProj(ctx *gin.Context) {
 		Status:    uint8(constant.ProjStatCreated),
 		GitURL:    gitURL,
 		Path:      config.ProjPath + userName + "/" + name + "/",
-		// SyncTime:  uint64(syncTime),
-		SrcLangs: src,
-		TrnLangs: trn,
+		SrcLangs:  src,
+		TrnLangs:  trn,
 	}
 	if findProj := model.GetProjByOwnerIDName(proj.OwnerID, proj.Name, true); findProj != nil {
 		ctx.JSON(http.StatusBadRequest, model.Result{

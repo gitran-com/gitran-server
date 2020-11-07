@@ -3,6 +3,7 @@ package model
 import (
 	"encoding/json"
 	"strings"
+	"time"
 
 	"github.com/wzru/gitran-server/config"
 	"github.com/wzru/gitran-server/constant"
@@ -10,26 +11,29 @@ import (
 
 //ProjCfg means project config
 type ProjCfg struct {
-	ID         uint64 `json:"id" gorm:"primaryKey;autoIncrement"`
-	ProjID     uint64 `json:"project_id" gorm:"index;notNull"`
-	Changed    bool   `gorm:"index;notNull"`
-	SrcBr      string `json:"src_branch" gorm:"type:varchar(32);notNull"`
-	TrnBr      string `json:"trn_branch" gorm:"type:varchar(32);notNull"`
-	SyncTime   uint64 `json:"sync_time,omitempty" gorm:"notNull"`
-	SyncStatus bool   `json:"sync_status" gorm:"notNull"`
-	PushTrans  bool   `json:"push_trans" gorm:"notNull"`
-	FileName   string `json:"file_name" gorm:"type:varchar(32);notNull"`
+	ID         uint64    `json:"id" gorm:"primaryKey;autoIncrement"`
+	ProjID     uint64    `json:"project_id" gorm:"index;notNull"`
+	FileName   string    `json:"file_name" gorm:"type:varchar(32);notNull"`
+	Changed    bool      `json:"-" gorm:"index;notNull"`
+	SrcBr      string    `json:"src_branch" gorm:"type:varchar(32);notNull"`
+	TrnBr      string    `json:"trn_branch" gorm:"type:varchar(32);notNull"`
+	PullItv    uint16    `json:"pull_interval" gorm:"notNull"`
+	PushItv    uint16    `json:"push_interval" gorm:"notNull"`
+	PullStatus uint8     `json:"pull_status" gorm:"notNull"`
+	PushStatus uint8     `json:"push_status" gorm:"notNull"`
+	LastPullAt time.Time `json:"last_pull_at"`
+	LastPushAt time.Time `json:"last_push_at"`
 }
 
 //BrchRule means branch rules
 type BrchRule struct {
-	ID        uint64 `json:"id" gorm:"primaryKey;autoIncrement"`
-	ProjCfgID uint64 `json:"project_config_id" gorm:"index;notNull"`
+	ID        uint64 `gorm:"primaryKey;autoIncrement"`
+	ProjCfgID uint64 `gorm:"index;notNull"`
 	Status    uint8  `gorm:"index;notNull"`
 	SrcFiles  string `yaml:"source_files" json:"src_files" gorm:"type:varchar(128);notNull"`
 	TrnFiles  string `yaml:"translation_files" json:"trn_files" gorm:"type:varchar(128);notNull"`
 	IgnFiles  string `yaml:"ignore_files" json:"ign_files" gorm:"type:varchar(256);"`
-	Extension string `json:"extension" gorm:"type:varchar(256)"`
+	Extension string `gorm:"type:varchar(256)"`
 }
 
 //BrchRuleInfo means branch rules info
@@ -42,11 +46,6 @@ type BrchRuleInfo struct {
 	IgnFiles  []string               `yaml:"ignore_files" json:"ign_files"`
 	Extension map[string]interface{} `yaml:"extension" json:"extension"`
 }
-
-// //NeedUpdate return whether the config need update config file
-// func (*ProjCfg) NeedUpdate() bool {
-// 	return config.DB.TablePrefix + "project_configs"
-// }
 
 //TableName return table name
 func (*ProjCfg) TableName() string {
@@ -128,4 +127,14 @@ func GetBrchRuleInfosFromBrchRules(rules []BrchRule) []BrchRuleInfo {
 //UpdateProjCfgChanged update a project cfg changed status
 func UpdateProjCfgChanged(cfg *ProjCfg, changed bool) {
 	db.Model(cfg).Select("changed").Updates(map[string]interface{}{"changed": changed})
+}
+
+//UpdateProjCfgPullStatus update a project cfg pull status
+func UpdateProjCfgPullStatus(cfg *ProjCfg, stat uint8) {
+	db.Model(cfg).Select("pull_status").Updates(map[string]interface{}{"pull_status": stat})
+}
+
+//UpdateProjCfgPushStatus update a project cfg push status
+func UpdateProjCfgPushStatus(cfg *ProjCfg, stat uint8) {
+	db.Model(cfg).Select("push_status").Updates(map[string]interface{}{"push_status": stat})
 }

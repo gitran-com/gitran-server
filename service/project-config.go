@@ -106,8 +106,8 @@ func CreateUserProjCfg(ctx *gin.Context) {
 	proj := ctx.Keys["project"].(*model.Project)
 	srcBrName := "refs/heads/" + ctx.PostForm("src_branch")
 	trnBrName := "refs/heads/" + ctx.PostForm("trn_branch")
-	syncTime, _ := strconv.ParseUint(ctx.PostForm("sync_time"), 10, 64)
-	pushTrans := ctx.PostForm("push_trans") == "true"
+	pullItv, _ := strconv.ParseUint(ctx.PostForm("pull_interval"), 10, 16)
+	pushItv, _ := strconv.ParseUint(ctx.PostForm("push_interval"), 10, 16)
 	fileName := ctx.PostForm("file_name")
 	projMutexMap.Lock(proj.ID)
 	defer projMutexMap.Unlock(proj.ID)
@@ -137,13 +137,13 @@ func CreateUserProjCfg(ctx *gin.Context) {
 		return
 	}
 	projCfg := &model.ProjCfg{
-		ProjID:    proj.ID,
-		SrcBr:     ctx.PostForm("src_branch"),
-		TrnBr:     ctx.PostForm("trn_branch"),
-		Changed:   false,
-		SyncTime:  syncTime,
-		PushTrans: pushTrans,
-		FileName:  fileName,
+		ProjID:   proj.ID,
+		SrcBr:    ctx.PostForm("src_branch"),
+		TrnBr:    ctx.PostForm("trn_branch"),
+		Changed:  false,
+		PullItv:  uint16(pullItv),
+		PushItv:  uint16(pushItv),
+		FileName: fileName,
 	}
 	projCfg, err = model.NewProjCfg(projCfg)
 	if err != nil {
@@ -159,6 +159,12 @@ func CreateUserProjCfg(ctx *gin.Context) {
 		Msg:     "项目配置创建成功",
 		Data:    nil,
 	})
+	if pullItv != 0 {
+		pullSchd.Every(pullItv).Minutes().SetTag([]string{proj.Path}).Do(pullGit, proj, projCfg)
+	}
+	if pushItv != 0 {
+		pushSchd.Every(pushItv).Minutes().SetTag([]string{proj.Path}).Do(pushGit, proj, projCfg)
+	}
 }
 
 //SaveUserProjCfg save a project config

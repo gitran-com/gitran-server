@@ -5,7 +5,6 @@ import (
 	"strconv"
 
 	"github.com/gin-gonic/gin"
-	"github.com/wzru/gitran-server/config"
 	"github.com/wzru/gitran-server/model"
 )
 
@@ -14,9 +13,8 @@ func GetLangs(ctx *gin.Context) {
 	ctx.JSON(http.StatusOK,
 		model.Result{
 			Success: true,
-			Msg:     "success",
 			Data: gin.H{
-				"languages": config.Langs,
+				"languages": model.GetLangs(),
 			},
 		})
 }
@@ -29,11 +27,12 @@ func GetLang(ctx *gin.Context) {
 			model.Result{
 				Success: false,
 				Msg:     err.Error(),
+				Code:    http.StatusBadRequest,
 				Data:    nil,
 			})
 		return
 	}
-	lang := model.GetLangByID(uint(id))
+	lang := model.GetLangByID(id)
 	if lang == nil {
 		ctx.JSON(http.StatusNotFound, model.Result404)
 		return
@@ -41,7 +40,6 @@ func GetLang(ctx *gin.Context) {
 	ctx.JSON(http.StatusOK,
 		model.Result{
 			Success: true,
-			Msg:     "success",
 			Data: gin.H{
 				"language": *lang,
 			},

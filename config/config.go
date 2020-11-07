@@ -20,7 +20,7 @@ type oauth struct {
 	ClientSecret string `json:"client_secret"`
 }
 
-type database struct {
+type db struct {
 	Type        string `json:"type"`
 	Name        string `json:"name"`
 	User        string `json:"user"`
@@ -42,22 +42,12 @@ type app struct {
 	APIPrefix string `json:"api_prefix"`
 }
 
-//Lang 语言
-type Lang struct {
-	ID    uint   `json:"id"`
-	Code  string `json:"code"`
-	Code3 string `json:"code3"`
-	ISO   string `json:"iso"`
-	Name  string `json:"name"`
-}
-
 //Config 应用运行配置
 type Config struct {
 	Github    oauth    `json:"github"`
-	DB        database `json:"db"`
+	DB        db       `json:"db"`
 	JWT       jwt      `json:"jwt"`
 	APP       app      `json:"app"`
-	Langs     []Lang   `json:"langs"`
 	FileTypes []string `json:"file_types"`
 }
 
@@ -85,15 +75,13 @@ var (
 var (
 	c *Config
 	//DB config
-	DB *database
+	DB *db
 	//Github config
 	Github *oauth
 	//JWT config
 	JWT *jwt
 	//APP config
 	APP *app
-	//Langs config
-	Langs []Lang
 )
 
 func (s *logFormatter) Format(entry *log.Entry) ([]byte, error) {
@@ -117,23 +105,21 @@ func Init() error {
 	log.SetFormatter(new(logFormatter))
 	log.SetOutput(logFile)
 	//加载配置文件
-	log.Infof("Open config file '%s'...", *configFile)
+	log.Infof("open config file '%s'...", *configFile)
 	configData, err := ioutil.ReadFile(*configFile)
 	if err != nil {
-		log.Fatalf("Cannot open config file '%s'!\n", *configFile)
+		log.Fatalf("cannot open config file '%s'!\n", *configFile)
 		return err
 	}
 	// fmt.Printf("%v\n", json.Valid(configData))
 	c = &Config{}
 	if err := json.Unmarshal(configData, c); err != nil {
-		log.Fatalf("Config JSON unmarshal failed: %v", err)
+		log.Fatalf("config JSON unmarshal failed: %v", err)
 		return err
 	}
 	Github = &c.Github
 	DB = &c.DB
 	JWT = &c.JWT
 	APP = &c.APP
-	Langs = c.Langs
-	//fmt.Printf("%v", *C)
 	return nil
 }

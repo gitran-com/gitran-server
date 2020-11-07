@@ -13,30 +13,39 @@ const (
 
 const (
 	//OwnerUsr 属于个人的项目
-	OwnerUsr = iota
+	OwnerUsr uint8 = iota
 	//OwnerOrg 属于组织的项目
 	OwnerOrg
 )
 
 const (
 	//ProjCommon 普通项目
-	ProjCommon = iota
+	ProjCommon uint8 = iota
 	//ProjGithub git仓库引入的项目
 	ProjGithub
 )
 
 const (
 	//ProjStatCreated 项目已创建未初始化
-	ProjStatCreated = iota
+	ProjStatCreated uint8 = iota
 	//ProjStatInit 项目已初始化完成
 	ProjStatInit
 )
 
 const (
 	//RuleStatCreated 规则已创建未保存到配置文件
-	RuleStatCreated = iota
+	RuleStatCreated uint8 = iota
 	//RuleStatSaved 规则已保存到配置文件
 	RuleStatSaved
+)
+
+const (
+	//SyncStatSucc 上一次分支同步成功
+	SyncStatSucc uint8 = iota
+	//SyncStatDoing 分支同步中
+	SyncStatDoing
+	//SyncStatFail 上一次分支同步失败
+	SyncStatFail
 )
 
 const (

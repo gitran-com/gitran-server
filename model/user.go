@@ -12,17 +12,17 @@ import (
 
 //UserInfo means user's infomation
 type UserInfo struct {
-	ID          uint64        `json:"id"`
-	Login       string        `json:"login"`
-	Name        string        `json:"name,omitempty"`
-	Email       string        `json:"email"`
-	AvatarURL   string        `json:"avatar_url"`
-	Bio         string        `json:"bio"`
-	PreferLangs []config.Lang `json:"prefer_langs"`
-	GithubID    uint64        `json:"github_id,omitempty"`
-	IsPrivate   bool          `json:"is_private"`
-	CreatedAt   time.Time     `json:"created_at"`
-	UpdatedAt   time.Time     `json:"updated_at"`
+	ID          uint64     `json:"id"`
+	Login       string     `json:"login"`
+	Name        string     `json:"name,omitempty"`
+	Email       string     `json:"email"`
+	AvatarURL   string     `json:"avatar_url"`
+	Bio         string     `json:"bio"`
+	PreferLangs []Language `json:"prefer_langs"`
+	GithubID    uint64     `json:"github_id,omitempty"`
+	IsPrivate   bool       `json:"is_private"`
+	CreatedAt   time.Time  `json:"created_at"`
+	UpdatedAt   time.Time  `json:"updated_at"`
 }
 
 //User means user model
@@ -46,8 +46,8 @@ func (*User) TableName() string {
 	return config.DB.TablePrefix + "users"
 }
 
-//GetUserByUnameEmail gets a user by login or email
-func GetUserByUnameEmail(login string, email string) *User {
+//GetUserByNameEmail gets a user by login or email
+func GetUserByNameEmail(login string, email string) *User {
 	var user []User
 	db.Where("login=? OR email=?", login, email).First(&user)
 	if len(user) > 0 {
@@ -57,8 +57,8 @@ func GetUserByUnameEmail(login string, email string) *User {
 	}
 }
 
-//GetUserByUname gets a user by login(username)
-func GetUserByUname(name string) *User {
+//GetUserByName gets a user by login(username)
+func GetUserByName(name string) *User {
 	var user []User
 	db.Where("login=?", name).First(&user)
 	if len(user) > 0 {
@@ -68,9 +68,9 @@ func GetUserByUname(name string) *User {
 }
 
 //GetOwnerByName gets a user or an org by name
-func GetOwnerByName(name string) (*User, *Organization, int) {
+func GetOwnerByName(name string) (*User, *Organization, uint8) {
 	//TODO
-	return GetUserByUname(name), nil, constant.OwnerUsr
+	return GetUserByName(name), nil, constant.OwnerUsr
 }
 
 //GetUserByID gets a user by id

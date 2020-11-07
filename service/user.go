@@ -11,7 +11,7 @@ import (
 //GetUser get a user info
 func GetUser(ctx *gin.Context) {
 	login := ctx.Param("username")
-	user := model.GetUserByUname(login)
+	user := model.GetUserByName(login)
 	if user == nil {
 		ctx.JSON(http.StatusNotFound, model.Result404)
 		return
@@ -20,7 +20,6 @@ func GetUser(ctx *gin.Context) {
 	ctx.JSON(http.StatusOK,
 		model.Result{
 			Success: true,
-			Msg:     "success",
 			Data: gin.H{
 				"user_info": *info,
 			},
