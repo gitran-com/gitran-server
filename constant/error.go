@@ -7,4 +7,8 @@ const (
 	ErrorLoginExists
 	//ErrorEmailExists 邮箱已存在
 	ErrorEmailExists
+	//ErrorGithubBindThisAccount Github已绑定当前帐号
+	ErrorGithubBindThisAccount
+	//ErrorGithubBindOtherAccount Github已绑定其他帐号
+	ErrorGithubBindOtherAccount
 )

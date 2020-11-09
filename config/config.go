@@ -18,6 +18,7 @@ type oauth struct {
 	Enable       bool   `json:"enable"`
 	ClientID     string `json:"client_id"`
 	ClientSecret string `json:"client_secret"`
+	CallbackURL  string `json:"callback_url"`
 }
 
 type db struct {

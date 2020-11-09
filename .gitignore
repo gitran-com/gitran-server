@@ -1,9 +1,11 @@
 config.json
+config-dev.json
 *.exe
 
 bin/
 log/
-sql/
 output/
 data/
+
 .idea/
+.vscode/

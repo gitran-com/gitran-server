@@ -15,8 +15,8 @@ const (
 
 var src = rand.NewSource(time.Now().UnixNano())
 
-//RandStringBytesMaskImprSrcUnsafe gen a n-byte rand string
-func RandStringBytesMaskImprSrcUnsafe(n int) string {
+//RandString gen a n-byte rand string
+func RandString(n int) string {
 	b := make([]byte, n)
 	// A src.Int63() generates 63 random bits, enough for letterIdxMax characters!
 	for i, cache, remain := n-1, src.Int63(), letterIdxMax; i >= 0; {

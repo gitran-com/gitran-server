@@ -1,6 +1,7 @@
 package service
 
 import (
+	"fmt"
 	"net/http"
 	"strconv"
 	"strings"
@@ -40,16 +41,36 @@ func Register(ctx *gin.Context) {
 	login := ctx.PostForm("login")
 	email := ctx.PostForm("email")
 	passwd := ctx.PostForm("password")
+	val, fromGH := ctx.Get("github-user-info")
+	var userInfo githubUserInfo
+	if fromGH {
+		userInfo = val.(githubUserInfo)
+		fmt.Printf("github-user-info=%+v\n", userInfo)
+	}
 	user := model.GetUserByNameEmail(login, email)
 	if user == nil {
+		var user *model.User
+		var err error
 		salt := []byte(model.GenSalt())
-		user, err := model.NewUser(&model.User{
-			Login:    login,
-			Name:     login,
-			Email:    email,
-			Password: model.HashSalt(passwd, salt),
-			Salt:     salt,
-		})
+		if fromGH {
+			user, err = model.NewUser(&model.User{
+				Login:     login,
+				Name:      login,
+				Email:     email,
+				GithubID:  userInfo.ID,
+				AvatarURL: userInfo.AvatarURL,
+				Password:  model.HashSalt(passwd, salt),
+				Salt:      salt,
+			})
+		} else {
+			user, err = model.NewUser(&model.User{
+				Login:    login,
+				Name:     login,
+				Email:    email,
+				Password: model.HashSalt(passwd, salt),
+				Salt:     salt,
+			})
+		}
 		if err == nil {
 			ctx.JSON(http.StatusCreated,
 				model.Result{
@@ -57,6 +78,7 @@ func Register(ctx *gin.Context) {
 					Msg:     "注册成功",
 					Data: gin.H{
 						"token": middleware.GenTokenFromUser(user, "register"),
+						"url":   ctx.GetString("referer"),
 					},
 				})
 			return

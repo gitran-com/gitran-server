@@ -2,6 +2,7 @@ package v1
 
 import (
 	"github.com/gin-gonic/gin"
+	"github.com/wzru/gitran-server/config"
 	"github.com/wzru/gitran-server/controller"
 	"github.com/wzru/gitran-server/middleware"
 )
@@ -16,9 +17,22 @@ func Init(g *gin.RouterGroup) {
 }
 
 func initAuth(g *gin.RouterGroup) {
-	g.POST("/login", controller.Login)
-	g.POST("/register", controller.Register)
-	g.POST("/refresh", controller.Refresh)
+	gg := g.Group("/auth")
+	gg.POST("/login", controller.Login)
+	gg.POST("/register", controller.Register)
+	gg.POST("/refresh", controller.Refresh)
+	if config.Github.Enable {
+		gg.POST("/github/login", controller.AuthGithubLogin)
+		gg.POST("/github/register", controller.AuthGithubRegister)
+		gg.POST("/github/login/callback", controller.AuthGithubLoginCallback)
+	}
+	gg.Use(middleware.AuthUserJWT())
+	{
+		gg.POST("/github/bind", controller.AuthGithubLogin)
+		gg.POST("/github/bind/callback", controller.AuthGithubBindCallback)
+		gg.POST("/github/import", controller.AuthGithubImport)
+		gg.POST("/github/import/callback", controller.AuthGithubImportCallback)
+	}
 }
 
 func initLang(g *gin.RouterGroup) {

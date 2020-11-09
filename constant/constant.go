@@ -49,6 +49,18 @@ const (
 )
 
 const (
+	//AuthGithubLogin github登录
+	AuthGithubLogin = "login"
+	//AuthGithubImport github引入仓库
+	AuthGithubImport = "import"
+)
+
+const (
+	//TokenGithub GitHub来源的token
+	TokenGithub uint8 = iota
+)
+
+const (
 	//Delim 是数据库记录中的分隔符
 	Delim = "|"
 )

@@ -10,6 +10,22 @@ import (
 	"github.com/wzru/gitran-server/util"
 )
 
+//User means user
+type User struct {
+	ID          uint64    `gorm:"primaryKey;autoIncrement"`
+	Login       string    `gorm:"type:varchar(32);uniqueIndex;notNull"`
+	Name        string    `gorm:"type:varchar(32);index"`
+	Email       string    `gorm:"type:varchar(64);uniqueIndex;notNull"`
+	AvatarURL   string    `gorm:"type:varchar(128)"`
+	Bio         string    `gorm:"type:varchar(128)"`
+	GithubID    uint64    `gorm:"index"`
+	PreferLangs string    `gorm:"type:varchar(128)"`
+	CreatedAt   time.Time ``
+	UpdatedAt   time.Time ``
+	Password    []byte    `gorm:"type:binary(64);notNull"`
+	Salt        []byte    `gorm:"type:binary(64);notNull"`
+}
+
 //UserInfo means user's infomation
 type UserInfo struct {
 	ID          uint64     `json:"id"`
@@ -23,22 +39,6 @@ type UserInfo struct {
 	IsPrivate   bool       `json:"is_private"`
 	CreatedAt   time.Time  `json:"created_at"`
 	UpdatedAt   time.Time  `json:"updated_at"`
-}
-
-//User means user model
-type User struct {
-	ID          uint64    `gorm:"primaryKey;autoIncrement"`
-	Login       string    `gorm:"type:varchar(32);uniqueIndex;notNull"`
-	Name        string    `gorm:"type:varchar(32);index"`
-	Email       string    `gorm:"type:varchar(64);uniqueIndex;notNull"`
-	AvatarURL   string    `gorm:"type:varchar(128)"`
-	Bio         string    `gorm:"type:varchar(128)"`
-	GithubID    uint64    `gorm:""`
-	PreferLangs string    `gorm:"type:varchar(128)"`
-	CreatedAt   time.Time ``
-	UpdatedAt   time.Time ``
-	Password    []byte    `gorm:"type:binary(64);notNull"`
-	Salt        []byte    `gorm:"type:binary(64);notNull"`
 }
 
 //TableName return table name
@@ -79,9 +79,28 @@ func GetUserByID(id uint64) *User {
 	db.First(&user, id)
 	if len(user) > 0 {
 		return &user[0]
-	} else {
-		return nil
 	}
+	return nil
+}
+
+//GetUserByEmail gets a user by email
+func GetUserByEmail(email string) *User {
+	var user []User
+	db.Where("email=?", email).First(&user)
+	if len(user) > 0 {
+		return &user[0]
+	}
+	return nil
+}
+
+//GetUserByGithubID gets a user by github id
+func GetUserByGithubID(ghid uint64) *User {
+	var user []User
+	db.Where("github_id=?", ghid).First(&user)
+	if len(user) > 0 {
+		return &user[0]
+	}
+	return nil
 }
 
 //GetUserInfoFromUser gen UserInfo from User
@@ -134,5 +153,10 @@ func NewUser(user *User) (*User, error) {
 
 //GenSalt gens a random 64-byte salt
 func GenSalt() string {
-	return util.RandStringBytesMaskImprSrcUnsafe(64)
+	return util.RandString(64)
+}
+
+//UpdateUserGithubID update a user github_id
+func UpdateUserGithubID(user *User, ghid uint64) {
+	db.Model(user).Select("github_id").Updates(map[string]interface{}{"github_id": ghid})
 }

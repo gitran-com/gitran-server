@@ -58,11 +58,11 @@ func (*BrchRule) TableName() string {
 }
 
 //NewProjCfg creates a new cfg for project
-func NewProjCfg(pc *ProjCfg) (*ProjCfg, error) {
-	if result := db.Create(pc); result.Error != nil {
+func NewProjCfg(cfg *ProjCfg) (*ProjCfg, error) {
+	if result := db.Create(cfg); result.Error != nil {
 		return nil, result.Error
 	}
-	return pc, nil
+	return cfg, nil
 }
 
 //ListProjCfgFromProjID list all project config by project id
