@@ -109,8 +109,8 @@ func CreateUserProjCfg(ctx *gin.Context) {
 	pullItv, _ := strconv.ParseUint(ctx.PostForm("pull_interval"), 10, 16)
 	pushItv, _ := strconv.ParseUint(ctx.PostForm("push_interval"), 10, 16)
 	fileName := ctx.PostForm("file_name")
-	projMutexMap.Lock(proj.ID)
-	defer projMutexMap.Unlock(proj.ID)
+	lk := projMutexMap.Lock(proj.ID)
+	defer lk.Unlock()
 	repo, err := git.PlainOpen(proj.Path)
 	wt, _ := repo.Worktree()
 	//先切换到src分支
@@ -172,8 +172,8 @@ func SaveUserProjCfg(ctx *gin.Context) {
 	proj := ctx.Keys["project"].(*model.Project)
 	user := ctx.Keys["user"].(*model.User)
 	cfgs := model.ListProjCfgFromProjID(proj.ID)
-	projMutexMap.Lock(proj.ID)
-	defer projMutexMap.Unlock(proj.ID)
+	lk := projMutexMap.Lock(proj.ID)
+	defer lk.Unlock()
 	repo, err := git.PlainOpen(proj.Path)
 	wt, _ := repo.Worktree()
 	for _, cfg := range cfgs {

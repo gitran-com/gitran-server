@@ -4,6 +4,8 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"strconv"
+	"strings"
 	"time"
 
 	"github.com/gin-gonic/gin"
@@ -38,6 +40,10 @@ type githubToken struct {
 type stateValue struct {
 	Referer        string
 	GithubUserInfo githubUserInfo
+}
+
+func genState() string {
+	return util.RandString(32)
 }
 
 func getGithubToken(url string) (*githubToken, error) {
@@ -81,15 +87,33 @@ func getGithubUserInfo(token *githubToken) (*githubUserInfo, error) {
 	return &userInfo, nil
 }
 
+func storeGhToken(ghToken *githubToken, oid uint64) {
+	if ghToken == nil {
+		return
+	}
+	for _, scope := range strings.Split(ghToken.Scope, constant.GithubTokenScopeDelim) {
+		if scope == "repo" {
+			model.NewToken(
+				&model.Token{
+					Source:      constant.TypeGithub,
+					OwnerID:     oid,
+					AccessToken: ghToken.AccessToken,
+					TokenType:   ghToken.TokenType,
+					Scope:       scope,
+				})
+		}
+	}
+}
+
 func AuthGithubLogin(ctx *gin.Context) {
 	fmt.Printf("referer=%v\n", ctx.GetHeader("Referer"))
-	state := util.RandString(32)
+	state := genState()
 	stateCache.Set(state, stateValue{Referer: ctx.GetHeader("Referer")}, ghExpTime)
 	ctx.JSON(http.StatusAccepted, model.Result{
 		Success: true,
 		Data: gin.H{
 			"url": fmt.Sprintf("https://github.com/login/oauth/authorize?client_id=%s&scope=user&redirect_uri=%s&state=%s",
-				config.Github.ClientID, config.Github.CallbackURL, state),
+				config.Github.ClientID, config.Github.CallbackURL+"/login", state),
 		}})
 }
 
@@ -102,6 +126,7 @@ func AuthGithubLoginCallback(ctx *gin.Context) {
 		ctx.JSON(http.StatusNotFound, model.Result404)
 		return
 	}
+	ref := val.(stateValue).Referer
 	ghToken, err := getGithubToken(fmt.Sprintf(
 		"https://github.com/login/oauth/access_token?client_id=%s&client_secret=%s&code=%s&state=%s",
 		config.Github.ClientID, config.Github.ClientSecret, code, state,
@@ -111,7 +136,9 @@ func AuthGithubLoginCallback(ctx *gin.Context) {
 			Success: false,
 			Code:    http.StatusInternalServerError,
 			Msg:     err.Error(),
-		})
+			Data: gin.H{
+				"url": ref,
+			}})
 		return
 	}
 	userInfo, err := getGithubUserInfo(ghToken)
@@ -121,7 +148,9 @@ func AuthGithubLoginCallback(ctx *gin.Context) {
 			Success: false,
 			Code:    http.StatusInternalServerError,
 			Msg:     err.Error(),
-		})
+			Data: gin.H{
+				"url": ref,
+			}})
 		return
 	}
 	fmt.Printf("user info=%+v\n", userInfo)
@@ -131,11 +160,12 @@ func AuthGithubLoginCallback(ctx *gin.Context) {
 		ctx.JSON(http.StatusOK, model.Result{
 			Success: true,
 			Data: gin.H{
-				"url":   val.(stateValue).Referer,
+				"url":   ref,
 				"token": middleware.GenTokenFromUser(user, "github-login"),
 			}})
 		return
 	}
+	//否则要求跳转注册页面
 	ctx.JSON(http.StatusAccepted, model.Result{
 		Success: true,
 		Data:    nil,
@@ -144,18 +174,46 @@ func AuthGithubLoginCallback(ctx *gin.Context) {
 
 func AuthGithubImport(ctx *gin.Context) {
 	fmt.Printf("referer=%v\n", ctx.GetHeader("Referer"))
-	state := util.RandString(32)
+	state := genState()
 	stateCache.Set(state, stateValue{Referer: ctx.GetHeader("Referer")}, ghExpTime)
 	ctx.JSON(http.StatusAccepted, model.Result{
 		Success: true,
 		Data: gin.H{
 			"url": fmt.Sprintf("https://github.com/login/oauth/authorize?client_id=%s&scope=repo&redirect_uri=%s&state=%s",
-				config.Github.ClientID, config.Github.CallbackURL, state),
+				config.Github.ClientID, config.Github.CallbackURL+"import", state),
 		}})
 }
 
 func AuthGithubImportCallback(ctx *gin.Context) {
-
+	code := ctx.Query("code")
+	state := ctx.Query("state")
+	//校验state
+	val, ok := stateCache.Get(state)
+	if !ok {
+		ctx.JSON(http.StatusNotFound, model.Result404)
+		return
+	}
+	ref := val.(stateValue).Referer
+	ghToken, err := getGithubToken(fmt.Sprintf(
+		"https://github.com/login/oauth/access_token?client_id=%s&client_secret=%s&code=%s&state=%s",
+		config.Github.ClientID, config.Github.ClientSecret, code, state,
+	))
+	if err != nil {
+		ctx.JSON(http.StatusInternalServerError, model.Result{
+			Success: false,
+			Code:    http.StatusInternalServerError,
+			Msg:     err.Error(),
+			Data: gin.H{
+				"url": ref,
+			}})
+		return
+	}
+	uid, _ := strconv.ParseUint(ctx.GetString("user-id"), 10, 64)
+	storeGhToken(ghToken, uid)
+	ctx.JSON(http.StatusOK, model.Result{
+		Success: true,
+		Data:    nil,
+	})
 }
 
 func AuthGithubRegister(ctx *gin.Context) {
@@ -170,17 +228,17 @@ func AuthGithubRegister(ctx *gin.Context) {
 	Register(ctx)
 }
 
-// func AuthGithubBind(ctx *gin.Context) {
-// 	fmt.Printf("referer=%v\n", ctx.GetHeader("Referer"))
-// 	state := util.RandString(32)
-// 	stateCache.Set(state, stateValue{Referer: ctx.GetHeader("Referer")}, ghExpTime)
-// 	ctx.JSON(http.StatusAccepted, model.Result{
-// 		Success: true,
-// 		Data: gin.H{
-// 			"url": fmt.Sprintf("https://github.com/login/oauth/authorize?client_id=%s&scope=user&redirect_uri=%s&state=%s",
-// 				config.Github.ClientID, config.Github.CallbackURL, state),
-// 		}})
-// }
+func AuthGithubBind(ctx *gin.Context) {
+	fmt.Printf("referer=%v\n", ctx.GetHeader("Referer"))
+	state := genState()
+	stateCache.Set(state, stateValue{Referer: ctx.GetHeader("Referer")}, ghExpTime)
+	ctx.JSON(http.StatusAccepted, model.Result{
+		Success: true,
+		Data: gin.H{
+			"url": fmt.Sprintf("https://github.com/login/oauth/authorize?client_id=%s&scope=user&redirect_uri=%s&state=%s",
+				config.Github.ClientID, config.Github.CallbackURL+"/bind", state),
+		}})
+}
 
 func AuthGithubBindCallback(ctx *gin.Context) {
 	user := model.GetUserByID(uint64(ctx.GetInt64("user-id")))
@@ -188,20 +246,23 @@ func AuthGithubBindCallback(ctx *gin.Context) {
 		ctx.JSON(http.StatusNotFound, model.Result404)
 		return
 	}
+	code := ctx.Query("code")
+	state := ctx.Query("state")
+	//校验state
+	val, ok := stateCache.Get(state)
+	if !ok {
+		ctx.JSON(http.StatusNotFound, model.Result404)
+		return
+	}
+	ref := val.(stateValue).Referer
 	if user.GithubID != 0 {
 		ctx.JSON(http.StatusBadRequest, model.Result{
 			Success: false,
 			Code:    constant.ErrorGithubBindThisAccount,
 			Msg:     "GitHub已绑定",
-		})
-		return
-	}
-	code := ctx.Query("code")
-	state := ctx.Query("state")
-	//校验state
-	_, ok := stateCache.Get(state)
-	if !ok {
-		ctx.JSON(http.StatusNotFound, model.Result404)
+			Data: gin.H{
+				"url": ref,
+			}})
 		return
 	}
 	ghToken, err := getGithubToken(fmt.Sprintf(
@@ -213,7 +274,9 @@ func AuthGithubBindCallback(ctx *gin.Context) {
 			Success: false,
 			Code:    http.StatusInternalServerError,
 			Msg:     err.Error(),
-		})
+			Data: gin.H{
+				"url": ref,
+			}})
 		return
 	}
 	userInfo, err := getGithubUserInfo(ghToken)
@@ -223,7 +286,9 @@ func AuthGithubBindCallback(ctx *gin.Context) {
 			Success: false,
 			Code:    http.StatusInternalServerError,
 			Msg:     err.Error(),
-		})
+			Data: gin.H{
+				"url": ref,
+			}})
 		return
 	}
 	fmt.Printf("user info=%+v\n", userInfo)
@@ -234,12 +299,15 @@ func AuthGithubBindCallback(ctx *gin.Context) {
 			Success: false,
 			Code:    constant.ErrorGithubBindOtherAccount,
 			Msg:     "GitHub账号已绑定其他账号",
-		})
+			Data: gin.H{
+				"url": ref,
+			}})
 		return
 	}
 	model.UpdateUserGithubID(user, userInfo.ID)
 	ctx.JSON(http.StatusOK, model.Result{
 		Success: true,
-		Data:    nil,
-	})
+		Data: gin.H{
+			"url": ref,
+		}})
 }

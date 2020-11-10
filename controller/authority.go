@@ -29,9 +29,9 @@ func AuthGithubImport(ctx *gin.Context) {
 	service.AuthGithubImport(ctx)
 }
 
-// func AuthGithubBind(ctx *gin.Context) {
-// 	service.AuthGithubBind(ctx)
-// }
+func AuthGithubBind(ctx *gin.Context) {
+	service.AuthGithubBind(ctx)
+}
 
 func AuthGithubLoginCallback(ctx *gin.Context) {
 	service.AuthGithubLoginCallback(ctx)

@@ -25,13 +25,13 @@ func initAuth(g *gin.RouterGroup) {
 		gg.POST("/github/login", controller.AuthGithubLogin)
 		gg.POST("/github/register", controller.AuthGithubRegister)
 		gg.POST("/github/login/callback", controller.AuthGithubLoginCallback)
-	}
-	gg.Use(middleware.AuthUserJWT())
-	{
-		gg.POST("/github/bind", controller.AuthGithubLogin)
-		gg.POST("/github/bind/callback", controller.AuthGithubBindCallback)
-		gg.POST("/github/import", controller.AuthGithubImport)
-		gg.POST("/github/import/callback", controller.AuthGithubImportCallback)
+		gg.Use(middleware.AuthUserJWT())
+		{
+			gg.POST("/github/bind", controller.AuthGithubBind)
+			gg.POST("/github/bind/callback", controller.AuthGithubBindCallback)
+			gg.POST("/github/import", controller.AuthGithubImport)
+			gg.POST("/github/import/callback", controller.AuthGithubImportCallback)
+		}
 	}
 }
 

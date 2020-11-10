@@ -12,3 +12,8 @@ const (
 	//ErrorGithubBindOtherAccount Github已绑定其他帐号
 	ErrorGithubBindOtherAccount
 )
+
+const (
+	//GitErrorUpToDate git already up-to-date
+	GitErrorUpToDate = "already up-to-date"
+)

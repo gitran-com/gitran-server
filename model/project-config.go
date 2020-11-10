@@ -17,8 +17,8 @@ type ProjCfg struct {
 	Changed    bool      `json:"-" gorm:"index;notNull"`
 	SrcBr      string    `json:"src_branch" gorm:"type:varchar(32);notNull"`
 	TrnBr      string    `json:"trn_branch" gorm:"type:varchar(32);notNull"`
-	PullItv    uint16    `json:"pull_interval" gorm:"notNull"`
-	PushItv    uint16    `json:"push_interval" gorm:"notNull"`
+	PullItv    uint16    `json:"pull_interval" gorm:"index;notNull"`
+	PushItv    uint16    `json:"push_interval" gorm:"index;notNull"`
 	PullStatus uint8     `json:"pull_status" gorm:"notNull"`
 	PushStatus uint8     `json:"push_status" gorm:"notNull"`
 	LastPullAt time.Time `json:"last_pull_at"`
@@ -137,4 +137,11 @@ func UpdateProjCfgPullStatus(cfg *ProjCfg, stat uint8) {
 //UpdateProjCfgPushStatus update a project cfg push status
 func UpdateProjCfgPushStatus(cfg *ProjCfg, stat uint8) {
 	db.Model(cfg).Select("push_status").Updates(map[string]interface{}{"push_status": stat})
+}
+
+//ListSyncProjCfg list all project cfg that should be sync
+func ListSyncProjCfg() []ProjCfg {
+	var cfg []ProjCfg
+	db.Where("pull_itv!=0 OR push_itv!=0").Find(&cfg)
+	return cfg
 }

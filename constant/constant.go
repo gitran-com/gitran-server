@@ -19,10 +19,12 @@ const (
 )
 
 const (
-	//ProjCommon 普通项目
-	ProjCommon uint8 = iota
-	//ProjGithub git仓库引入的项目
-	ProjGithub
+	//TypeCommon 普通项目
+	TypeCommon uint8 = iota
+	//TypeGithub GitHub引入的项目
+	TypeGithub
+	//TypeGitURL Git URL引入的公开项目
+	TypeGitURL
 )
 
 const (
@@ -56,11 +58,8 @@ const (
 )
 
 const (
-	//TokenGithub GitHub来源的token
-	TokenGithub uint8 = iota
-)
-
-const (
 	//Delim 是数据库记录中的分隔符
 	Delim = "|"
+	//GithubTokenScopeDelim 是GitHub token作用域的分隔符
+	GithubTokenScopeDelim = ","
 )

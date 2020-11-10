@@ -1,14 +1,15 @@
 package service
 
 import (
-	"fmt"
 	"time"
 
 	"github.com/go-git/go-git/v5"
 	"github.com/go-git/go-git/v5/plumbing"
+	"github.com/go-git/go-git/v5/plumbing/transport/http"
 	log "github.com/sirupsen/logrus"
 
 	"github.com/go-co-op/gocron"
+	"github.com/wzru/gitran-server/config"
 	"github.com/wzru/gitran-server/constant"
 	"github.com/wzru/gitran-server/model"
 )
@@ -19,24 +20,27 @@ var (
 )
 
 func pushGit(cfg *model.ProjCfg) {
-	fmt.Printf("begin to push...")
+	// log.Infof("begin to push project %v", cfg.ProjID)
 	beg := time.Now().Unix()
-	projMutexMap.Lock(cfg.ProjID)
-	defer projMutexMap.Unlock(cfg.ProjID)
+	lk := projMutexMap.Lock(cfg.ProjID)
+	defer lk.Unlock()
 	proj := model.GetProjByID(cfg.ProjID)
 	if proj == nil {
+		log.Warnf("project %v not found when pushing", proj.ID)
 		return
 	}
-	cfg = model.GetProjCfgByID(cfg.ID)
+	cid := cfg.ID
+	cfg = model.GetProjCfgByID(cid)
 	if cfg == nil {
+		log.Warnf("project config %v not found when pushing", cfg.ID)
 		return
 	}
 	if cfg.LastPushAt.Unix() >= beg {
-		log.Warnf("project %v, config %v PUSH time out", proj.ID, cfg.ID)
+		log.Warnf("project config not found when pushing", cid)
 		return
 	}
 	if cfg.PushStatus == constant.SyncStatDoing {
-		log.Warnf("project %v, config %v last PUSH aborted", proj.ID, cfg.ID)
+		log.Warnf("project %v, config %v last push aborted", proj.ID, cfg.ID)
 	} else {
 		model.UpdateProjCfgPushStatus(cfg, constant.SyncStatDoing)
 	}
@@ -51,9 +55,20 @@ func pushGit(cfg *model.ProjCfg) {
 		model.UpdateProjCfgPushStatus(cfg, constant.SyncStatFail)
 		return
 	}
-	err = repo.Push(&git.PushOptions{RemoteName: "origin"})
-	if err != nil {
-		log.Warnf("%v push failed", proj.Path)
+	tk := model.GetTokenByOwnerID(proj.OwnerID, proj.Type)
+	if tk == nil {
+		log.Warnf("%v get token failed", proj.Path)
+		model.UpdateProjCfgPushStatus(cfg, constant.SyncStatFail)
+		return
+	}
+	err = repo.Push(&git.PushOptions{
+		RemoteName: "origin",
+		Auth: &http.BasicAuth{
+			Username: config.APP.Name,
+			Password: tk.AccessToken,
+		}})
+	if err != nil && err.Error() != constant.GitErrorUpToDate {
+		log.Warnf("%v push failed : %v", proj.Path, err.Error())
 		model.UpdateProjCfgPushStatus(cfg, constant.SyncStatFail)
 		return
 	}
@@ -62,24 +77,27 @@ func pushGit(cfg *model.ProjCfg) {
 }
 
 func pullGit(cfg *model.ProjCfg) {
-	fmt.Printf("begin to pull...")
+	// log.Infof("begin to pull project %v", cfg.ProjID)
 	beg := time.Now().Unix()
-	projMutexMap.Lock(cfg.ProjID)
-	defer projMutexMap.Unlock(cfg.ProjID)
+	lk := projMutexMap.Lock(cfg.ProjID)
+	defer lk.Unlock()
 	proj := model.GetProjByID(cfg.ProjID)
 	if proj == nil {
+		log.Warnf("project %v not found when pulling", proj.ID)
 		return
 	}
-	cfg = model.GetProjCfgByID(cfg.ID)
+	cid := cfg.ID
+	cfg = model.GetProjCfgByID(cid)
 	if cfg == nil {
+		log.Warnf("project config not found when pulling", cid)
 		return
 	}
 	if cfg.LastPullAt.Unix() >= beg {
-		log.Warnf("project %v, config %v PULL time out", proj.ID, cfg.ID)
+		log.Warnf("project %v, config %v pull time out", proj.ID, cfg.ID)
 		return
 	}
 	if cfg.PullStatus == constant.SyncStatDoing {
-		log.Warnf("project %v, config %v last PULL aborted", proj.ID, cfg.ID)
+		log.Warnf("project %v, config %v last pull aborted", proj.ID, cfg.ID)
 	} else {
 		model.UpdateProjCfgPullStatus(cfg, constant.SyncStatDoing)
 	}
@@ -94,9 +112,21 @@ func pullGit(cfg *model.ProjCfg) {
 		model.UpdateProjCfgPullStatus(cfg, constant.SyncStatFail)
 		return
 	}
-	err = wt.Pull(&git.PullOptions{RemoteName: "origin"})
-	if err != nil {
-		log.Warnf("%v pull failed", proj.Path)
+	tk := model.GetTokenByOwnerID(proj.OwnerID, proj.Type)
+	if tk == nil {
+		log.Warnf("%v get token failed", proj.Path)
+		model.UpdateProjCfgPushStatus(cfg, constant.SyncStatFail)
+		return
+	}
+	err = wt.Pull(&git.PullOptions{
+		RemoteName:   "origin",
+		SingleBranch: true,
+		Auth: &http.BasicAuth{
+			Username: config.APP.Name,
+			Password: tk.AccessToken,
+		}})
+	if err != nil && err.Error() != constant.GitErrorUpToDate {
+		log.Warnf("%v pull failed : %v", proj.Path, err.Error())
 		model.UpdateProjCfgPullStatus(cfg, constant.SyncStatFail)
 		return
 	}

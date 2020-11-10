@@ -198,7 +198,7 @@ func CreateUserProj(ctx *gin.Context) {
 
 //initUserProj init a new user project
 func initUserProj(proj *model.Project) {
-	if proj.Type == constant.ProjGithub {
+	if proj.Type == constant.TypeGithub {
 		_, err := git.PlainClone(proj.Path, false, &git.CloneOptions{
 			URL:          proj.GitURL,
 			Progress:     os.Stdout,
