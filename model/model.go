@@ -7,8 +7,10 @@ import (
 	"io/ioutil"
 
 	log "github.com/sirupsen/logrus"
+
 	"github.com/wzru/gitran-server/config"
 	"gorm.io/driver/mysql"
+	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
 )
 
@@ -20,26 +22,42 @@ var (
 
 func initDB() error {
 	var err error
-	if config.DB.Type == "mysql" {
-		dsn := fmt.Sprintf("%s:%s@tcp(%s)/?charset=utf8mb4&parseTime=True&loc=Local", config.DB.User, config.DB.Password, config.DB.Host)
+	var dsn string
+	switch config.DB.Type {
+	case "mysql", "mariadb":
+		dsn = fmt.Sprintf("%s:%s@tcp(%s:%v)/?charset=utf8mb4&parseTime=True&loc=Local", config.DB.User, config.DB.Password, config.DB.Host, config.DB.Port)
 		db, err = gorm.Open(mysql.Open(dsn), &gorm.Config{})
 		if err != nil {
-			log.Fatalf("Database connect ERROR : %v", err)
+			log.Fatalf("db connect ERROR : %v", err)
 			return err
 		}
 		db.Exec("CREATE DATABASE IF NOT EXISTS " + config.DB.Name)
-		dsn = fmt.Sprintf("%s:%s@tcp(%s)/%s?charset=utf8mb4&parseTime=True&loc=Local", config.DB.User, config.DB.Password, config.DB.Host, config.DB.Name)
+		dsn = fmt.Sprintf("%s:%s@tcp(%s:%v)/%s?charset=utf8mb4&parseTime=True&loc=Local", config.DB.User, config.DB.Password, config.DB.Host, config.DB.Port, config.DB.Name)
 		db, err = gorm.Open(mysql.Open(dsn), &gorm.Config{})
-	} else if config.DB.Type == "postgresql" {
-		//TODO
+	case "postgres", "postgresql":
+		dsn = fmt.Sprintf("host=%s port=%v dbname=postgres user=%v password='%s' sslmode=disable", config.DB.Host, config.DB.Port, config.DB.User, config.DB.Password)
+		db, err = gorm.Open(postgres.Open(dsn), &gorm.Config{})
+		if err != nil {
+			log.Fatalf("db connect ERROR : %v", err)
+			return err
+		}
+		db = db.Exec("CREATE DATABASE " + config.DB.Name)
+		if db.Error != nil {
+			log.Warnf("db create %v ERROR : %v", config.DB.Name, db.Error.Error())
+			// return db.Error
+		}
+		dsn = fmt.Sprintf("host=%s port=%v dbname=%v user=%v password='%s' sslmode=disable", config.DB.Host, config.DB.Port, config.DB.Name, config.DB.User, config.DB.Password)
+		db, err = gorm.Open(postgres.Open(dsn), &gorm.Config{})
+	default:
+		log.Fatalf("unknown db type : %v", config.DB.Type)
 	}
 	if err != nil {
-		log.Fatalf("DB connect ERROR : %v", err.Error())
+		log.Fatalf("db connect ERROR : %v", err.Error())
 		return err
 	}
 	err = db.AutoMigrate(&User{}, &Project{}, &ProjCfg{}, &BrchRule{}, &Token{}, &Translation{})
 	if err != nil {
-		log.Fatalf("DB migrate ERROR : %v", err.Error())
+		log.Fatalf("db migrate ERROR : %v", err.Error())
 		return err
 	}
 	return nil

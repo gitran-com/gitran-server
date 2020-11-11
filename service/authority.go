@@ -51,7 +51,7 @@ func Register(ctx *gin.Context) {
 	if user == nil {
 		var user *model.User
 		var err error
-		salt := []byte(model.GenSalt())
+		salt := model.GenSalt()
 		if fromGH {
 			user, err = model.NewUser(&model.User{
 				Login:     login,
@@ -59,7 +59,7 @@ func Register(ctx *gin.Context) {
 				Email:     email,
 				GithubID:  userInfo.ID,
 				AvatarURL: userInfo.AvatarURL,
-				Password:  model.HashSalt(passwd, salt),
+				Password:  model.HashWithSalt(passwd, salt),
 				Salt:      salt,
 			})
 		} else {
@@ -67,7 +67,7 @@ func Register(ctx *gin.Context) {
 				Login:    login,
 				Name:     login,
 				Email:    email,
-				Password: model.HashSalt(passwd, salt),
+				Password: model.HashWithSalt(passwd, salt),
 				Salt:     salt,
 			})
 		}

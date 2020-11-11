@@ -1,9 +1,7 @@
 package model
 
 import (
-	"bytes"
 	"crypto/sha512"
-	"time"
 
 	"github.com/wzru/gitran-server/config"
 	"github.com/wzru/gitran-server/constant"
@@ -12,18 +10,18 @@ import (
 
 //User means user
 type User struct {
-	ID          uint64    `gorm:"primaryKey;autoIncrement"`
-	Login       string    `gorm:"type:varchar(32);uniqueIndex;notNull"`
-	Name        string    `gorm:"type:varchar(32);index"`
-	Email       string    `gorm:"type:varchar(64);uniqueIndex;notNull"`
-	AvatarURL   string    `gorm:"type:varchar(128)"`
-	Bio         string    `gorm:"type:varchar(128)"`
-	GithubID    uint64    `gorm:"index"`
-	PreferLangs string    `gorm:"type:varchar(128)"`
-	CreatedAt   time.Time ``
-	UpdatedAt   time.Time ``
-	Password    []byte    `gorm:"type:binary(64);notNull"`
-	Salt        []byte    `gorm:"type:binary(64);notNull"`
+	ID          uint64 `gorm:"primaryKey;autoIncrement"`
+	Login       string `gorm:"type:varchar(32);uniqueIndex;notNull"`
+	Name        string `gorm:"type:varchar(32);index;notNull"`
+	Email       string `gorm:"type:varchar(64);uniqueIndex;notNull"`
+	AvatarURL   string `gorm:"type:varchar(128)"`
+	Bio         string `gorm:"type:varchar(128)"`
+	GithubID    uint64 `gorm:"index"`
+	PreferLangs string `gorm:"type:varchar(128)"`
+	CreatedAt   int64  `gorm:"autoCreateTime:nano"`
+	UpdatedAt   int64  `gorm:"autoUpdateTime:nano"`
+	Salt        string `gorm:"type:bytes;size:64;notNull"`
+	Password    string `gorm:"type:bytes;size:64;notNull"`
 }
 
 //UserInfo means user's infomation
@@ -37,8 +35,8 @@ type UserInfo struct {
 	PreferLangs []Language `json:"prefer_langs"`
 	GithubID    uint64     `json:"github_id,omitempty"`
 	IsPrivate   bool       `json:"is_private"`
-	CreatedAt   time.Time  `json:"created_at"`
-	UpdatedAt   time.Time  `json:"updated_at"`
+	CreatedAt   int64      `json:"created_at"`
+	UpdatedAt   int64      `json:"updated_at"`
 }
 
 //TableName return table name
@@ -131,16 +129,15 @@ func GetUserInfoFromUser(user *User, priv bool) *UserInfo {
 	}
 }
 
-//HashSalt calcs H(pass+salt)
-func HashSalt(pass string, salt []byte) []byte {
-	sum := sha512.Sum512(append([]byte(pass), salt...))
-	return sum[:]
+//HashWithSalt calcs H(pass+salt)
+func HashWithSalt(pass string, salt string) string {
+	sum := sha512.Sum512([]byte(pass + salt))
+	return string(sum[:])
 }
 
 //CheckPasswordCorrect checks whether a password is correct
 func CheckPasswordCorrect(pass string, user *User) bool {
-	// fmt.Printf("pass=%v\n", pass)
-	return bytes.Equal(HashSalt(pass, user.Salt), user.Password)
+	return HashWithSalt(pass, user.Salt) == user.Password
 }
 
 //NewUser creates a new user
