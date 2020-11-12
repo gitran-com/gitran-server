@@ -20,3 +20,11 @@ func CreateUserProj(ctx *gin.Context) {
 func CreateOrgProj(ctx *gin.Context) {
 	service.CreateOrgProj(ctx)
 }
+
+func ListUserPubProj(ctx *gin.Context) {
+	service.ListUserPubProj(ctx)
+}
+
+func ListAuthUserProj(ctx *gin.Context) {
+	service.ListAuthUserProj(ctx)
+}

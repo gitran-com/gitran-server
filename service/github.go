@@ -4,7 +4,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
-	"strconv"
 	"strings"
 	"time"
 
@@ -26,9 +25,18 @@ var (
 type githubUserInfo struct {
 	ID        uint64 `json:"id"`
 	Login     string `json:"login"`
+	Type      string `json:"type"`
 	AvatarURL string `json:"avatar_url"`
 	Name      string `json:"name"`
 	Email     string `json:"email"`
+}
+
+type githubRepoInfo struct {
+	ID      uint64         `json:"id"`
+	Name    string         `json:"name"`
+	URL     string         `json:"url"`
+	Private bool           `json:"private"`
+	Owner   githubUserInfo `json:"owner"`
 }
 
 type githubToken struct {
@@ -66,9 +74,8 @@ func getGithubToken(url string) (*githubToken, error) {
 }
 
 func getGithubUserInfo(token *githubToken) (*githubUserInfo, error) {
-	// 形成请求
-	var userInfoURL = "https://api.github.com/user" // GitHub用户信息获取接口
-	req, err := http.NewRequest(http.MethodGet, userInfoURL, nil)
+	var userRepoURL = "https://api.github.com/user" // GitHub用户信息获取接口
+	req, err := http.NewRequest(http.MethodGet, userRepoURL, nil)
 	if err != nil {
 		return nil, err
 	}
@@ -85,6 +92,26 @@ func getGithubUserInfo(token *githubToken) (*githubUserInfo, error) {
 		return nil, err
 	}
 	return &userInfo, nil
+}
+
+func getGithubRepo(token *githubToken) ([]githubRepoInfo, error) {
+	var userInfoURL = "https://api.github.com/user/repos" // GitHub仓库信息获取接口
+	req, err := http.NewRequest(http.MethodGet, userInfoURL, nil)
+	if err != nil {
+		return nil, err
+	}
+	req.Header.Set("accept", "application/json")
+	req.Header.Set("Authorization", "token "+token.AccessToken)
+	var client = http.Client{}
+	res, err := client.Do(req)
+	if err != nil {
+		return nil, err
+	}
+	var repoInfo []githubRepoInfo
+	if err := json.NewDecoder(res.Body).Decode(&repoInfo); err != nil {
+		return nil, err
+	}
+	return repoInfo, nil
 }
 
 func storeGhToken(ghToken *githubToken, oid uint64) {
@@ -208,7 +235,8 @@ func AuthGithubImportCallback(ctx *gin.Context) {
 			}})
 		return
 	}
-	uid, _ := strconv.ParseUint(ctx.GetString("user-id"), 10, 64)
+	user := ctx.Keys["user"].(*model.User)
+	uid := user.ID
 	storeGhToken(ghToken, uid)
 	ctx.JSON(http.StatusOK, model.Result{
 		Success: true,
@@ -223,8 +251,9 @@ func AuthGithubRegister(ctx *gin.Context) {
 		ctx.JSON(http.StatusNotFound, model.Result404)
 		return
 	}
-	ctx.Set("github-user-info", val.(stateValue).GithubUserInfo)
-	ctx.Set("referer", val.(stateValue).Referer)
+	sv := val.(stateValue)
+	ctx.Set("github-user-info", &(sv.GithubUserInfo))
+	ctx.Set("referer", sv.Referer)
 	Register(ctx)
 }
 
@@ -241,7 +270,7 @@ func AuthGithubBind(ctx *gin.Context) {
 }
 
 func AuthGithubBindCallback(ctx *gin.Context) {
-	user := model.GetUserByID(uint64(ctx.GetInt64("user-id")))
+	user := ctx.Keys["user"].(*model.User)
 	if user == nil {
 		ctx.JSON(http.StatusNotFound, model.Result404)
 		return
@@ -310,4 +339,52 @@ func AuthGithubBindCallback(ctx *gin.Context) {
 		Data: gin.H{
 			"url": ref,
 		}})
+}
+
+//ListGithubRepo list all github repo from auth user
+func ListGithubRepo(ctx *gin.Context) {
+	tk := ctx.Keys["github-token"].(*model.Token)
+	// getGithubUserInfo(genGithubToken(tk))
+	repos, err := getGithubRepo(genGithubToken(tk))
+	if err != nil {
+		log.Warnf("list github repo ERROR : %v", err.Error())
+		ctx.JSON(http.StatusInternalServerError, model.Result{
+			Success: false,
+			Msg:     err.Error(),
+		})
+		return
+	}
+	ctx.JSON(http.StatusOK, model.Result{
+		Success: true,
+		Data: gin.H{
+			"repo_infos": repos,
+		}})
+}
+
+func genGithubToken(tk *model.Token) *githubToken {
+	return &githubToken{
+		AccessToken: tk.AccessToken,
+		TokenType:   tk.TokenType,
+		Scope:       tk.Scope,
+	}
+}
+
+func getGithubRepoByTokenID(rid uint64, tk *model.Token) *githubRepoInfo {
+	url := fmt.Sprintf("https://api.github.com/repositories/%v", rid) // GitHub仓库信息获取接口
+	req, err := http.NewRequest(http.MethodGet, url, nil)
+	if err != nil {
+		return nil
+	}
+	req.Header.Set("accept", "application/json")
+	req.Header.Set("Authorization", "token "+tk.AccessToken)
+	var client = http.Client{}
+	res, err := client.Do(req)
+	if err != nil {
+		return nil
+	}
+	var repoInfo githubRepoInfo
+	if err := json.NewDecoder(res.Body).Decode(&repoInfo); err != nil {
+		return nil
+	}
+	return &repoInfo
 }

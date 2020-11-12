@@ -42,9 +42,9 @@ func Register(ctx *gin.Context) {
 	email := ctx.PostForm("email")
 	passwd := ctx.PostForm("password")
 	val, fromGH := ctx.Get("github-user-info")
-	var userInfo githubUserInfo
+	var userInfo *githubUserInfo
 	if fromGH {
-		userInfo = val.(githubUserInfo)
+		userInfo = val.(*githubUserInfo)
 		fmt.Printf("github-user-info=%+v\n", userInfo)
 	}
 	user := model.GetUserByNameEmail(login, email)

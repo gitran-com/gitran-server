@@ -31,9 +31,9 @@ func NewToken(tk *Token) (*Token, error) {
 }
 
 //GetTokenByOwnerID get a token by owner id
-func GetTokenByOwnerID(oid uint64, src uint8) *Token {
+func GetTokenByOwnerID(oid uint64, src uint8, scope string) *Token {
 	var tk []Token
-	db.Where("owner_id=? AND source=?", oid, src).First(&tk)
+	db.Where("owner_id=? AND source=? AND scope=?", oid, src, scope).First(&tk)
 	if len(tk) > 0 {
 		return &tk[0]
 	}

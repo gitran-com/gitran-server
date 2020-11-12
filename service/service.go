@@ -2,11 +2,11 @@ package service
 
 import (
 	log "github.com/sirupsen/logrus"
+	"github.com/wzru/gitran-server/constant"
 	"github.com/wzru/gitran-server/model"
 )
 
-//Init init the service
-func Init() error {
+func initSync() error {
 	pullSchd.StartAsync()
 	pushSchd.StartAsync()
 	cfgs := model.ListSyncProjCfg()
@@ -30,6 +30,26 @@ func Init() error {
 				}
 			}
 		}
+	}
+	return nil
+}
+
+//初始化未初始化的项目
+func initProjInit() error {
+	projs := model.ListProjByStatus(constant.ProjStatCreated)
+	for i := range projs {
+		go initUserProj(&projs[i])
+	}
+	return nil
+}
+
+//Init init the service
+func Init() error {
+	if err := initSync(); err != nil {
+		return err
+	}
+	if err := initProjInit(); err != nil {
+		return err
 	}
 	return nil
 }

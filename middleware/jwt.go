@@ -11,6 +11,7 @@ import (
 	"github.com/dgrijalva/jwt-go"
 	"github.com/gin-gonic/gin"
 	"github.com/wzru/gitran-server/config"
+	"github.com/wzru/gitran-server/constant"
 	"github.com/wzru/gitran-server/model"
 )
 
@@ -30,8 +31,14 @@ func AuthUserJWT() gin.HandlerFunc {
 			ctx.Abort()
 			return
 		}
-		ctx.Set("user-id", clm.Id)
-		ctx.Set("user-name", clm.Audience)
+		id, _ := strconv.ParseUint(clm.Id, 10, 64)
+		user := model.GetUserByID(id)
+		if user == nil {
+			ctx.JSON(http.StatusUnauthorized, model.Result401)
+			ctx.Abort()
+			return
+		}
+		ctx.Set("user", user)
 		ctx.Next()
 	}
 }
@@ -39,42 +46,39 @@ func AuthUserJWT() gin.HandlerFunc {
 //AuthUserProjJWT verifies a jwt if can do something on a project
 func AuthUserProjJWT() gin.HandlerFunc {
 	return func(ctx *gin.Context) {
-		auth := ctx.Request.Header.Get("Authorization")
-		if len(auth) <= 0 {
-			ctx.JSON(http.StatusUnauthorized, model.Result401)
-			ctx.Abort()
-			return
-		}
-		token := strings.Fields(auth)[1]
-		clm, err := ParseToken(token) // 校验token
-		if err != nil {
-			ctx.JSON(http.StatusUnauthorized, model.Result401)
-			ctx.Abort()
-			return
-		}
-		owner, _, _ := model.GetOwnerByName(ctx.Param("owner"))
-		if owner == nil {
+		user := ctx.Keys["user"].(*model.User)
+		if user == nil || user.Login != ctx.Param("owner") {
 			ctx.JSON(http.StatusNotFound, model.Result404)
 			ctx.Abort()
 			return
 		}
-		uid, _ := strconv.ParseUint(clm.Id, 10, 64)
-		if owner.ID != uid {
-			ctx.JSON(http.StatusUnauthorized, model.Result401)
-			ctx.Abort()
-			return
-		}
-		proj := model.GetProjByOwnerIDName(owner.ID, ctx.Param("project"), true)
+		proj := model.GetProjByOwnerIDName(user.ID, ctx.Param("project"), true)
 		if proj == nil {
 			ctx.JSON(http.StatusNotFound, model.Result404)
 			ctx.Abort()
 			return
 		}
-		ctx.Set("proj-id", proj.ID)
-		ctx.Set("user-id", clm.Id)
-		ctx.Set("user", owner)
 		ctx.Set("project", proj)
-		// ctx.Set("user-name", clm.Audience)
+		ctx.Next()
+	}
+}
+
+//AuthUserGithubJWT verifies a token and its github-id
+func AuthUserGithubJWT() gin.HandlerFunc {
+	return func(ctx *gin.Context) {
+		user := ctx.Keys["user"].(*model.User)
+		if user == nil || user.GithubID == 0 {
+			ctx.JSON(http.StatusUnauthorized, model.Result401)
+			ctx.Abort()
+			return
+		}
+		tk := model.GetTokenByOwnerID(user.ID, constant.TypeGithub, constant.TokenRepo)
+		if tk == nil {
+			ctx.JSON(http.StatusUnauthorized, model.Result401)
+			ctx.Abort()
+			return
+		}
+		ctx.Set("github-token", tk)
 		ctx.Next()
 	}
 }
@@ -123,12 +127,3 @@ func HasUserPermission(ctx *gin.Context, uid uint64) bool {
 	id, _ := strconv.ParseUint(clm.Id, 10, 64)
 	return err == nil && uid == id
 }
-
-//HasUserPermission check if this user has permission to user uid by checking JWT
-// func HasUserProjPermission(uid uint64, pid uint64) bool {
-// 	proj := model.GetProjByID(pid)
-// 	if proj == nil || proj.OwnerType != constant.OwnerUsr || proj.OwnerID != uid {
-// 		return false
-// 	}
-// 	return true
-// }

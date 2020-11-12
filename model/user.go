@@ -2,6 +2,7 @@ package model
 
 import (
 	"crypto/sha512"
+	"time"
 
 	"github.com/wzru/gitran-server/config"
 	"github.com/wzru/gitran-server/constant"
@@ -10,18 +11,18 @@ import (
 
 //User means user
 type User struct {
-	ID          uint64 `gorm:"primaryKey;autoIncrement"`
-	Login       string `gorm:"type:varchar(32);uniqueIndex;notNull"`
-	Name        string `gorm:"type:varchar(32);index;notNull"`
-	Email       string `gorm:"type:varchar(64);uniqueIndex;notNull"`
-	AvatarURL   string `gorm:"type:varchar(128)"`
-	Bio         string `gorm:"type:varchar(128)"`
-	GithubID    uint64 `gorm:"index"`
-	PreferLangs string `gorm:"type:varchar(128)"`
-	CreatedAt   int64  `gorm:"autoCreateTime:nano"`
-	UpdatedAt   int64  `gorm:"autoUpdateTime:nano"`
-	Salt        string `gorm:"type:bytes;size:64;notNull"`
-	Password    string `gorm:"type:bytes;size:64;notNull"`
+	ID          uint64    `gorm:"primaryKey;autoIncrement"`
+	Login       string    `gorm:"type:varchar(32);uniqueIndex;notNull"`
+	Name        string    `gorm:"type:varchar(32);index;notNull"`
+	Email       string    `gorm:"type:varchar(64);uniqueIndex;notNull"`
+	AvatarURL   string    `gorm:"type:varchar(128)"`
+	Bio         string    `gorm:"type:varchar(128)"`
+	GithubID    uint64    `gorm:"index"`
+	PreferLangs string    `gorm:"type:varchar(128)"`
+	Salt        string    `gorm:"type:bytes;size:64;notNull"`
+	Password    string    `gorm:"type:bytes;size:64;notNull"`
+	CreatedAt   time.Time `gorm:"autoCreateTime"`
+	UpdatedAt   time.Time `gorm:"autoUpdateTime"`
 }
 
 //UserInfo means user's infomation
@@ -34,9 +35,9 @@ type UserInfo struct {
 	Bio         string     `json:"bio"`
 	PreferLangs []Language `json:"prefer_langs"`
 	GithubID    uint64     `json:"github_id,omitempty"`
-	IsPrivate   bool       `json:"is_private"`
-	CreatedAt   int64      `json:"created_at"`
-	UpdatedAt   int64      `json:"updated_at"`
+	Private     bool       `json:"private"`
+	CreatedAt   time.Time  `json:"created_at"`
+	UpdatedAt   time.Time  `json:"updated_at"`
 }
 
 //TableName return table name
@@ -55,7 +56,7 @@ func GetUserByNameEmail(login string, email string) *User {
 	}
 }
 
-//GetUserByName gets a user by login(username)
+//GetUserByName gets a user by login(user)
 func GetUserByName(name string) *User {
 	var user []User
 	db.Where("login=?", name).First(&user)
@@ -68,7 +69,11 @@ func GetUserByName(name string) *User {
 //GetOwnerByName gets a user or an org by name
 func GetOwnerByName(name string) (*User, *Organization, uint8) {
 	//TODO
-	return GetUserByName(name), nil, constant.OwnerUsr
+	user := GetUserByName(name)
+	if user == nil {
+		return nil, nil, constant.OwnerNone
+	}
+	return user, nil, constant.OwnerUsr
 }
 
 //GetUserByID gets a user by id
@@ -113,7 +118,7 @@ func GetUserInfoFromUser(user *User, priv bool) *UserInfo {
 			GithubID:    user.GithubID,
 			CreatedAt:   user.CreatedAt,
 			UpdatedAt:   user.UpdatedAt,
-			IsPrivate:   priv,
+			Private:     priv,
 		}
 	} else {
 		return &UserInfo{
@@ -124,7 +129,7 @@ func GetUserInfoFromUser(user *User, priv bool) *UserInfo {
 			PreferLangs: GetLangsFromString(user.PreferLangs),
 			CreatedAt:   user.CreatedAt,
 			UpdatedAt:   user.UpdatedAt,
-			IsPrivate:   priv,
+			Private:     priv,
 		}
 	}
 }
@@ -142,8 +147,8 @@ func CheckPasswordCorrect(pass string, user *User) bool {
 
 //NewUser creates a new user
 func NewUser(user *User) (*User, error) {
-	if result := db.Create(user); result.Error != nil {
-		return nil, result.Error
+	if res := db.Create(user); res.Error != nil {
+		return nil, res.Error
 	}
 	return user, nil
 }

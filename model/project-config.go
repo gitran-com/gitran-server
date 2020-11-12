@@ -59,8 +59,8 @@ func (*BrchRule) TableName() string {
 
 //NewProjCfg creates a new cfg for project
 func NewProjCfg(cfg *ProjCfg) (*ProjCfg, error) {
-	if result := db.Create(cfg); result.Error != nil {
-		return nil, result.Error
+	if res := db.Create(cfg); res.Error != nil {
+		return nil, res.Error
 	}
 	return cfg, nil
 }
@@ -131,12 +131,12 @@ func UpdateProjCfgChanged(cfg *ProjCfg, changed bool) {
 
 //UpdateProjCfgPullStatus update a project cfg pull status
 func UpdateProjCfgPullStatus(cfg *ProjCfg, stat uint8) {
-	db.Model(cfg).Select("pull_status").Updates(map[string]interface{}{"pull_status": stat})
+	db.Model(cfg).Select("pull_status").Updates(map[string]interface{}{"pull_status": stat, "last_pull_at": time.Now()})
 }
 
 //UpdateProjCfgPushStatus update a project cfg push status
 func UpdateProjCfgPushStatus(cfg *ProjCfg, stat uint8) {
-	db.Model(cfg).Select("push_status").Updates(map[string]interface{}{"push_status": stat})
+	db.Model(cfg).Select("push_status").Updates(map[string]interface{}{"push_status": stat, "last_push_at": time.Now()})
 }
 
 //ListSyncProjCfg list all project cfg that should be sync

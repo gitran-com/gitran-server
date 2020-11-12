@@ -55,7 +55,7 @@ func pushGit(cfg *model.ProjCfg) {
 		model.UpdateProjCfgPushStatus(cfg, constant.SyncStatFail)
 		return
 	}
-	tk := model.GetTokenByOwnerID(proj.OwnerID, proj.Type)
+	tk := model.GetTokenByOwnerID(proj.OwnerID, proj.Type, constant.TokenRepo)
 	if tk == nil {
 		log.Warnf("%v get token failed", proj.Path)
 		model.UpdateProjCfgPushStatus(cfg, constant.SyncStatFail)
@@ -112,7 +112,7 @@ func pullGit(cfg *model.ProjCfg) {
 		model.UpdateProjCfgPullStatus(cfg, constant.SyncStatFail)
 		return
 	}
-	tk := model.GetTokenByOwnerID(proj.OwnerID, proj.Type)
+	tk := model.GetTokenByOwnerID(proj.OwnerID, proj.Type, constant.TokenRepo)
 	if tk == nil {
 		log.Warnf("%v get token failed", proj.Path)
 		model.UpdateProjCfgPushStatus(cfg, constant.SyncStatFail)
