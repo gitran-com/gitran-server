@@ -1,8 +1,6 @@
 package model
 
 import (
-	"time"
-
 	"github.com/wzru/gitran-server/config"
 	"github.com/wzru/gitran-server/constant"
 )
@@ -15,16 +13,16 @@ type Project struct {
 	OwnerType uint8  `json:"owner_type" gorm:"index;notNull"`
 	Type      uint8  `json:"type" gorm:"index;notNull"`
 	//Status means whether project is ready
-	Status    uint8     `json:"status" gorm:"notNull"`
-	Desc      string    `json:"desc" gorm:"type:varchar(256)"`
-	Private   bool      `json:"private" gorm:"index;notNull"`
-	GitURL    string    `json:"git_url,omitempty" gorm:"type:varchar(256)"`
-	RepoID    uint64    ``
-	Path      string    `gorm:"type:varchar(256)"`
-	SrcLangs  string    `json:"src_langs" gorm:"type:varchar(128)"`
-	TrnLangs  string    `json:"trn_langs" gorm:"type:varchar(128)"`
-	CreatedAt time.Time `gorm:"autoCreateTime:nano"`
-	UpdatedAt time.Time `gorm:"autoUpdateTime:nano"`
+	Status    uint8  `json:"status" gorm:"notNull"`
+	Desc      string `json:"desc" gorm:"type:varchar(256)"`
+	Private   bool   `json:"private" gorm:"index;notNull"`
+	GitURL    string `json:"git_url,omitempty" gorm:"type:varchar(256)"`
+	RepoID    uint64 ``
+	Path      string `gorm:"type:varchar(256)"`
+	SrcLangs  string `json:"src_langs" gorm:"type:varchar(128)"`
+	TrnLangs  string `json:"trn_langs" gorm:"type:varchar(128)"`
+	CreatedAt int64  `gorm:"autoCreateTime:nano"`
+	UpdatedAt int64  `gorm:"autoUpdateTime:nano"`
 }
 
 //ProjInfo means project's infomation
@@ -40,8 +38,8 @@ type ProjInfo struct {
 	GitURL    string     `json:"git_url,omitempty" gorm:"type:varchar(256)"`
 	SrcLangs  []Language `json:"src_langs"`
 	TrnLangs  []Language `json:"trn_langs"`
-	CreatedAt time.Time  `json:"created_at"`
-	UpdatedAt time.Time  `json:"updated_at"`
+	CreatedAt int64      `json:"created_at"`
+	UpdatedAt int64      `json:"updated_at"`
 }
 
 //TableName return table name

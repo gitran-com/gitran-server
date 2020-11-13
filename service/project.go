@@ -195,6 +195,7 @@ func CreateUserProj(ctx *gin.Context) {
 			ctx.JSON(http.StatusBadRequest, model.Result404)
 			return
 		}
+		importURL = repo.CloneURL
 	}
 	proj := &model.Project{
 		Name:      name,
@@ -238,16 +239,29 @@ func CreateUserProj(ctx *gin.Context) {
 
 //initUserProj init a new user project
 func initUserProj(proj *model.Project) {
-	if proj.Type == constant.TypeGithub || proj.Type == constant.TypeGitURL {
+	if proj.Type == constant.TypeGithub {
 		if _, err := os.Stat(proj.Path); !os.IsNotExist(err) {
 			log.Warnf("remove path %v", proj.Path)
 			os.RemoveAll(proj.Path)
 		}
 		_, err := git.PlainClone(proj.Path, false, &git.CloneOptions{
-			URL:          proj.GitURL,
-			Progress:     os.Stdout,
-			Depth:        1,
-			SingleBranch: false,
+			URL:      proj.GitURL,
+			Progress: os.Stdout,
+			Depth:    1,
+		})
+		if err == nil {
+			model.UpdateProjStatus(proj, constant.ProjStatInit)
+		} else {
+			log.Warnf("git clone %+v into %+v ERROR : %+v", proj.GitURL, proj.Path, err.Error())
+		}
+	} else if proj.Type == constant.TypeGitURL {
+		if _, err := os.Stat(proj.Path); !os.IsNotExist(err) {
+			log.Warnf("remove path %v", proj.Path)
+			os.RemoveAll(proj.Path)
+		}
+		_, err := git.PlainClone(proj.Path, false, &git.CloneOptions{
+			URL:      proj.GitURL,
+			Progress: os.Stdout,
 		})
 		if err == nil {
 			model.UpdateProjStatus(proj, constant.ProjStatInit)
@@ -287,4 +301,9 @@ func ListAuthUserProj(ctx *gin.Context) {
 		Data: gin.H{
 			"proj_infos": model.GetProjInfosFromProjs(model.ListProjByUserID(user.ID, true)),
 		}})
+}
+
+//L
+func ListUserProjBrch(ctx *gin.Context) {
+
 }

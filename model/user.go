@@ -2,7 +2,6 @@ package model
 
 import (
 	"crypto/sha512"
-	"time"
 
 	"github.com/wzru/gitran-server/config"
 	"github.com/wzru/gitran-server/constant"
@@ -11,18 +10,18 @@ import (
 
 //User means user
 type User struct {
-	ID          uint64    `gorm:"primaryKey;autoIncrement"`
-	Login       string    `gorm:"type:varchar(32);uniqueIndex;notNull"`
-	Name        string    `gorm:"type:varchar(32);index;notNull"`
-	Email       string    `gorm:"type:varchar(64);uniqueIndex;notNull"`
-	AvatarURL   string    `gorm:"type:varchar(128)"`
-	Bio         string    `gorm:"type:varchar(128)"`
-	GithubID    uint64    `gorm:"index"`
-	PreferLangs string    `gorm:"type:varchar(128)"`
-	Salt        string    `gorm:"type:bytes;size:64;notNull"`
-	Password    string    `gorm:"type:bytes;size:64;notNull"`
-	CreatedAt   time.Time `gorm:"autoCreateTime"`
-	UpdatedAt   time.Time `gorm:"autoUpdateTime"`
+	ID          uint64 `gorm:"primaryKey;autoIncrement"`
+	Login       string `gorm:"type:varchar(32);uniqueIndex;notNull"`
+	Name        string `gorm:"type:varchar(32);index;notNull"`
+	Email       string `gorm:"type:varchar(64);uniqueIndex;notNull"`
+	AvatarURL   string `gorm:"type:varchar(128)"`
+	Bio         string `gorm:"type:varchar(128)"`
+	GithubID    uint64 `gorm:"index"`
+	PreferLangs string `gorm:"type:varchar(128)"`
+	Salt        string `gorm:"type:bytes;size:64;notNull"`
+	Password    string `gorm:"type:bytes;size:64;notNull"`
+	CreatedAt   int64  `gorm:"autoCreateTime:nano"`
+	UpdatedAt   int64  `gorm:"autoUpdateTime:nano"`
 }
 
 //UserInfo means user's infomation
@@ -36,8 +35,8 @@ type UserInfo struct {
 	PreferLangs []Language `json:"prefer_langs"`
 	GithubID    uint64     `json:"github_id,omitempty"`
 	Private     bool       `json:"private"`
-	CreatedAt   time.Time  `json:"created_at"`
-	UpdatedAt   time.Time  `json:"updated_at"`
+	CreatedAt   int64      `json:"created_at"`
+	UpdatedAt   int64      `json:"updated_at"`
 }
 
 //TableName return table name

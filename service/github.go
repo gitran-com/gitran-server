@@ -8,6 +8,8 @@ import (
 	"time"
 
 	"github.com/gin-gonic/gin"
+	"github.com/go-git/go-git/v5"
+	"github.com/go-git/go-git/v5/plumbing"
 	"github.com/patrickmn/go-cache"
 	log "github.com/sirupsen/logrus"
 	"github.com/wzru/gitran-server/config"
@@ -32,11 +34,16 @@ type githubUserInfo struct {
 }
 
 type githubRepoInfo struct {
-	ID      uint64         `json:"id"`
-	Name    string         `json:"name"`
-	URL     string         `json:"url"`
-	Private bool           `json:"private"`
-	Owner   githubUserInfo `json:"owner"`
+	ID       uint64         `json:"id"`
+	Name     string         `json:"name"`
+	URL      string         `json:"url"`
+	CloneURL string         `json:"clone_url"`
+	Private  bool           `json:"private"`
+	Owner    githubUserInfo `json:"owner"`
+}
+
+type repoBrch struct {
+	Name string `json:"name"`
 }
 
 type githubToken struct {
@@ -387,4 +394,76 @@ func getGithubRepoByTokenID(rid uint64, tk *model.Token) *githubRepoInfo {
 		return nil
 	}
 	return &repoInfo
+}
+
+func getGithubRepoBrch(rid uint64, tk *model.Token) []repoBrch {
+	url := fmt.Sprintf("https://api.github.com/repositories/%v/branches", rid)
+	req, err := http.NewRequest(http.MethodGet, url, nil)
+	if err != nil {
+		log.Warnf("new request : %+v", err.Error())
+		return nil
+	}
+	req.Header.Set("accept", "application/json")
+	req.Header.Set("Authorization", "token "+tk.AccessToken)
+	var client = http.Client{}
+	res, err := client.Do(req)
+	if err != nil {
+		log.Warnf("send request : %+v", err.Error())
+		return nil
+	}
+	var repoInfo []repoBrch
+	if err := json.NewDecoder(res.Body).Decode(&repoInfo); err != nil {
+		log.Warnf("json decode : %+v", err.Error())
+		return nil
+	}
+	return repoInfo
+}
+
+//ListGithubRepoBrch list github repo branches
+func ListGithubRepoBrch(ctx *gin.Context) {
+	proj := ctx.Keys["project"].(*model.Project)
+	tk := model.GetTokenByOwnerID(proj.OwnerID, constant.TypeGithub, constant.TokenRepo)
+	if tk == nil {
+		ctx.JSON(http.StatusNotFound, model.Result404)
+		return
+	}
+	ctx.JSON(http.StatusOK, model.Result{
+		Success: true,
+		Data: gin.H{
+			"branches": getGithubRepoBrch(proj.RepoID, tk),
+		}})
+	return
+}
+
+//ListGitRepoBrch list local git repo branches
+func ListGitRepoBrch(ctx *gin.Context) {
+	proj := ctx.Keys["project"].(*model.Project)
+	repo, err := git.PlainOpen(proj.Path)
+	if err != nil {
+		ctx.JSON(http.StatusInternalServerError, model.Result{
+			Success: false,
+			Msg:     err.Error(),
+		})
+		return
+	}
+	it, err := repo.Branches()
+	if err != nil {
+		ctx.JSON(http.StatusInternalServerError, model.Result{
+			Success: false,
+			Msg:     err.Error(),
+		})
+		return
+	}
+	var brs []repoBrch
+	it.ForEach(func(r *plumbing.Reference) error {
+		brs = append(brs, repoBrch{
+			Name: r.Name().Short(),
+		})
+		return nil
+	})
+	ctx.JSON(http.StatusOK, model.Result{
+		Success: true,
+		Data: gin.H{
+			"branches": brs,
+		}})
 }

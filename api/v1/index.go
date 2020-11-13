@@ -68,6 +68,8 @@ func initProj(g *gin.RouterGroup) {
 		//Branch Rule
 		gg.GET("/:owner/:project/configs/:config_id/rules", controller.ListUserProjBrchRule)
 		gg.POST("/:owner/:project/configs/:config_id/rules", controller.CreateUserProjBrchRule)
+		//Project Branch
+		gg.GET("/:owner/:project/branches", controller.ListUserProjBrch)
 	}
 }
 

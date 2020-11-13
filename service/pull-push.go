@@ -35,7 +35,7 @@ func pushGit(cfg *model.ProjCfg) {
 		log.Warnf("project config %v not found when pushing", cfg.ID)
 		return
 	}
-	if cfg.LastPushAt.Unix() >= beg {
+	if cfg.LastPushAt >= beg {
 		log.Warnf("project config not found when pushing", cid)
 		return
 	}
@@ -92,7 +92,8 @@ func pullGit(cfg *model.ProjCfg) {
 		log.Warnf("project config not found when pulling", cid)
 		return
 	}
-	if cfg.LastPullAt.Unix() >= beg {
+	//如果任务超时
+	if cfg.LastPullAt >= beg {
 		log.Warnf("project %v, config %v pull time out", proj.ID, cfg.ID)
 		return
 	}
@@ -120,6 +121,7 @@ func pullGit(cfg *model.ProjCfg) {
 	}
 	err = wt.Pull(&git.PullOptions{
 		RemoteName:   "origin",
+		Depth:        1,
 		SingleBranch: true,
 		Auth: &http.BasicAuth{
 			Username: config.APP.Name,
