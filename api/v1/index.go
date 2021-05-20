@@ -14,6 +14,17 @@ func Init(g *gin.RouterGroup) {
 	initUser(g)
 	initProj(g)
 	initLang(g)
+	initGithub(g)
+}
+
+func initGithub(g *gin.RouterGroup) {
+	gg := g.Group("/github")
+	if config.Github.Enable {
+		gg.Use(middleware.AuthUserJWT(), middleware.AuthUserGithubJWT())
+		{
+			gg.GET("/repos", controller.ListGithubRepo)
+		}
+	}
 }
 
 func initAuth(g *gin.RouterGroup) {
@@ -35,34 +46,38 @@ func initLang(g *gin.RouterGroup) {
 
 func initProj(g *gin.RouterGroup) {
 	gg := g.Group("/projects")
-	gg.GET("/:owner", controller.ListProj)
-	gg.GET("/:owner/:project", controller.GetProj)
+	gg.GET("/:owner/:project", controller.GetProj) //获取特定项目
 	gg.Use(middleware.AuthUserJWT())
 	{
-		gg.POST("", controller.CreateUserProj)
+		gg.POST("", controller.CreateUserProj) //新建用户项目
 	}
-	gg.Use(middleware.AuthUserProjJWT())
+	gg.Use(middleware.AuthUserJWT(), middleware.AuthUserProjJWT())
 	{
 		//Project Config
 		gg.GET("/:owner/:project/configs", controller.ListUserProjCfg)
 		gg.POST("/:owner/:project/configs", controller.CreateUserProjCfg)
 		gg.PUT("/:owner/:project/configs", controller.SaveUserProjCfg)
-		// gg.GET("/:owner/:project/configs/:config_id", controller.GetUserProjCfg)
-
 		//Branch Rule
 		gg.GET("/:owner/:project/configs/:config_id/rules", controller.ListUserProjBrchRule)
 		gg.POST("/:owner/:project/configs/:config_id/rules", controller.CreateUserProjBrchRule)
-		// gg.PUT("/:owner/:project/configs/:config_id/rules", controller.SaveUserProjBrchRule)
-		// gg.GET("/:owner/:project/configs/:config_id/rules/:rule_id", controller.GetUserProjBrchRule)
-		// gg.GET("/:owner/:project/branches", controller.ListUserProjBrch)
+		//Project Branch
+		gg.GET("/:owner/:project/branches", controller.ListUserProjBrch)
 	}
 }
 
 func initUser(g *gin.RouterGroup) {
-	gg := g.Group("/users")
-	gg.GET("/:username", controller.GetUser)
-	gg.Use(middleware.AuthUserJWT())
+	pubGrp := g.Group("/users")
+	pubGrp.Use(middleware.GetUser())
 	{
-		// gg.PUT("/:username", controller.UpdateUser)
+		pubGrp.GET("/:username", controller.GetUser)
+		pubGrp.GET("/:username/projects", controller.ListUserPubProj)
+	}
+	prvGrp := g.Group("/user")
+	prvGrp.Use(middleware.AuthUserJWT())
+	{
+
+		prvGrp.GET("/projects", controller.ListAuthUserProj)
+		prvGrp.POST("/projects", controller.CreateUserProj)
+		// prvGrp.PUT("/:username", controller.UpdateUser)
 	}
 }

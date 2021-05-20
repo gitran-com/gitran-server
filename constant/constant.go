@@ -16,6 +16,8 @@ const (
 	OwnerUsr uint8 = iota
 	//OwnerOrg 属于组织的项目
 	OwnerOrg
+	//OwnerNone nothing
+	OwnerNone
 )
 
 const (
@@ -55,6 +57,13 @@ const (
 	AuthGithubLogin = "login"
 	//AuthGithubImport github引入仓库
 	AuthGithubImport = "import"
+)
+
+const (
+	//TokenUser github token for user
+	TokenUser = "user"
+	//TokenRepo github token for user repo
+	TokenRepo = "repo"
 )
 
 const (

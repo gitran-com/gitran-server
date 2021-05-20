@@ -1,7 +1,6 @@
 package model
 
 import (
-	"bytes"
 	"crypto/sha512"
 	"strconv"
 	"time"
@@ -114,10 +113,10 @@ func GetUserInfoFromUser(user *User, priv bool) *UserInfo {
 	}
 }
 
-//HashSalt calcs H(pass+salt)
-func HashSalt(pass string, salt []byte) []byte {
-	sum := sha512.Sum512(append([]byte(pass), salt...))
-	return sum[:]
+//HashWithSalt calcs H(pass+salt)
+func HashWithSalt(pass string, salt string) string {
+	sum := sha512.Sum512([]byte(pass + salt))
+	return string(sum[:])
 }
 
 //CheckPass checks whether a password is correct

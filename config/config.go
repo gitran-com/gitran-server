@@ -27,6 +27,7 @@ type db struct {
 	User        string `json:"user"`
 	Password    string `json:"password"`
 	Host        string `json:"host"`
+	Port        uint16 `json:"port"`
 	TablePrefix string `json:"table_prefix"`
 }
 

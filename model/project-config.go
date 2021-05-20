@@ -11,18 +11,18 @@ import (
 
 //ProjCfg means project config
 type ProjCfg struct {
-	ID         uint64    `json:"id" gorm:"primaryKey;autoIncrement"`
-	ProjID     uint64    `json:"project_id" gorm:"index;notNull"`
-	FileName   string    `json:"file_name" gorm:"type:varchar(32);notNull"`
-	Changed    bool      `json:"-" gorm:"index;notNull"`
-	SrcBr      string    `json:"src_branch" gorm:"type:varchar(32);notNull"`
-	TrnBr      string    `json:"trn_branch" gorm:"type:varchar(32);notNull"`
-	PullItv    uint16    `json:"pull_interval" gorm:"index;notNull"`
-	PushItv    uint16    `json:"push_interval" gorm:"index;notNull"`
-	PullStatus uint8     `json:"pull_status" gorm:"notNull"`
-	PushStatus uint8     `json:"push_status" gorm:"notNull"`
-	LastPullAt time.Time `json:"last_pull_at"`
-	LastPushAt time.Time `json:"last_push_at"`
+	ID         uint64 `json:"id" gorm:"primaryKey;autoIncrement"`
+	ProjID     uint64 `json:"project_id" gorm:"index;notNull"`
+	FileName   string `json:"file_name" gorm:"type:varchar(32);notNull"`
+	Changed    bool   `json:"-" gorm:"index;notNull"`
+	SrcBr      string `json:"src_branch" gorm:"type:varchar(32);notNull"`
+	TrnBr      string `json:"trn_branch" gorm:"type:varchar(32);notNull"`
+	PullItv    uint16 `json:"pull_interval" gorm:"index;notNull"`
+	PushItv    uint16 `json:"push_interval" gorm:"index;notNull"`
+	PullStatus uint8  `json:"pull_status" gorm:"notNull"`
+	PushStatus uint8  `json:"push_status" gorm:"notNull"`
+	LastPullAt int64  `json:"last_pull_at"`
+	LastPushAt int64  `json:"last_push_at"`
 }
 
 //BrchRule means branch rules
@@ -59,8 +59,8 @@ func (*BrchRule) TableName() string {
 
 //NewProjCfg creates a new cfg for project
 func NewProjCfg(cfg *ProjCfg) (*ProjCfg, error) {
-	if result := db.Create(cfg); result.Error != nil {
-		return nil, result.Error
+	if res := db.Create(cfg); res.Error != nil {
+		return nil, res.Error
 	}
 	return cfg, nil
 }
@@ -131,12 +131,12 @@ func UpdateProjCfgChanged(cfg *ProjCfg, changed bool) {
 
 //UpdateProjCfgPullStatus update a project cfg pull status
 func UpdateProjCfgPullStatus(cfg *ProjCfg, stat uint8) {
-	db.Model(cfg).Select("pull_status").Updates(map[string]interface{}{"pull_status": stat})
+	db.Model(cfg).Select("pull_status").Updates(map[string]interface{}{"pull_status": stat, "last_pull_at": time.Now()})
 }
 
 //UpdateProjCfgPushStatus update a project cfg push status
 func UpdateProjCfgPushStatus(cfg *ProjCfg, stat uint8) {
-	db.Model(cfg).Select("push_status").Updates(map[string]interface{}{"push_status": stat})
+	db.Model(cfg).Select("push_status").Updates(map[string]interface{}{"push_status": stat, "last_push_at": time.Now()})
 }
 
 //ListSyncProjCfg list all project cfg that should be sync

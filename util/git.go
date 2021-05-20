@@ -19,5 +19,5 @@ func GenSSHGitURL(host string, path string) string {
 
 //GenHTTPSGitURL gen a git url in https protocol using host and path
 func GenHTTPSGitURL(host string, path string) string {
-	return fmt.Sprintf("https://%s%s", host, path)
+	return fmt.Sprintf("https://%s/%s", host, path)
 }
