@@ -82,26 +82,26 @@ func GetProj(ctx *gin.Context) {
 
 //ListProj list all projects
 func ListProj(ctx *gin.Context) {
-	usr, org, tp := model.GetOwnerByName(ctx.Param("owner"))
-	if tp == constant.OwnerUsr {
-		if usr == nil {
-			ctx.JSON(http.StatusNotFound, model.Result404)
-			return
-		}
-		ctx.JSON(http.StatusOK, model.Result{
-			Success: true,
-			Msg:     "",
-			Data: gin.H{
-				"projects:": model.GetProjInfosFromProjs(model.ListProjFromUser(usr, middleware.HasUserPermission(ctx, usr.ID))),
-			}})
-		return
-	} else {
-		//TODO
-		if org == nil {
-			ctx.JSON(http.StatusNotFound, model.Result404)
-			return
-		}
-	}
+	// usr, org, tp := model.GetOwnerByName(ctx.Param("owner"))
+	// if tp == constant.OwnerUsr {
+	// 	if usr == nil {
+	// 		ctx.JSON(http.StatusNotFound, model.Result404)
+	// 		return
+	// 	}
+	// 	ctx.JSON(http.StatusOK, model.Result{
+	// 		Success: true,
+	// 		Msg:     "",
+	// 		Data: gin.H{
+	// 			"projects:": model.GetProjInfosFromProjs(model.ListProjFromUser(usr, middleware.HasUserPermission(ctx, usr.ID))),
+	// 		}})
+	// 	return
+	// } else {
+	// 	//TODO
+	// 	if org == nil {
+	// 		ctx.JSON(http.StatusNotFound, model.Result404)
+	// 		return
+	// 	}
+	// }
 }
 
 //CreateUserProj create a new user project

@@ -1,7 +1,10 @@
 package service
 
 import (
+	"github.com/markbates/goth"
+	"github.com/markbates/goth/providers/github"
 	log "github.com/sirupsen/logrus"
+	"github.com/wzru/gitran-server/config"
 	"github.com/wzru/gitran-server/model"
 )
 
@@ -30,6 +33,9 @@ func Init() error {
 				}
 			}
 		}
+	}
+	if config.Github.Enable {
+		goth.UseProviders(github.New(config.Github.ClientID, config.Github.ClientSecret, config.Github.CallbackURL, ""))
 	}
 	return nil
 }

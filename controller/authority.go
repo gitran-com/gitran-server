@@ -17,30 +17,10 @@ func Refresh(ctx *gin.Context) {
 	service.RefreshToken(ctx)
 }
 
+func AuthGithub(ctx *gin.Context) {
+	service.AuthGithub(ctx)
+}
+
 func AuthGithubLogin(ctx *gin.Context) {
 	service.AuthGithubLogin(ctx)
-}
-
-func AuthGithubRegister(ctx *gin.Context) {
-	service.AuthGithubRegister(ctx)
-}
-
-func AuthGithubImport(ctx *gin.Context) {
-	service.AuthGithubImport(ctx)
-}
-
-func AuthGithubBind(ctx *gin.Context) {
-	service.AuthGithubBind(ctx)
-}
-
-func AuthGithubLoginCallback(ctx *gin.Context) {
-	service.AuthGithubLoginCallback(ctx)
-}
-
-func AuthGithubImportCallback(ctx *gin.Context) {
-	service.AuthGithubImportCallback(ctx)
-}
-
-func AuthGithubBindCallback(ctx *gin.Context) {
-	service.AuthGithubBindCallback(ctx)
 }

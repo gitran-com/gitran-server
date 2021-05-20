@@ -52,7 +52,7 @@ func AuthUserProjJWT() gin.HandlerFunc {
 			ctx.Abort()
 			return
 		}
-		owner, _, _ := model.GetOwnerByName(ctx.Param("owner"))
+		owner := model.GetUserByName(ctx.Param("owner"))
 		if owner == nil {
 			ctx.JSON(http.StatusNotFound, model.Result404)
 			ctx.Abort()
@@ -83,7 +83,7 @@ func AuthUserProjJWT() gin.HandlerFunc {
 func GenTokenFromUser(user *model.User, subj string) string {
 	now := time.Now().Unix()
 	claims := jwt.StandardClaims{
-		Audience:  user.Login,                        // 受众
+		Audience:  user.Name,                         // 受众
 		ExpiresAt: now + int64(config.JWT.ValidTime), // 失效时间
 		Id:        fmt.Sprintf("%v", user.ID),        // 编号
 		IssuedAt:  now,                               // 签发时间

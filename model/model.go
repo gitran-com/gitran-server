@@ -24,12 +24,16 @@ func initDB() error {
 		dsn := fmt.Sprintf("%s:%s@tcp(%s)/?charset=utf8mb4&parseTime=True&loc=Local", config.DB.User, config.DB.Password, config.DB.Host)
 		db, err = gorm.Open(mysql.Open(dsn), &gorm.Config{})
 		if err != nil {
-			log.Fatalf("Database connect ERROR : %v", err)
+			log.Fatalf("db connect ERROR : %v", err)
 			return err
 		}
 		db.Exec("CREATE DATABASE IF NOT EXISTS " + config.DB.Name)
 		dsn = fmt.Sprintf("%s:%s@tcp(%s)/%s?charset=utf8mb4&parseTime=True&loc=Local", config.DB.User, config.DB.Password, config.DB.Host, config.DB.Name)
 		db, err = gorm.Open(mysql.Open(dsn), &gorm.Config{})
+		if err != nil {
+			log.Fatalf("db connect ERROR : %v", err)
+			return err
+		}
 	} else if config.DB.Type == "postgresql" {
 		//TODO
 	}

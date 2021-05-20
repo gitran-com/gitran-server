@@ -3,42 +3,47 @@ package model
 import (
 	"bytes"
 	"crypto/sha512"
+	"strconv"
 	"time"
 
+	"github.com/markbates/goth"
 	"github.com/wzru/gitran-server/config"
-	"github.com/wzru/gitran-server/constant"
 	"github.com/wzru/gitran-server/util"
+)
+
+const (
+	LoginTypePlain = iota
+	LoginTypeGithub
 )
 
 //User means user
 type User struct {
 	ID          uint64    `gorm:"primaryKey;autoIncrement"`
-	Login       string    `gorm:"type:varchar(32);uniqueIndex;notNull"`
 	Name        string    `gorm:"type:varchar(32);index"`
-	Email       string    `gorm:"type:varchar(64);uniqueIndex;notNull"`
+	Email       string    `gorm:"type:varchar(64);index"`
 	AvatarURL   string    `gorm:"type:varchar(128)"`
 	Bio         string    `gorm:"type:varchar(128)"`
-	GithubID    uint64    `gorm:"index"`
-	PreferLangs string    `gorm:"type:varchar(128)"`
+	LoginType   int       `gorm:"index"`
+	IsActive    bool      `gorm:"index"`
+	ExternID    uint64    `gorm:"index"`
 	CreatedAt   time.Time ``
 	UpdatedAt   time.Time ``
-	Password    []byte    `gorm:"type:binary(64);notNull"`
-	Salt        []byte    `gorm:"type:binary(64);notNull"`
+	LastLoginAt time.Time ``
+	Password    []byte    `gorm:"type:binary(64)"`
+	Salt        []byte    `gorm:"type:binary(64)"`
 }
 
 //UserInfo means user's infomation
 type UserInfo struct {
-	ID          uint64     `json:"id"`
-	Login       string     `json:"login"`
-	Name        string     `json:"name,omitempty"`
-	Email       string     `json:"email"`
-	AvatarURL   string     `json:"avatar_url"`
-	Bio         string     `json:"bio"`
-	PreferLangs []Language `json:"prefer_langs"`
-	GithubID    uint64     `json:"github_id,omitempty"`
-	IsPrivate   bool       `json:"is_private"`
-	CreatedAt   time.Time  `json:"created_at"`
-	UpdatedAt   time.Time  `json:"updated_at"`
+	ID        uint64    `json:"id"`
+	Name      string    `json:"name,omitempty"`
+	Email     string    `json:"email"`
+	AvatarURL string    `json:"avatar_url"`
+	Bio       string    `json:"bio"`
+	ExternID  uint64    `json:"github_id,omitempty"`
+	IsActive  bool      `json:"is_active"`
+	CreatedAt time.Time `json:"created_at"`
+	UpdatedAt time.Time `json:"updated_at"`
 }
 
 //TableName return table name
@@ -46,10 +51,10 @@ func (*User) TableName() string {
 	return config.DB.TablePrefix + "users"
 }
 
-//GetUserByNameEmail gets a user by login or email
+//GetUserByNameEmail gets a user by name or email
 func GetUserByNameEmail(login string, email string) *User {
 	var user []User
-	db.Where("login=? OR email=?", login, email).First(&user)
+	db.Where("name=? OR email=?", login, email).First(&user)
 	if len(user) > 0 {
 		return &user[0]
 	} else {
@@ -57,20 +62,14 @@ func GetUserByNameEmail(login string, email string) *User {
 	}
 }
 
-//GetUserByName gets a user by login(username)
+//GetUserByName gets a user by login_name
 func GetUserByName(name string) *User {
 	var user []User
-	db.Where("login=?", name).First(&user)
+	db.Where("name=?", name).First(&user)
 	if len(user) > 0 {
 		return &user[0]
 	}
 	return nil
-}
-
-//GetOwnerByName gets a user or an org by name
-func GetOwnerByName(name string) (*User, *Organization, uint8) {
-	//TODO
-	return GetUserByName(name), nil, constant.OwnerUsr
 }
 
 //GetUserByID gets a user by id
@@ -86,17 +85,17 @@ func GetUserByID(id uint64) *User {
 //GetUserByEmail gets a user by email
 func GetUserByEmail(email string) *User {
 	var user []User
-	db.Where("email=?", email).First(&user)
+	db.Where("login_type=? AND email=?", LoginTypePlain, email).First(&user)
 	if len(user) > 0 {
 		return &user[0]
 	}
 	return nil
 }
 
-//GetUserByGithubID gets a user by github id
-func GetUserByGithubID(ghid uint64) *User {
+//GetUserByExternID gets a user by github id
+func GetUserByExternID(ghid uint64) *User {
 	var user []User
-	db.Where("github_id=?", ghid).First(&user)
+	db.Where("extern_id=?", ghid).First(&user)
 	if len(user) > 0 {
 		return &user[0]
 	}
@@ -105,29 +104,13 @@ func GetUserByGithubID(ghid uint64) *User {
 
 //GetUserInfoFromUser gen UserInfo from User
 func GetUserInfoFromUser(user *User, priv bool) *UserInfo {
-	if priv {
-		return &UserInfo{
-			ID:          user.ID,
-			Login:       user.Login,
-			Name:        user.Name,
-			Email:       user.Email,
-			PreferLangs: GetLangsFromString(user.PreferLangs),
-			GithubID:    user.GithubID,
-			CreatedAt:   user.CreatedAt,
-			UpdatedAt:   user.UpdatedAt,
-			IsPrivate:   priv,
-		}
-	} else {
-		return &UserInfo{
-			ID:          user.ID,
-			Login:       user.Login,
-			Name:        user.Name,
-			Email:       user.Email,
-			PreferLangs: GetLangsFromString(user.PreferLangs),
-			CreatedAt:   user.CreatedAt,
-			UpdatedAt:   user.UpdatedAt,
-			IsPrivate:   priv,
-		}
+	return &UserInfo{
+		ID:        user.ID,
+		Name:      user.Name,
+		Email:     user.Email,
+		ExternID:  user.ExternID,
+		CreatedAt: user.CreatedAt,
+		UpdatedAt: user.UpdatedAt,
 	}
 }
 
@@ -137,16 +120,36 @@ func HashSalt(pass string, salt []byte) []byte {
 	return sum[:]
 }
 
-//CheckPasswordCorrect checks whether a password is correct
-func CheckPasswordCorrect(pass string, user *User) bool {
-	// fmt.Printf("pass=%v\n", pass)
+//CheckPass checks whether a password is correct
+func CheckPass(user *User, pass string) bool {
+	if user == nil || user.LoginType != LoginTypePlain {
+		return false
+	}
 	return bytes.Equal(HashSalt(pass, user.Salt), user.Password)
 }
 
-//NewUser creates a new user
-func NewUser(user *User) (*User, error) {
-	if result := db.Create(user); result.Error != nil {
-		return nil, result.Error
+//CreateUser creates a new user
+func CreateUser(user *User) (*User, error) {
+	if res := db.Create(user); res.Error != nil {
+		return nil, res.Error
+	}
+	return user, nil
+}
+
+//NewUserFromExtern creates a new user from OAuth
+func NewUserFromExtern(ext *goth.User, login_type int) (*User, error) {
+	ext_id, _ := strconv.ParseUint(ext.UserID, 10, 64)
+	bio, ok := ext.RawData["bio"].(string)
+	if !ok {
+		bio = ""
+	}
+	user := &User{
+		Name:      ext.Name,
+		AvatarURL: ext.AvatarURL,
+		Bio:       bio,
+		ExternID:  ext_id,
+		LoginType: login_type,
+		IsActive:  true,
 	}
 	return user, nil
 }
