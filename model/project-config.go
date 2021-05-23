@@ -19,8 +19,8 @@ type ProjCfg struct {
 	TrnBr      string    `json:"trn_branch" gorm:"type:varchar(32);notNull"`
 	PullItv    uint16    `json:"pull_interval" gorm:"index;notNull"`
 	PushItv    uint16    `json:"push_interval" gorm:"index;notNull"`
-	PullStatus uint8     `json:"pull_status" gorm:"notNull"`
-	PushStatus uint8     `json:"push_status" gorm:"notNull"`
+	PullStatus int       `json:"pull_status" gorm:"notNull"`
+	PushStatus int       `json:"push_status" gorm:"notNull"`
 	LastPullAt time.Time `json:"last_pull_at"`
 	LastPushAt time.Time `json:"last_push_at"`
 }
@@ -29,7 +29,7 @@ type ProjCfg struct {
 type BrchRule struct {
 	ID        uint64 `gorm:"primaryKey;autoIncrement"`
 	ProjCfgID uint64 `gorm:"index;notNull"`
-	Status    uint8  `gorm:"index;notNull"`
+	Status    int    `gorm:"index;notNull"`
 	SrcFiles  string `yaml:"source_files" json:"src_files" gorm:"type:varchar(128);notNull"`
 	TrnFiles  string `yaml:"translation_files" json:"trn_files" gorm:"type:varchar(128);notNull"`
 	IgnFiles  string `yaml:"ignore_files" json:"ign_files" gorm:"type:varchar(256);"`
@@ -40,7 +40,7 @@ type BrchRule struct {
 type BrchRuleInfo struct {
 	ID        uint64                 `yaml:"-" json:"id"`
 	ProjCfgID uint64                 `yaml:"-" json:"project_config_id"`
-	Status    uint8                  `yaml:"-" json:"status"`
+	Status    int                    `yaml:"-" json:"status"`
 	SrcFiles  string                 `yaml:"source_files" json:"src_files"`
 	TrnFiles  string                 `yaml:"translation_files" json:"trn_files"`
 	IgnFiles  []string               `yaml:"ignore_files" json:"ign_files"`
@@ -130,12 +130,12 @@ func UpdateProjCfgChanged(cfg *ProjCfg, changed bool) {
 }
 
 //UpdateProjCfgPullStatus update a project cfg pull status
-func UpdateProjCfgPullStatus(cfg *ProjCfg, stat uint8) {
+func UpdateProjCfgPullStatus(cfg *ProjCfg, stat int) {
 	db.Model(cfg).Select("pull_status").Updates(map[string]interface{}{"pull_status": stat})
 }
 
 //UpdateProjCfgPushStatus update a project cfg push status
-func UpdateProjCfgPushStatus(cfg *ProjCfg, stat uint8) {
+func UpdateProjCfgPushStatus(cfg *ProjCfg, stat int) {
 	db.Model(cfg).Select("push_status").Updates(map[string]interface{}{"push_status": stat})
 }
 

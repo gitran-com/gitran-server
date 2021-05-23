@@ -9,7 +9,7 @@ import (
 //Token 存储Github等来源的Token
 type Token struct {
 	ID          uint64    `gorm:"primaryKey;autoIncrement"`
-	Source      uint8     `gorm:"index"`
+	Source      int       `gorm:"index"`
 	OwnerID     uint64    `gorm:"index"`
 	AccessToken string    `json:"access_token" gorm:"type:varchar(128)"`
 	TokenType   string    `json:"token_type" gorm:"type:varchar(8)"`
@@ -31,7 +31,7 @@ func NewToken(tk *Token) (*Token, error) {
 }
 
 //GetTokenByOwnerID get a token by owner id
-func GetTokenByOwnerID(oid uint64, src uint8) *Token {
+func GetTokenByOwnerID(oid uint64, src int) *Token {
 	var tk []Token
 	db.Where("owner_id=? AND source=?", oid, src).First(&tk)
 	if len(tk) > 0 {

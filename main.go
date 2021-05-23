@@ -6,6 +6,8 @@ import (
 	log "github.com/sirupsen/logrus"
 
 	"github.com/gin-contrib/cors"
+	"github.com/gin-contrib/sessions"
+	"github.com/gin-contrib/sessions/cookie"
 	"github.com/gin-gonic/gin"
 	v1 "github.com/wzru/gitran-server/api/v1"
 	"github.com/wzru/gitran-server/config"
@@ -40,6 +42,7 @@ func main() {
 		r.Use(middleware.Logger())
 		r.Use(cors.Default())
 	}
+	r.Use(sessions.Sessions(config.APP.Name, cookie.NewStore([]byte(config.APP.SessionSecret))))
 	api := r.Group(config.APP.APIPrefix + "/api")
 	{
 		apiv1 := api.Group("/v1")

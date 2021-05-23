@@ -27,6 +27,7 @@ type db struct {
 	User        string `json:"user"`
 	Password    string `json:"password"`
 	Host        string `json:"host"`
+	Port        uint16 `json:"port"`
 	TablePrefix string `json:"table_prefix"`
 }
 
@@ -38,9 +39,20 @@ type jwt struct {
 }
 
 type app struct {
-	Name      string `json:"name"`
-	Addr      string `json:"addr"`
-	APIPrefix string `json:"api_prefix"`
+	Name          string `json:"name"`
+	Addr          string `json:"addr"`
+	APIPrefix     string `json:"api_prefix"`
+	SessionSecret string `json:"session_secret"`
+}
+
+type email struct {
+	Enable   bool   `json:"enable"`
+	From     string `json:"from"`
+	Type     string `json:"type"`
+	Host     string `json:"host"`
+	TLS      bool   `json:"tls"`
+	User     string `json:"user"`
+	Password string `json:"password"`
 }
 
 //Config 应用运行配置
@@ -49,6 +61,7 @@ type Config struct {
 	DB        db       `json:"db"`
 	JWT       jwt      `json:"jwt"`
 	APP       app      `json:"app"`
+	Email     email    `json:"email"`
 	FileTypes []string `json:"file_types"`
 }
 
@@ -83,6 +96,8 @@ var (
 	JWT *jwt
 	//APP config
 	APP *app
+	//Email config
+	Email *email
 )
 
 func (s *logFormatter) Format(entry *log.Entry) ([]byte, error) {
@@ -122,5 +137,6 @@ func Init() error {
 	DB = &c.DB
 	JWT = &c.JWT
 	APP = &c.APP
+	Email = &c.Email
 	return nil
 }

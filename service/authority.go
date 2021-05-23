@@ -6,6 +6,7 @@ import (
 	"strings"
 
 	"github.com/gin-gonic/gin"
+	"github.com/wzru/gitran-server/config"
 	"github.com/wzru/gitran-server/constant"
 	"github.com/wzru/gitran-server/middleware"
 	"github.com/wzru/gitran-server/model"
@@ -45,11 +46,11 @@ func Register(ctx *gin.Context) {
 		var err error
 		salt := []byte(model.GenSalt())
 		user, err = model.CreateUser(&model.User{
-			Name:      name,
-			Email:     email,
-			Password:  model.HashSalt(passwd, salt),
-			Salt:      salt,
-			LoginType: model.LoginTypePlain,
+			Name:     name,
+			Email:    email,
+			Password: model.HashSalt(passwd, salt),
+			Salt:     salt,
+			IsActive: !config.Email.Enable,
 		})
 		if err == nil {
 			ctx.JSON(http.StatusCreated,
@@ -58,7 +59,7 @@ func Register(ctx *gin.Context) {
 					Msg:     "注册成功",
 					Data: gin.H{
 						"token": middleware.GenTokenFromUser(user, "register"),
-						"url":   ctx.GetString("referer"),
+						"url":   ctx.Request.Referer(),
 					},
 				})
 			return
@@ -71,8 +72,7 @@ func Register(ctx *gin.Context) {
 				})
 			return
 		}
-	}
-	if user.Email == email {
+	} else {
 		ctx.JSON(http.StatusBadRequest,
 			model.Result{
 				Success: false,

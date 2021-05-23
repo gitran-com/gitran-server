@@ -107,11 +107,11 @@ func ListProj(ctx *gin.Context) {
 //CreateUserProj create a new user project
 func CreateUserProj(ctx *gin.Context) {
 	name := ctx.PostForm("name")
-	ot := constant.OwnerUsr
+	// ot := constant.OwnerUsr
 	desc := ctx.PostForm("desc")
 	userID, _ := strconv.Atoi(ctx.GetString("user-id"))
 	userName := ctx.GetString("user-name")
-	isPrvt := ctx.PostForm("is_private") == "true"
+	// isPrvt := ctx.PostForm("is_private") == "true"
 	gitURL := ctx.PostForm("git_url")
 	src := ctx.PostForm("src_langs")
 	trn := ctx.PostForm("trn_langs")
@@ -159,17 +159,15 @@ func CreateUserProj(ctx *gin.Context) {
 		return
 	}
 	proj := &model.Project{
-		Name:      name,
-		Desc:      desc,
-		OwnerID:   uint64(userID),
-		OwnerType: uint8(ot),
-		IsPrivate: isPrvt,
-		Type:      uint8(tp),
-		Status:    uint8(constant.ProjStatCreated),
-		GitURL:    gitURL,
-		Path:      config.ProjPath + userName + "/" + name + "/",
-		SrcLangs:  src,
-		TrnLangs:  trn,
+		Name:     name,
+		Desc:     desc,
+		OwnerID:  uint64(userID),
+		Type:     tp,
+		Status:   constant.ProjStatCreated,
+		GitURL:   gitURL,
+		Path:     config.ProjPath + userName + "/" + name + "/",
+		SrcLangs: src,
+		TrnLangs: trn,
 	}
 	if findProj := model.GetProjByOwnerIDName(proj.OwnerID, proj.Name, true); findProj != nil {
 		ctx.JSON(http.StatusBadRequest, model.Result{
@@ -196,9 +194,9 @@ func CreateUserProj(ctx *gin.Context) {
 	go initProj(proj)
 }
 
-//initUserProj init a new user project
-func initUserProj(proj *model.Project) {
-	if proj.Type == constant.TypeGithub {
+//initProj init a new project
+func initProj(proj *model.Project) {
+	if proj.Type == constant.TypeGitURL {
 		_, err := git.PlainClone(proj.Path, false, &git.CloneOptions{
 			URL:          proj.GitURL,
 			Progress:     os.Stdout,
@@ -213,23 +211,4 @@ func initUserProj(proj *model.Project) {
 	} else {
 		//TODO
 	}
-}
-
-//initOrgProj init a new org project
-func initOrgProj(proj *model.Project) {
-	//TODO
-}
-
-//initProj init a new project
-func initProj(proj *model.Project) {
-	if proj.OwnerType == constant.OwnerUsr {
-		initUserProj(proj)
-	} else if proj.OwnerType == constant.OwnerOrg {
-		initOrgProj(proj)
-	}
-}
-
-//CreateOrgProj create a new organization project
-func CreateOrgProj(ctx *gin.Context) {
-	//TODO
 }

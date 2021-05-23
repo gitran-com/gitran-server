@@ -1,8 +1,10 @@
 {
     "app": {
         "name": "gitran",
-        "addr": "0.0.0.0:7000",
-        "api_prefix": ""
+        "url": "Your URL",
+        "addr": ":7000",
+        "api_prefix": "",
+        "session_secret": "Your Session Secret"
     },
     "database": {
         "type": "mysql",
@@ -10,6 +12,7 @@
         "user": "Your DB User",
         "password": "Your DB Password",
         "host": "Your DB Host",
+        "port": 3306,
         "table_prefix": ""
     },
     "jwt": {
@@ -19,48 +22,20 @@
         "refresh_time": 1209600
     },
     "github": {
-        "enable": true,
+        "enable": false,
         "client_id": "Your Client ID",
-        "client_secret": "Your Client Secret"
+        "client_secret": "Your Client Secret",
+        "callback_url": "Your Callback URL"
     },
-    "langs": [
-        {
-            "language_id": 0,
-            "iso": "Chinese Simplified",
-            "name": "简体中文",
-            "code": "zho-CN"
-        },
-        {
-            "language_id": 1,
-            "iso": "English",
-            "name": "English",
-            "code": "eng"
-        },
-        {
-            "language_id": 2,
-            "iso": "Russian",
-            "name": "русский",
-            "code": "rus"
-        },
-        {
-            "language_id": 3,
-            "iso": "French",
-            "name": "français",
-            "code": "fra"
-        },
-        {
-            "language_id": 4,
-            "iso": "Arabic",
-            "name": "العربية",
-            "code": "ara"
-        },
-        {
-            "language_id": 5,
-            "iso": "Spanish, Castilian",
-            "name": "Español",
-            "code": "spa"
-        }
-    ],
+    "email": {
+        "enable": false,
+        "from": "from@example.com",
+        "type": "smtp",
+        "host": "example.com",
+        "tls": false,
+        "user": "Your User",
+        "password": "Your Password"
+    },
     "file_types": [
         "txt",
         "xml",

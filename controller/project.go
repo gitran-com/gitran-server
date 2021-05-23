@@ -16,7 +16,3 @@ func GetProj(ctx *gin.Context) {
 func CreateUserProj(ctx *gin.Context) {
 	service.CreateUserProj(ctx)
 }
-
-func CreateOrgProj(ctx *gin.Context) {
-	service.CreateOrgProj(ctx)
-}

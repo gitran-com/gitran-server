@@ -74,7 +74,7 @@ func CreateUserProjBrchRule(ctx *gin.Context) {
 	// fmt.Printf("len=%+v, ign_files=%+v\n", len(ignFiles), ignFiles)
 	rule := &model.BrchRule{
 		ProjCfgID: configID,
-		Status:    uint8(constant.RuleStatCreated),
+		Status:    constant.RuleStatCreated,
 		SrcFiles:  srcFiles,
 		TrnFiles:  trnFiles,
 		IgnFiles:  strings.Join(ignFiles, constant.Delim),

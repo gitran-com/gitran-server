@@ -11,21 +11,15 @@ import (
 	"github.com/wzru/gitran-server/util"
 )
 
-const (
-	LoginTypePlain = iota
-	LoginTypeGithub
-)
-
 //User means user
 type User struct {
 	ID          uint64    `gorm:"primaryKey;autoIncrement"`
-	Name        string    `gorm:"type:varchar(32);index"`
+	Name        string    `gorm:"type:varchar(32);uniqueIndex"`
 	Email       string    `gorm:"type:varchar(64);index"`
 	AvatarURL   string    `gorm:"type:varchar(128)"`
 	Bio         string    `gorm:"type:varchar(128)"`
-	LoginType   int       `gorm:"index"`
+	GithubID    uint64    `gorm:"index"`
 	IsActive    bool      `gorm:"index"`
-	ExternID    uint64    `gorm:"index"`
 	CreatedAt   time.Time ``
 	UpdatedAt   time.Time ``
 	LastLoginAt time.Time ``
@@ -40,7 +34,6 @@ type UserInfo struct {
 	Email     string    `json:"email"`
 	AvatarURL string    `json:"avatar_url"`
 	Bio       string    `json:"bio"`
-	ExternID  uint64    `json:"github_id,omitempty"`
 	IsActive  bool      `json:"is_active"`
 	CreatedAt time.Time `json:"created_at"`
 	UpdatedAt time.Time `json:"updated_at"`
@@ -85,17 +78,17 @@ func GetUserByID(id uint64) *User {
 //GetUserByEmail gets a user by email
 func GetUserByEmail(email string) *User {
 	var user []User
-	db.Where("login_type=? AND email=?", LoginTypePlain, email).First(&user)
+	db.Where("email=?", email).First(&user)
 	if len(user) > 0 {
 		return &user[0]
 	}
 	return nil
 }
 
-//GetUserByExternID gets a user by github id
-func GetUserByExternID(ghid uint64) *User {
+//GetUserByGithubID gets a user by github id
+func GetUserByGithubID(ghid uint64) *User {
 	var user []User
-	db.Where("extern_id=?", ghid).First(&user)
+	db.Where("github_id=?", ghid).First(&user)
 	if len(user) > 0 {
 		return &user[0]
 	}
@@ -103,12 +96,12 @@ func GetUserByExternID(ghid uint64) *User {
 }
 
 //GetUserInfoFromUser gen UserInfo from User
-func GetUserInfoFromUser(user *User, priv bool) *UserInfo {
+func GetUserInfoFromUser(user *User) *UserInfo {
 	return &UserInfo{
 		ID:        user.ID,
 		Name:      user.Name,
 		Email:     user.Email,
-		ExternID:  user.ExternID,
+		IsActive:  user.IsActive,
 		CreatedAt: user.CreatedAt,
 		UpdatedAt: user.UpdatedAt,
 	}
@@ -122,7 +115,7 @@ func HashSalt(pass string, salt []byte) []byte {
 
 //CheckPass checks whether a password is correct
 func CheckPass(user *User, pass string) bool {
-	if user == nil || user.LoginType != LoginTypePlain {
+	if user == nil {
 		return false
 	}
 	return bytes.Equal(HashSalt(pass, user.Salt), user.Password)
@@ -136,8 +129,8 @@ func CreateUser(user *User) (*User, error) {
 	return user, nil
 }
 
-//NewUserFromExtern creates a new user from OAuth
-func NewUserFromExtern(ext *goth.User, login_type int) (*User, error) {
+//NewUserFromGithub creates a new user from OAuth
+func NewUserFromGithub(ext *goth.User) (*User, error) {
 	ext_id, _ := strconv.ParseUint(ext.UserID, 10, 64)
 	bio, ok := ext.RawData["bio"].(string)
 	if !ok {
@@ -145,10 +138,10 @@ func NewUserFromExtern(ext *goth.User, login_type int) (*User, error) {
 	}
 	user := &User{
 		Name:      ext.Name,
+		Email:     ext.Email,
 		AvatarURL: ext.AvatarURL,
 		Bio:       bio,
-		ExternID:  ext_id,
-		LoginType: login_type,
+		GithubID:  ext_id,
 		IsActive:  true,
 	}
 	return user, nil
@@ -160,6 +153,8 @@ func GenSalt() string {
 }
 
 //UpdateUserGithubID update a user github_id
-func UpdateUserGithubID(user *User, ghid uint64) {
-	db.Model(user).Select("github_id").Updates(map[string]interface{}{"github_id": ghid})
+func UpdateUserGithubID(user *User, github_id uint64) *User {
+	db.Model(user).Select("github_id").Updates(map[string]interface{}{"github_id": github_id})
+	user.GithubID = github_id
+	return user
 }

@@ -2,21 +2,21 @@ package service
 
 import (
 	"net/http"
+	"strconv"
 
 	"github.com/gin-gonic/gin"
-	"github.com/wzru/gitran-server/middleware"
 	"github.com/wzru/gitran-server/model"
 )
 
 //GetUser get a user info
 func GetUser(ctx *gin.Context) {
-	login := ctx.Param("username")
-	user := model.GetUserByName(login)
+	id, _ := strconv.ParseUint(ctx.Param("id"), 10, 64)
+	user := model.GetUserByID(id)
 	if user == nil {
 		ctx.JSON(http.StatusNotFound, model.Result404)
 		return
 	}
-	info := model.GetUserInfoFromUser(user, middleware.HasUserPermission(ctx, user.ID))
+	info := model.GetUserInfoFromUser(user)
 	ctx.JSON(http.StatusOK,
 		model.Result{
 			Success: true,

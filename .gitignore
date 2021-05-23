@@ -1,11 +1,13 @@
-config.json
-config-dev.json
+config*.json
+!config-example.json
 *.exe
+gitran-server
 
 bin/
 log/
 output/
 data/
+sql/
 
 .idea/
 .vscode/

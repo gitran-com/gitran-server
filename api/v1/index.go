@@ -60,7 +60,7 @@ func initProj(g *gin.RouterGroup) {
 
 func initUser(g *gin.RouterGroup) {
 	gg := g.Group("/users")
-	gg.GET("/:username", controller.GetUser)
+	gg.GET("/:id", controller.GetUser)
 	gg.Use(middleware.AuthUserJWT())
 	{
 		// gg.PUT("/:username", controller.UpdateUser)
