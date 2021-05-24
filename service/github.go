@@ -7,12 +7,14 @@ import (
 
 	"github.com/gin-contrib/sessions"
 	"github.com/gin-gonic/gin"
+	"github.com/google/go-github/github"
 	"github.com/markbates/goth/gothic"
 	log "github.com/sirupsen/logrus"
 	"github.com/wzru/gitran-server/config"
 	"github.com/wzru/gitran-server/constant"
 	"github.com/wzru/gitran-server/middleware"
 	"github.com/wzru/gitran-server/model"
+	"golang.org/x/oauth2"
 )
 
 //GitHub OAuth
@@ -100,4 +102,54 @@ func AuthGithubImport(ctx *gin.Context) {
 	} else {
 		ctx.Redirect(http.StatusTemporaryRedirect, next)
 	}
+}
+
+func GetGithubTokens(ctx *gin.Context) {
+	user := ctx.Keys["user"].(*model.User)
+	tk := model.GetValidTokensByOwnerID(user.ID, constant.TypeGithub)
+	ctx.JSON(http.StatusOK, model.Result{
+		Success: true,
+		Data: gin.H{
+			"tokens": tk,
+		},
+	})
+}
+
+func GetGithubRepos(ctx *gin.Context) {
+	user := ctx.Keys["user"].(*model.User)
+	token_id, _ := strconv.ParseUint(ctx.Param("id"), 10, 64)
+	tk := model.GetTokenByID(token_id)
+	if tk == nil || tk.OwnerID != user.ID {
+		ctx.JSON(http.StatusBadRequest, model.Result404)
+	} else {
+		ctx.JSON(http.StatusOK, model.Result{
+			Success: true,
+			Data: gin.H{
+				"repo_infos": getGithubReposFromToken(tk.AccessToken),
+			},
+		})
+	}
+}
+
+func getGithubReposFromToken(token string) []model.RepoInfo {
+	ts := oauth2.StaticTokenSource(
+		&oauth2.Token{AccessToken: token},
+	)
+	ctx := context.Background()
+	tc := oauth2.NewClient(ctx, ts)
+	client := github.NewClient(tc)
+	repos, _, err := client.Repositories.List(ctx, "", nil)
+	var repo_infos []model.RepoInfo
+	if err != nil {
+		log.Warnf("getGithubReposFromToken error: %+v", err.Error())
+	}
+	for _, repo := range repos {
+		repo_infos = append(repo_infos, model.RepoInfo{
+			ID:        uint64(*repo.ID),
+			OwnerName: *repo.Owner.Login,
+			Name:      *repo.Name,
+			URL:       *repo.URL,
+		})
+	}
+	return repo_infos
 }

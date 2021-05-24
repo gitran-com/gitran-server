@@ -25,6 +25,8 @@ func initAuth(g *gin.RouterGroup) {
 		gg.GET("/github", controller.AuthGithub)
 		gg.GET("/github/login", controller.AuthGithubLogin)
 		gg.GET("/github/import", middleware.AuthUserJWT(), controller.AuthGithubImport)
+		gg.GET("/github/tokens", middleware.AuthUserJWT(), controller.GetGithubTokens)
+		gg.GET("/github/repos/:id", middleware.AuthUserJWT(), controller.GetGithubRepos)
 	}
 }
 

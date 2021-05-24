@@ -8,14 +8,14 @@ import (
 
 //Token 存储Github等来源的Token
 type Token struct {
-	ID             uint64    `gorm:"primaryKey;autoIncrement"`
-	Valid          bool      ``
-	Source         int       `gorm:"type:varchar(16);index"`
-	OwnerID        uint64    `gorm:"index"`
-	OwnerName      string    `gorm:"type:varchar(32)"`
-	OwnerAvatarURL string    `gorm:"type:varchar(128)"`
-	AccessToken    string    `json:"access_token" gorm:"type:varchar(128)"`
-	Scope          string    `json:"scope" gorm:"type:varchar(8);index"`
+	ID             uint64    `json:"id" gorm:"primaryKey;autoIncrement"`
+	Valid          bool      `json:"-"`
+	Source         int       `json:"-" gorm:"type:varchar(16);index"`
+	OwnerID        uint64    `json:"-" gorm:"index"`
+	OwnerName      string    `json:"owner_name" gorm:"type:varchar(32)"`
+	OwnerAvatarURL string    `json:"avatar_url" gorm:"type:varchar(128)"`
+	AccessToken    string    `json:"-" gorm:"type:varchar(128)"`
+	Scope          string    `json:"-" gorm:"type:varchar(8);index"`
 	CreatedAt      time.Time `json:"created_at"`
 }
 
@@ -32,10 +32,10 @@ func NewToken(tk *Token) (*Token, error) {
 	return tk, nil
 }
 
-//GetTokenByOwnerID get a token by owner id
-func GetTokensByOwnerID(oid uint64, src int) []Token {
+//GetValidTokensByOwnerID get a token by owner id
+func GetValidTokensByOwnerID(oid uint64, src int) []Token {
 	var tk []Token
-	db.Where("owner_id=? AND source=?", oid, src).First(&tk)
+	db.Where("owner_id=? AND source=? AND valid=?", oid, src, true).First(&tk)
 	return tk
 }
 

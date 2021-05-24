@@ -28,3 +28,11 @@ func AuthGithubLogin(ctx *gin.Context) {
 func AuthGithubImport(ctx *gin.Context) {
 	service.AuthGithubImport(ctx)
 }
+
+func GetGithubTokens(ctx *gin.Context) {
+	service.GetGithubTokens(ctx)
+}
+
+func GetGithubRepos(ctx *gin.Context) {
+	service.GetGithubRepos(ctx)
+}

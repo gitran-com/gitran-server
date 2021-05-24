@@ -11,6 +11,8 @@ require (
 	github.com/go-co-op/gocron v0.3.2
 	github.com/go-git/go-git/v5 v5.2.0
 	github.com/golang/protobuf v1.5.2 // indirect
+	github.com/google/go-github v17.0.0+incompatible
+	github.com/google/go-querystring v1.1.0 // indirect
 	github.com/imdario/mergo v0.3.11 // indirect
 	github.com/jehiah/go-strftime v0.0.0-20171201141054-1d33003b3869 // indirect
 	github.com/jonboulle/clockwork v0.2.2 // indirect
@@ -22,7 +24,7 @@ require (
 	github.com/tebeka/strftime v0.1.5 // indirect
 	github.com/whilp/git-urls v1.0.0
 	golang.org/x/net v0.0.0-20210510120150-4163338589ed // indirect
-	golang.org/x/oauth2 v0.0.0-20210514164344-f6687ab2804c // indirect
+	golang.org/x/oauth2 v0.0.0-20210514164344-f6687ab2804c
 	google.golang.org/appengine v1.6.7 // indirect
 	gopkg.in/yaml.v2 v2.3.0
 	gorm.io/driver/mysql v1.0.3
