@@ -67,7 +67,7 @@ func pushGit(cfg *model.ProjCfg) {
 			Username: config.APP.Name,
 			Password: tk.AccessToken,
 		}})
-	if err != nil && err.Error() != constant.GitErrorUpToDate {
+	if err != nil && err.Error() != constant.ErrGitUpToDate {
 		log.Warnf("%v push failed : %v", proj.Path, err.Error())
 		model.UpdateProjCfgPushStatus(cfg, constant.SyncStatFail)
 		return
@@ -125,7 +125,7 @@ func pullGit(cfg *model.ProjCfg) {
 			Username: config.APP.Name,
 			Password: tk.AccessToken,
 		}})
-	if err != nil && err.Error() != constant.GitErrorUpToDate {
+	if err != nil && err.Error() != constant.ErrGitUpToDate {
 		log.Warnf("%v pull failed : %v", proj.Path, err.Error())
 		model.UpdateProjCfgPullStatus(cfg, constant.SyncStatFail)
 		return

@@ -29,7 +29,7 @@ func Login(ctx *gin.Context) {
 		ctx.JSON(http.StatusUnauthorized, model.Result{
 			Success: false,
 			Msg:     "用户名或密码错误",
-			Code:    constant.ErrorLoginOrPasswordIncorrect,
+			Code:    constant.ErrLoginOrPasswordIncorrect,
 			Data:    nil,
 		})
 	}
@@ -69,6 +69,7 @@ func Register(ctx *gin.Context) {
 					Success: false,
 					Msg:     err.Error(),
 					Data:    nil,
+					Code:    -1,
 				})
 			return
 		}
@@ -77,7 +78,7 @@ func Register(ctx *gin.Context) {
 			model.Result{
 				Success: false,
 				Msg:     "邮箱不可用",
-				Code:    constant.ErrorEmailExists,
+				Code:    constant.ErrEmailExists,
 				Data:    nil,
 			})
 	}

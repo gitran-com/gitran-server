@@ -5,8 +5,8 @@ import (
 	"github.com/wzru/gitran-server/service"
 )
 
-func ListProj(ctx *gin.Context) {
-	service.ListProj(ctx)
+func ListUserProj(ctx *gin.Context) {
+	service.ListUserProj(ctx)
 }
 
 func GetProj(ctx *gin.Context) {

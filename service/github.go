@@ -148,7 +148,7 @@ func getGithubReposFromToken(token string) []model.RepoInfo {
 			ID:        uint64(*repo.ID),
 			OwnerName: *repo.Owner.Login,
 			Name:      *repo.Name,
-			URL:       *repo.URL,
+			URL:       *repo.HTMLURL,
 		})
 	}
 	return repo_infos

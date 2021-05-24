@@ -1,6 +1,7 @@
 package model
 
 import (
+	"strconv"
 	"strings"
 
 	log "github.com/sirupsen/logrus"
@@ -29,7 +30,7 @@ func CheckLang(lang *Language) bool {
 	return false
 }
 
-func CheckLangs(langs []Language) bool {
+func ValidateLangs(langs []Language) bool {
 	for _, lang := range langs {
 		ok := CheckLang(&lang)
 		if !ok {
@@ -64,19 +65,20 @@ func GetLangByCode(code string) *Language {
 	return nil
 }
 
-//GetLangsFromString extract []Lang from string like "eng|zho"
-func GetLangsFromString(s string) []Language {
+//ParseLangs extract []Lang from string like "eng|zho"
+func ParseLangs(s string) []Language {
 	if s == "" {
 		return nil
 	}
 	ss := strings.Split(s, constant.Delim)
 	langs := make([]Language, len(ss))
-	for i, code := range ss {
-		lang := GetLangByCode(code)
+	for i, id := range ss {
+		num, _ := strconv.Atoi(id)
+		lang := GetLangByID(num)
 		if lang == nil {
-			log.Warnf("unknown language %v", code)
+			log.Warnf("unknown language #%v", num)
 		} else {
-			langs[i] = *GetLangByCode(code)
+			langs[i] = *lang
 		}
 	}
 	return langs

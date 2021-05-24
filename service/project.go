@@ -1,10 +1,13 @@
 package service
 
 import (
+	"fmt"
 	"net/http"
 	"os"
 	"regexp"
 	"strconv"
+
+	githttp "github.com/go-git/go-git/v5/plumbing/transport/http"
 
 	"github.com/gin-gonic/gin"
 	"github.com/go-git/go-git/v5"
@@ -21,13 +24,13 @@ var (
 	urlNameReg = "^[A-Za-z0-9-_]{1,32}$"
 )
 
-//checkURLName checks if a name is legal (to be in URL)
-func checkURLName(name string) bool {
+//validateURLName checks if a name is legal (to be in URL)
+func validateURLName(name string) bool {
 	ok, _ := regexp.Match(urlNameReg, []byte(name))
 	return ok
 }
 
-func checkGitURL(url string) bool {
+func validateGitURL(url string) bool {
 	rmt := git.NewRemote(memory.NewStorage(), &gitconfig.RemoteConfig{
 		URLs: []string{url},
 	})
@@ -60,12 +63,8 @@ func GetOrgProjByName(ctx *gin.Context, owner string, name string) *model.Projec
 
 //GetProj get a project info
 func GetProj(ctx *gin.Context) {
-	owner := ctx.Param("owner")
-	name := ctx.Param("project")
-	proj := GetUserProjByName(ctx, owner, name)
-	if proj == nil {
-		proj = GetOrgProjByName(ctx, owner, name)
-	}
+	id, _ := strconv.ParseUint(ctx.Param("id"), 10, 64)
+	proj := model.GetProjByID(id)
 	if proj == nil {
 		ctx.JSON(http.StatusNotFound, model.Result404)
 		return
@@ -80,49 +79,61 @@ func GetProj(ctx *gin.Context) {
 	})
 }
 
-//ListProj list all projects
-func ListProj(ctx *gin.Context) {
-	// usr, org, tp := model.GetOwnerByName(ctx.Param("owner"))
-	// if tp == constant.OwnerUsr {
-	// 	if usr == nil {
-	// 		ctx.JSON(http.StatusNotFound, model.Result404)
-	// 		return
-	// 	}
-	// 	ctx.JSON(http.StatusOK, model.Result{
-	// 		Success: true,
-	// 		Msg:     "",
-	// 		Data: gin.H{
-	// 			"projects:": model.GetProjInfosFromProjs(model.ListProjFromUser(usr, middleware.HasUserPermission(ctx, usr.ID))),
-	// 		}})
-	// 	return
-	// } else {
-	// 	//TODO
-	// 	if org == nil {
-	// 		ctx.JSON(http.StatusNotFound, model.Result404)
-	// 		return
-	// 	}
-	// }
+//ListUserProj list all projects
+func ListUserProj(ctx *gin.Context) {
+	user_id, _ := strconv.ParseUint(ctx.Param("id"), 10, 64)
+	ctx.JSON(http.StatusOK, model.Result{
+		Success: true,
+		Msg:     "",
+		Data: gin.H{
+			"proj_infos": model.GetProjInfosFromProjs(model.ListUserProj(user_id)),
+		}})
 }
 
 //CreateUserProj create a new user project
 func CreateUserProj(ctx *gin.Context) {
 	name := ctx.PostForm("name")
-	// ot := constant.OwnerUsr
+	uri := ctx.PostForm("uri")
 	desc := ctx.PostForm("desc")
-	userID, _ := strconv.Atoi(ctx.GetString("user-id"))
-	userName := ctx.GetString("user-name")
-	// isPrvt := ctx.PostForm("is_private") == "true"
+	user := ctx.Keys["user"].(*model.User)
 	gitURL := ctx.PostForm("git_url")
 	src := ctx.PostForm("src_langs")
 	trn := ctx.PostForm("trn_langs")
-	srcLangs := model.GetLangsFromString(src)
-	trnLangs := model.GetLangsFromString(trn)
+	srcLangs := model.ParseLangs(src)
+	trnLangs := model.ParseLangs(trn)
 	tp, _ := strconv.Atoi(ctx.PostForm("type"))
-	if !checkURLName(name) {
+	var token *model.Token
+	var token_id uint64
+	var err error
+	if token_id, err = strconv.ParseUint(ctx.PostForm("token_id"), 10, 64); err == nil {
+		token = model.GetTokenByID(token_id)
+	} else {
+		token = nil
+	}
+	if token == nil && tp == constant.TypeGithub {
+		ctx.JSON(http.StatusBadRequest, model.Result{
+			Success: false,
+			Msg:     "Token不合法",
+			Data:    nil,
+			Code:    constant.ErrTokenIllegal,
+		})
+		return
+	}
+	if model.GetProjByURI(uri) != nil {
+		ctx.JSON(http.StatusBadRequest, model.Result{
+			Success: false,
+			Msg:     "URI已被占用",
+			Data:    nil,
+			Code:    constant.ErrProjUriIllegal,
+		})
+		return
+	}
+	if !validateURLName(name) {
 		ctx.JSON(http.StatusBadRequest, model.Result{
 			Success: false,
 			Msg:     "名字不合法",
 			Data:    nil,
+			Code:    constant.ErrProjNameIllegal,
 		})
 		return
 	}
@@ -131,53 +142,61 @@ func CreateUserProj(ctx *gin.Context) {
 			Success: false,
 			Msg:     "源语言不能为空",
 			Data:    nil,
+			Code:    constant.ErrProjSrcLangEmpty,
 		})
 		return
 	}
-	if !model.CheckLangs(srcLangs) {
+	if !model.ValidateLangs(srcLangs) {
 		ctx.JSON(http.StatusBadRequest, model.Result{
 			Success: false,
 			Msg:     "源语言不合法",
 			Data:    nil,
+			Code:    constant.ErrProjSrcLangIllegal,
 		})
 		return
 	}
-	if !model.CheckLangs(trnLangs) {
+	if !model.ValidateLangs(trnLangs) {
 		ctx.JSON(http.StatusBadRequest, model.Result{
 			Success: false,
 			Msg:     "目标语言不合法",
 			Data:    nil,
+			Code:    constant.ErrProjTrnLangIllegal,
 		})
 		return
 	}
-	if !checkGitURL(gitURL) {
+	if tp == constant.TypeGitURL && !validateGitURL(gitURL) {
 		ctx.JSON(http.StatusBadRequest, model.Result{
 			Success: false,
 			Msg:     "Git URL不合法",
 			Data:    nil,
+			Code:    constant.ErrGitUrlIllegal,
 		})
 		return
 	}
-	proj := &model.Project{
-		Name:     name,
-		Desc:     desc,
-		OwnerID:  uint64(userID),
-		Type:     tp,
-		Status:   constant.ProjStatCreated,
-		GitURL:   gitURL,
-		Path:     config.ProjPath + userName + "/" + name + "/",
-		SrcLangs: src,
-		TrnLangs: trn,
-	}
-	if findProj := model.GetProjByOwnerIDName(proj.OwnerID, proj.Name, true); findProj != nil {
+	fmt.Printf("token=%+v\n", token)
+	if token != nil && token.OwnerID != user.ID {
 		ctx.JSON(http.StatusBadRequest, model.Result{
 			Success: false,
-			Msg:     "项目已存在",
+			Msg:     "Token不合法",
 			Data:    nil,
+			Code:    constant.ErrTokenIllegal,
 		})
 		return
 	}
-	proj, err := model.NewProj(proj)
+	proj, err := model.NewProj(&model.Project{
+		Name:     name,
+		URI:      uri,
+		OwnerID:  user.ID,
+		TokenID:  token_id,
+		Token:    token,
+		Type:     tp,
+		Status:   constant.ProjStatCreated,
+		Desc:     desc,
+		GitURL:   gitURL,
+		Path:     config.ProjPath + "/" + uri + "/",
+		SrcLangs: src,
+		TrnLangs: trn,
+	})
 	if err != nil {
 		ctx.JSON(http.StatusBadRequest, model.Result{
 			Success: false,
@@ -186,12 +205,12 @@ func CreateUserProj(ctx *gin.Context) {
 		})
 		return
 	}
+	go initProj(proj)
 	ctx.JSON(http.StatusCreated, model.Result{
 		Success: true,
 		Msg:     "创建项目成功",
 		Data:    nil,
 	})
-	go initProj(proj)
 }
 
 //initProj init a new project
@@ -199,6 +218,22 @@ func initProj(proj *model.Project) {
 	if proj.Type == constant.TypeGitURL {
 		_, err := git.PlainClone(proj.Path, false, &git.CloneOptions{
 			URL:          proj.GitURL,
+			Progress:     os.Stdout, //TODO: update progress in DB
+			Depth:        1,
+			SingleBranch: false,
+		})
+		if err == nil {
+			model.UpdateProjStatus(proj, constant.ProjStatInit)
+		} else {
+			log.Warnf("git clone error : %v", err.Error())
+		}
+	} else if proj.Type == constant.TypeGithub {
+		_, err := git.PlainClone(proj.Path, false, &git.CloneOptions{
+			URL: proj.GitURL,
+			Auth: &githttp.BasicAuth{
+				Username: config.APP.Name,
+				Password: proj.Token.AccessToken,
+			},
 			Progress:     os.Stdout,
 			Depth:        1,
 			SingleBranch: false,
@@ -209,6 +244,7 @@ func initProj(proj *model.Project) {
 			log.Warnf("git clone error : %v", err.Error())
 		}
 	} else {
+		log.Errorf("initProj error: type %v has not been implemented", proj.Type)
 		//TODO
 	}
 }

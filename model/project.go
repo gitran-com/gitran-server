@@ -4,15 +4,16 @@ import (
 	"time"
 
 	"github.com/wzru/gitran-server/config"
-	"github.com/wzru/gitran-server/constant"
 )
 
 //Project means project model
 type Project struct {
 	ID        uint64    `gorm:"primaryKey;autoIncrement"`
 	Name      string    `gorm:"type:varchar(32);index;notNull"`
+	URI       string    `gorm:"type:varchar(32);uniqueIndex;notNull"`
 	OwnerID   uint64    `gorm:"index;notNull"`
 	TokenID   uint64    `gorm:"index"`
+	Token     *Token    `gorm:"-"`
 	Type      int       `gorm:"index;notNull"`
 	Status    int       `gorm:"notNull"`
 	Desc      string    `gorm:"type:varchar(256)"`
@@ -28,6 +29,7 @@ type Project struct {
 type ProjInfo struct {
 	ID        uint64     `json:"id"`
 	Name      string     `json:"name"`
+	URI       string     `json:"uri"`
 	OwnerID   uint64     `json:"owner_id"`
 	Type      int        `json:"type"`
 	Status    int        `json:"status"`
@@ -48,6 +50,16 @@ func (*Project) TableName() string {
 func GetProjByID(id uint64) *Project {
 	var proj []Project
 	db.Where("id=?", id).First(&proj)
+	if len(proj) > 0 {
+		return &proj[0]
+	}
+	return nil
+}
+
+//GetProjByURI get project by name
+func GetProjByURI(uri string) *Project {
+	var proj []Project
+	db.Where("uri=?", uri).First(&proj)
 	if len(proj) > 0 {
 		return &proj[0]
 	}
@@ -89,8 +101,8 @@ func GetProjInfoFromProj(proj *Project) *ProjInfo {
 		Type:      proj.Type,
 		Status:    proj.Status,
 		GitURL:    proj.GitURL,
-		SrcLangs:  GetLangsFromString(proj.SrcLangs),
-		TrnLangs:  GetLangsFromString(proj.TrnLangs),
+		SrcLangs:  ParseLangs(proj.SrcLangs),
+		TrnLangs:  ParseLangs(proj.TrnLangs),
 		CreatedAt: proj.CreatedAt,
 		UpdatedAt: proj.UpdatedAt,
 	}
@@ -105,17 +117,10 @@ func GetProjInfosFromProjs(projs []Project) []ProjInfo {
 	return pi
 }
 
-//ListProjFromUser list all projects from a user
-func ListProjFromUser(user *User, priv bool) []Project {
-	if user == nil {
-		return nil
-	}
+//ListUserProj list all projects from a user
+func ListUserProj(user_id uint64) []Project {
 	var proj []Project
-	if priv {
-		db.Where("owner_id=? AND owner_type=?", user.ID, constant.OwnerUsr).Find(&proj)
-	} else {
-		db.Where("owner_id=? AND owner_type=? AND is_private=?", user.ID, constant.OwnerUsr, false).Find(&proj)
-	}
+	db.Where("owner_id=?", user_id).Find(&proj)
 	return proj
 }
 

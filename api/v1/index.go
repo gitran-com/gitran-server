@@ -30,16 +30,19 @@ func initAuth(g *gin.RouterGroup) {
 	}
 }
 
-func initLang(g *gin.RouterGroup) {
-	gg := g.Group("/languages")
-	gg.GET("", controller.GetLangs)
-	gg.GET("/:language_id", controller.GetLang)
+func initUser(g *gin.RouterGroup) {
+	gg := g.Group("/users")
+	gg.GET("/:id", controller.GetUser)
+	gg.GET("/:id/projects", controller.ListUserProj)
+	gg.Use(middleware.AuthUserJWT())
+	{
+		// gg.PUT("/:username", controller.UpdateUser)
+	}
 }
 
 func initProj(g *gin.RouterGroup) {
 	gg := g.Group("/projects")
-	gg.GET("/:owner", controller.ListProj)
-	gg.GET("/:owner/:project", controller.GetProj)
+	gg.GET("/:id", controller.GetProj)
 	gg.Use(middleware.AuthUserJWT())
 	{
 		gg.POST("", controller.CreateUserProj)
@@ -47,25 +50,22 @@ func initProj(g *gin.RouterGroup) {
 	gg.Use(middleware.AuthUserProjJWT())
 	{
 		//Project Config
-		gg.GET("/:owner/:project/configs", controller.ListUserProjCfg)
-		gg.POST("/:owner/:project/configs", controller.CreateUserProjCfg)
-		gg.PUT("/:owner/:project/configs", controller.SaveUserProjCfg)
+		gg.GET("/:id/configs", controller.ListUserProjCfg)
+		gg.POST("/:id/configs", controller.CreateUserProjCfg)
+		gg.PUT("/:id/configs", controller.SaveUserProjCfg)
 		// gg.GET("/:owner/:project/configs/:config_id", controller.GetUserProjCfg)
 
 		//Branch Rule
-		gg.GET("/:owner/:project/configs/:config_id/rules", controller.ListUserProjBrchRule)
-		gg.POST("/:owner/:project/configs/:config_id/rules", controller.CreateUserProjBrchRule)
+		gg.GET("/:id/configs/:config_id/rules", controller.ListUserProjBrchRule)
+		gg.POST("/:id/configs/:config_id/rules", controller.CreateUserProjBrchRule)
 		// gg.PUT("/:owner/:project/configs/:config_id/rules", controller.SaveUserProjBrchRule)
 		// gg.GET("/:owner/:project/configs/:config_id/rules/:rule_id", controller.GetUserProjBrchRule)
 		// gg.GET("/:owner/:project/branches", controller.ListUserProjBrch)
 	}
 }
 
-func initUser(g *gin.RouterGroup) {
-	gg := g.Group("/users")
-	gg.GET("/:id", controller.GetUser)
-	gg.Use(middleware.AuthUserJWT())
-	{
-		// gg.PUT("/:username", controller.UpdateUser)
-	}
+func initLang(g *gin.RouterGroup) {
+	gg := g.Group("/languages")
+	gg.GET("", controller.GetLangs)
+	gg.GET("/:language_id", controller.GetLang)
 }
