@@ -65,8 +65,8 @@ func NewProjCfg(cfg *ProjCfg) (*ProjCfg, error) {
 	return cfg, nil
 }
 
-//ListProjCfgFromProjID list all project config by project id
-func ListProjCfgFromProjID(pid uint64) []ProjCfg {
+//ListProjCfgByProjID list all project config by project id
+func ListProjCfgByProjID(pid uint64) []ProjCfg {
 	var pc []ProjCfg
 	db.Where("proj_id=?", pid).Find(&pc)
 	return pc

@@ -18,6 +18,11 @@ const (
 )
 
 const (
+	ErrGitChkout = 3000 + iota
+	ErrGitCommit
+)
+
+const (
 	//ErrGitUpToDate git already up-to-date
 	ErrGitUpToDate = "already up-to-date"
 )

@@ -49,23 +49,22 @@ func initProj(g *gin.RouterGroup) {
 	}
 	gg.Use(middleware.AuthUserProjJWT())
 	{
+		//Repo Branch
+		gg.GET("/:id/branches", controller.ListProjBrch)
+
 		//Project Config
 		gg.GET("/:id/configs", controller.ListUserProjCfg)
 		gg.POST("/:id/configs", controller.CreateUserProjCfg)
-		gg.PUT("/:id/configs", controller.SaveUserProjCfg)
-		// gg.GET("/:owner/:project/configs/:config_id", controller.GetUserProjCfg)
+		gg.POST("/:id/configs/:config_id", controller.SaveUserProjCfg)
 
 		//Branch Rule
 		gg.GET("/:id/configs/:config_id/rules", controller.ListUserProjBrchRule)
 		gg.POST("/:id/configs/:config_id/rules", controller.CreateUserProjBrchRule)
-		// gg.PUT("/:owner/:project/configs/:config_id/rules", controller.SaveUserProjBrchRule)
-		// gg.GET("/:owner/:project/configs/:config_id/rules/:rule_id", controller.GetUserProjBrchRule)
-		gg.GET("/:id/branches", controller.ListProjBrch)
 	}
 }
 
 func initLang(g *gin.RouterGroup) {
 	gg := g.Group("/languages")
 	gg.GET("", controller.GetLangs)
-	gg.GET("/:language_id", controller.GetLang)
+	gg.GET("/:id", controller.GetLang)
 }

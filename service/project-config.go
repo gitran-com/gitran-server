@@ -30,7 +30,7 @@ func ListUserProjCfg(ctx *gin.Context) {
 		Success: true,
 		Msg:     "success",
 		Data: gin.H{
-			"project_configs": model.ListProjCfgFromProjID(proj.ID),
+			"proj_cfgs": model.ListProjCfgByProjID(proj.ID),
 		}})
 	return
 }
@@ -59,19 +59,15 @@ func GetUserProjBrchRule(ctx *gin.Context) {
 }
 
 func CreateUserProjBrchRule(ctx *gin.Context) {
-	// proj := ctx.Keys["project"].(*model.Project)
 	configID, _ := strconv.ParseUint(ctx.Param("config_id"), 10, 64)
 	cfg := model.GetProjCfgByID(configID)
 	if cfg == nil {
 		ctx.JSON(http.StatusNotFound, model.Result404)
 		return
 	}
-	// srcBr := "refs/heads" + cfg.SrcBr
-	// trnBr := "refs/heads" + cfg.TrnBr
 	srcFiles := ctx.PostForm("src_files")
 	trnFiles := ctx.PostForm("trn_files")
 	ignFiles := ctx.PostFormArray("ign_files")
-	// fmt.Printf("len=%+v, ign_files=%+v\n", len(ignFiles), ignFiles)
 	rule := &model.BrchRule{
 		ProjCfgID: configID,
 		Status:    constant.RuleStatCreated,
@@ -122,6 +118,7 @@ func CreateUserProjCfg(ctx *gin.Context) {
 			Success: false,
 			Msg:     err.Error(),
 			Data:    nil,
+			Code:    -1,
 		})
 		return
 	}
@@ -133,6 +130,7 @@ func CreateUserProjCfg(ctx *gin.Context) {
 			Success: false,
 			Msg:     err.Error(),
 			Data:    nil,
+			Code:    -1,
 		})
 		return
 	}
@@ -151,6 +149,7 @@ func CreateUserProjCfg(ctx *gin.Context) {
 			Success: false,
 			Msg:     err.Error(),
 			Data:    nil,
+			Code:    -1,
 		})
 		return
 	}
@@ -160,24 +159,24 @@ func CreateUserProjCfg(ctx *gin.Context) {
 		Data:    nil,
 	})
 	if pullItv != 0 {
-		pullSchd.Every(pullItv).Minutes().SetTag([]string{proj.Path}).Do(pullGit, proj, projCfg)
+		pullSchd.Every(pullItv).Minutes().SetTag([]string{proj.Path}).Do(pullGit, projCfg)
 	}
-	if pushItv != 0 {
-		pushSchd.Every(pushItv).Minutes().SetTag([]string{proj.Path}).Do(pushGit, proj, projCfg)
+	if proj.Type == constant.TypeGithub && pushItv != 0 {
+		pushSchd.Every(pushItv).Minutes().SetTag([]string{proj.Path}).Do(pushGit, projCfg)
 	}
 }
 
-//SaveUserProjCfg save a project config
+//SaveUserProjCfg save a project config in config file and then commit
 func SaveUserProjCfg(ctx *gin.Context) {
 	proj := ctx.Keys["project"].(*model.Project)
 	user := ctx.Keys["user"].(*model.User)
-	cfgs := model.ListProjCfgFromProjID(proj.ID)
+	cfgs := model.ListProjCfgByProjID(proj.ID)
 	lk := projMutexMap.Lock(proj.ID)
 	defer lk.Unlock()
 	repo, err := git.PlainOpen(proj.Path)
 	wt, _ := repo.Worktree()
 	for _, cfg := range cfgs {
-		if cfg.Changed == false {
+		if !cfg.Changed { //if no changed, no need to commit
 			continue
 		}
 		srcBr := "refs/heads/" + cfg.SrcBr
@@ -189,6 +188,7 @@ func SaveUserProjCfg(ctx *gin.Context) {
 				Success: false,
 				Msg:     err.Error(),
 				Data:    nil,
+				Code:    constant.ErrGitChkout,
 			})
 			return
 		}
@@ -199,6 +199,7 @@ func SaveUserProjCfg(ctx *gin.Context) {
 				Success: false,
 				Msg:     err.Error(),
 				Data:    nil,
+				Code:    -1,
 			})
 			return
 		}
@@ -224,6 +225,7 @@ func SaveUserProjCfg(ctx *gin.Context) {
 					Success: false,
 					Msg:     err.Error(),
 					Data:    nil,
+					Code:    constant.ErrGitCommit,
 				})
 				return
 			}
@@ -234,10 +236,6 @@ func SaveUserProjCfg(ctx *gin.Context) {
 		Msg:     "项目配置更新成功",
 		Data:    nil,
 	})
-}
-
-func SaveUserProjBrchRule(ctx *gin.Context) {
-	//NO
 }
 
 func genCfgFileFromRuleInfos(rules []model.BrchRuleInfo) []byte {

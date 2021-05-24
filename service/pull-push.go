@@ -113,18 +113,25 @@ func pullGit(cfg *model.ProjCfg) {
 		return
 	}
 	tk := model.GetTokenByID(proj.TokenID)
-	if tk == nil {
+	if proj.Type == constant.TypeGithub && tk == nil {
 		log.Warnf("%v get token failed", proj.Path)
 		model.UpdateProjCfgPushStatus(cfg, constant.SyncStatFail)
 		return
 	}
-	err = wt.Pull(&git.PullOptions{
-		RemoteName:   "origin",
-		SingleBranch: true,
-		Auth: &http.BasicAuth{
-			Username: config.APP.Name,
-			Password: tk.AccessToken,
-		}})
+	if tk != nil {
+		err = wt.Pull(&git.PullOptions{
+			RemoteName:   "origin",
+			SingleBranch: true,
+			Auth: &http.BasicAuth{
+				Username: config.APP.Name,
+				Password: tk.AccessToken,
+			}})
+	} else {
+		err = wt.Pull(&git.PullOptions{
+			RemoteName:   "origin",
+			SingleBranch: true,
+		})
+	}
 	if err != nil && err.Error() != constant.ErrGitUpToDate {
 		log.Warnf("%v pull failed : %v", proj.Path, err.Error())
 		model.UpdateProjCfgPullStatus(cfg, constant.SyncStatFail)
