@@ -18,7 +18,6 @@ type oauth struct {
 	Enable       bool   `json:"enable"`
 	ClientID     string `json:"client_id"`
 	ClientSecret string `json:"client_secret"`
-	CallbackURL  string `json:"callback_url"`
 }
 
 type db struct {
@@ -40,6 +39,7 @@ type jwt struct {
 
 type app struct {
 	Name          string `json:"name"`
+	URL           string `json:"url"`
 	Addr          string `json:"addr"`
 	APIPrefix     string `json:"api_prefix"`
 	SessionSecret string `json:"session_secret"`

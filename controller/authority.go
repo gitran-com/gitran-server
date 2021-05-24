@@ -24,3 +24,7 @@ func AuthGithub(ctx *gin.Context) {
 func AuthGithubLogin(ctx *gin.Context) {
 	service.AuthGithubLogin(ctx)
 }
+
+func AuthGithubImport(ctx *gin.Context) {
+	service.AuthGithubImport(ctx)
+}

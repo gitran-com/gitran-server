@@ -30,8 +30,14 @@ func AuthUserJWT() gin.HandlerFunc {
 			ctx.Abort()
 			return
 		}
-		ctx.Set("user-id", clm.Id)
-		ctx.Set("user-name", clm.Audience)
+		id, _ := strconv.ParseUint(clm.Id, 10, 64)
+		user := model.GetUserByID(id)
+		if user == nil {
+			ctx.JSON(http.StatusUnauthorized, model.Result401)
+			ctx.Abort()
+			return
+		}
+		ctx.Set("user", user)
 		ctx.Next()
 	}
 }

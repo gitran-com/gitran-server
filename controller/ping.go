@@ -10,7 +10,8 @@ var html = `
 <html>
 <body>
   Pong! From Gitran API v1.<hr>
-  <a href="/api/v1/auth/github"><Button>/api/v1/auth/github</Button></a>
+  <a href="/api/v1/auth/github?scope=user"><Button>/api/v1/auth/github?scope=user</Button></a>
+  <a href="/api/v1/auth/github?scope=repo"><Button>/api/v1/auth/github?scope=repo</Button></a>
 </body>
 </html>
 `

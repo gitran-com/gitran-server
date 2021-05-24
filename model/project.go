@@ -12,6 +12,7 @@ type Project struct {
 	ID        uint64    `gorm:"primaryKey;autoIncrement"`
 	Name      string    `gorm:"type:varchar(32);index;notNull"`
 	OwnerID   uint64    `gorm:"index;notNull"`
+	TokenID   uint64    `gorm:"index"`
 	Type      int       `gorm:"index;notNull"`
 	Status    int       `gorm:"notNull"`
 	Desc      string    `gorm:"type:varchar(256)"`

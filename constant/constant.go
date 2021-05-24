@@ -19,10 +19,12 @@ const (
 )
 
 const (
-	//TypeCommon 普通项目
-	TypeCommon int = iota
+	//TypePlain 普通项目
+	TypePlain int = iota
 	//TypeGitURL Git URL引入的公开项目
 	TypeGitURL
+	//TypeGithub Github token引入的项目
+	TypeGithub
 )
 
 const (

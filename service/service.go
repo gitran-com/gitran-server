@@ -1,11 +1,20 @@
 package service
 
 import (
+	"fmt"
+	"net/url"
+
 	"github.com/markbates/goth"
 	"github.com/markbates/goth/providers/github"
 	log "github.com/sirupsen/logrus"
 	"github.com/wzru/gitran-server/config"
 	"github.com/wzru/gitran-server/model"
+)
+
+var (
+	GithubUserProvider *github.Provider
+	GithubRepoProvider *github.Provider
+	GithubRoute        string
 )
 
 //Init init the service
@@ -35,7 +44,20 @@ func Init() error {
 		}
 	}
 	if config.Github.Enable {
-		goth.UseProviders(github.New(config.Github.ClientID, config.Github.ClientSecret, config.Github.CallbackURL, ""))
+		url, err := url.Parse(config.APP.URL)
+		if err != nil {
+			log.Errorf("service/init parse url error: %+v", err.Error())
+		}
+		if url.Scheme != "http" && url.Scheme != "https" {
+			url.Scheme = "http"
+		}
+		fmt.Printf("url[%s]=%+v\n", config.APP.URL, *url)
+		GithubRoute = fmt.Sprintf("%s://%s%s/api/v1/auth/github/", url.Scheme, url.Host, config.APP.APIPrefix)
+		GithubUserProvider = github.New(config.Github.ClientID, config.Github.ClientSecret, GithubRoute+"login", "user")
+		GithubUserProvider.SetName("github-user")
+		GithubRepoProvider = github.New(config.Github.ClientID, config.Github.ClientSecret, GithubRoute+"import", "repo")
+		GithubRepoProvider.SetName("github-repo")
+		goth.UseProviders(GithubUserProvider, GithubRepoProvider)
 	}
 	return nil
 }

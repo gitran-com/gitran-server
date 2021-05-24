@@ -24,6 +24,7 @@ func initAuth(g *gin.RouterGroup) {
 	if config.Github.Enable {
 		gg.GET("/github", controller.AuthGithub)
 		gg.GET("/github/login", controller.AuthGithubLogin)
+		gg.GET("/github/import", middleware.AuthUserJWT(), controller.AuthGithubImport)
 	}
 }
 
