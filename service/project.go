@@ -6,7 +6,9 @@ import (
 	"os"
 	"regexp"
 	"strconv"
+	"strings"
 
+	"github.com/go-git/go-git/v5/plumbing"
 	githttp "github.com/go-git/go-git/v5/plumbing/transport/http"
 
 	"github.com/gin-gonic/gin"
@@ -247,4 +249,26 @@ func initProj(proj *model.Project) {
 		log.Errorf("initProj error: type %v has not been implemented", proj.Type)
 		//TODO
 	}
+}
+
+func getBrchFromRef(ref string) string {
+	return strings.TrimPrefix(ref, "refs/heads/")
+}
+
+func ListProjBrch(ctx *gin.Context) {
+	proj := ctx.Keys["project"].(*model.Project)
+	repo, _ := git.PlainOpen(proj.Path)
+	refs, _ := repo.Branches()
+	var brchs []string
+	refs.ForEach(func(r *plumbing.Reference) error {
+		brchs = append(brchs, getBrchFromRef(string(r.Name())))
+		// fmt.Printf("branch-name=%+v\n", getBrchFromRef(string(r.Name())))
+		return nil
+	})
+	ctx.JSON(http.StatusOK, model.Result{
+		Success: true,
+		Data: gin.H{
+			"branches": brchs,
+		},
+	})
 }

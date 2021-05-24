@@ -45,42 +45,20 @@ func AuthUserJWT() gin.HandlerFunc {
 //AuthUserProjJWT verifies a jwt if can do something on a project
 func AuthUserProjJWT() gin.HandlerFunc {
 	return func(ctx *gin.Context) {
-		auth := ctx.Request.Header.Get("Authorization")
-		if len(auth) <= 0 {
-			ctx.JSON(http.StatusUnauthorized, model.Result401)
-			ctx.Abort()
-			return
-		}
-		token := strings.Fields(auth)[1]
-		clm, err := ParseToken(token) // 校验token
-		if err != nil {
-			ctx.JSON(http.StatusUnauthorized, model.Result401)
-			ctx.Abort()
-			return
-		}
-		owner := model.GetUserByName(ctx.Param("owner"))
-		if owner == nil {
-			ctx.JSON(http.StatusNotFound, model.Result404)
-			ctx.Abort()
-			return
-		}
-		uid, _ := strconv.ParseUint(clm.Id, 10, 64)
-		if owner.ID != uid {
-			ctx.JSON(http.StatusUnauthorized, model.Result401)
-			ctx.Abort()
-			return
-		}
-		proj := model.GetProjByOwnerIDName(owner.ID, ctx.Param("project"), true)
+		id, _ := strconv.ParseUint(ctx.Param("id"), 10, 64)
+		proj := model.GetProjByID(id)
 		if proj == nil {
 			ctx.JSON(http.StatusNotFound, model.Result404)
 			ctx.Abort()
 			return
 		}
-		ctx.Set("proj-id", proj.ID)
-		ctx.Set("user-id", clm.Id)
-		ctx.Set("user", owner)
+		user := ctx.Keys["user"].(*model.User)
+		if proj.OwnerID != user.ID {
+			ctx.JSON(http.StatusNotFound, model.Result401)
+			ctx.Abort()
+			return
+		}
 		ctx.Set("project", proj)
-		// ctx.Set("user-name", clm.Audience)
 		ctx.Next()
 	}
 }

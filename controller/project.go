@@ -16,3 +16,7 @@ func GetProj(ctx *gin.Context) {
 func CreateUserProj(ctx *gin.Context) {
 	service.CreateUserProj(ctx)
 }
+
+func ListProjBrch(ctx *gin.Context) {
+	service.ListProjBrch(ctx)
+}
