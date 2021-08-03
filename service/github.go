@@ -43,7 +43,7 @@ func AuthGithubLogin(ctx *gin.Context) {
 	}
 	// fmt.Printf("github_user=%+v\n", github_user)
 	//get github id
-	github_id, _ := strconv.ParseUint(github_user.UserID, 10, 64)
+	github_id, _ := strconv.ParseInt(github_user.UserID, 10, 64)
 	//check if this user has ever login
 	user := model.GetUserByGithubID(github_id)
 	if user == nil { //if not
@@ -117,7 +117,7 @@ func GetGithubTokens(ctx *gin.Context) {
 
 func GetGithubRepos(ctx *gin.Context) {
 	user := ctx.Keys["user"].(*model.User)
-	token_id, _ := strconv.ParseUint(ctx.Param("id"), 10, 64)
+	token_id, _ := strconv.ParseInt(ctx.Param("id"), 10, 64)
 	tk := model.GetTokenByID(token_id)
 	if tk == nil || tk.OwnerID != user.ID {
 		ctx.JSON(http.StatusBadRequest, model.Result404)
@@ -145,7 +145,7 @@ func getGithubReposFromToken(token string) []model.RepoInfo {
 	}
 	for _, repo := range repos {
 		repo_infos = append(repo_infos, model.RepoInfo{
-			ID:        uint64(*repo.ID),
+			ID:        int64(*repo.ID),
 			OwnerName: *repo.Owner.Login,
 			Name:      *repo.Name,
 			URL:       *repo.HTMLURL,

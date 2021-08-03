@@ -5,10 +5,6 @@ import (
 	"github.com/wzru/gitran-server/service"
 )
 
-func GetUserProjCfg(ctx *gin.Context) {
-	service.GetUserProjCfg(ctx)
-}
-
 func CreateUserProjCfg(ctx *gin.Context) {
 	service.CreateUserProjCfg(ctx)
 }
@@ -19,10 +15,6 @@ func ListUserProjCfg(ctx *gin.Context) {
 
 func ListUserProjBrchRule(ctx *gin.Context) {
 	service.ListUserProjBrchRule(ctx)
-}
-
-func GetUserProjBrchRule(ctx *gin.Context) {
-	service.GetUserProjBrchRule(ctx)
 }
 
 func CreateUserProjBrchRule(ctx *gin.Context) {

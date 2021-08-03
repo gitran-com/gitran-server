@@ -10,6 +10,7 @@ import (
 //Init 初始化路由
 func Init(g *gin.RouterGroup) {
 	g.GET("/ping", controller.PingV1)
+	g.GET("/test", controller.Test)
 	initAuth(g)
 	initUser(g)
 	initProj(g)
@@ -55,7 +56,7 @@ func initProj(g *gin.RouterGroup) {
 		//Project Config
 		gg.GET("/:id/configs", controller.ListUserProjCfg)
 		gg.POST("/:id/configs", controller.CreateUserProjCfg)
-		gg.POST("/:id/configs/:config_id", controller.SaveUserProjCfg)
+		gg.POST("/:id/configs/save", controller.SaveUserProjCfg)
 
 		//Branch Rule
 		gg.GET("/:id/configs/:config_id/rules", controller.ListUserProjBrchRule)

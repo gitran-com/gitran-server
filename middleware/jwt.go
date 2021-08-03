@@ -8,8 +8,8 @@ import (
 	"strings"
 	"time"
 
-	"github.com/dgrijalva/jwt-go"
 	"github.com/gin-gonic/gin"
+	"github.com/golang-jwt/jwt"
 	"github.com/wzru/gitran-server/config"
 	"github.com/wzru/gitran-server/model"
 )
@@ -30,7 +30,7 @@ func AuthUserJWT() gin.HandlerFunc {
 			ctx.Abort()
 			return
 		}
-		id, _ := strconv.ParseUint(clm.Id, 10, 64)
+		id, _ := strconv.ParseInt(clm.Id, 10, 64)
 		user := model.GetUserByID(id)
 		if user == nil {
 			ctx.JSON(http.StatusUnauthorized, model.Result401)
@@ -45,7 +45,7 @@ func AuthUserJWT() gin.HandlerFunc {
 //AuthUserProjJWT verifies a jwt if can do something on a project
 func AuthUserProjJWT() gin.HandlerFunc {
 	return func(ctx *gin.Context) {
-		id, _ := strconv.ParseUint(ctx.Param("id"), 10, 64)
+		id, _ := strconv.ParseInt(ctx.Param("id"), 10, 64)
 		proj := model.GetProjByID(id)
 		if proj == nil {
 			ctx.JSON(http.StatusNotFound, model.Result404)
@@ -97,19 +97,19 @@ func ParseToken(tokenStr string) (*jwt.StandardClaims, error) {
 }
 
 //HasUserPermission check if this user has permission to user uid by checking JWT
-func HasUserPermission(ctx *gin.Context, uid uint64) bool {
+func HasUserPermission(ctx *gin.Context, uid int64) bool {
 	auth := ctx.Request.Header.Get("Authorization")
 	if len(auth) == 0 {
 		return false
 	}
 	token := strings.Fields(auth)[1]
 	clm, err := ParseToken(token)
-	id, _ := strconv.ParseUint(clm.Id, 10, 64)
+	id, _ := strconv.ParseInt(clm.Id, 10, 64)
 	return err == nil && uid == id
 }
 
 //HasUserPermission check if this user has permission to user uid by checking JWT
-// func HasUserProjPermission(uid uint64, pid uint64) bool {
+// func HasUserProjPermission(uid int64, pid int64) bool {
 // 	proj := model.GetProjByID(pid)
 // 	if proj == nil || proj.OwnerType != constant.OwnerUsr || proj.OwnerID != uid {
 // 		return false

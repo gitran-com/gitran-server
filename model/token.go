@@ -8,10 +8,10 @@ import (
 
 //Token 存储Github等来源的Token
 type Token struct {
-	ID             uint64    `json:"id" gorm:"primaryKey;autoIncrement"`
+	ID             int64     `json:"id" gorm:"primaryKey;autoIncrement"`
 	Valid          bool      `json:"-"`
 	Source         int       `json:"-" gorm:"type:varchar(16);index"`
-	OwnerID        uint64    `json:"-" gorm:"index"`
+	OwnerID        int64     `json:"-" gorm:"index"`
 	OwnerName      string    `json:"owner_name" gorm:"type:varchar(32)"`
 	OwnerAvatarURL string    `json:"avatar_url" gorm:"type:varchar(128)"`
 	AccessToken    string    `json:"-" gorm:"type:varchar(128)"`
@@ -33,14 +33,14 @@ func NewToken(tk *Token) (*Token, error) {
 }
 
 //GetValidTokensByOwnerID get a token by owner id
-func GetValidTokensByOwnerID(oid uint64, src int) []Token {
+func GetValidTokensByOwnerID(oid int64, src int) []Token {
 	var tk []Token
 	db.Where("owner_id=? AND source=? AND valid=?", oid, src, true).First(&tk)
 	return tk
 }
 
 //GetTokenByID gets a token by id
-func GetTokenByID(id uint64) *Token {
+func GetTokenByID(id int64) *Token {
 	var tk []Token
 	db.First(&tk, id)
 	if len(tk) > 0 {

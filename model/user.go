@@ -13,30 +13,18 @@ import (
 
 //User means user
 type User struct {
-	ID          uint64    `gorm:"primaryKey;autoIncrement"`
-	Name        string    `gorm:"type:varchar(32);uniqueIndex"`
-	Email       string    `gorm:"type:varchar(64);index"`
-	AvatarURL   string    `gorm:"type:varchar(128)"`
-	Bio         string    `gorm:"type:varchar(128)"`
-	GithubID    uint64    `gorm:"index"`
-	IsActive    bool      `gorm:"index"`
-	CreatedAt   time.Time ``
-	UpdatedAt   time.Time ``
-	LastLoginAt time.Time ``
-	Password    []byte    `gorm:"type:binary(64)"`
-	Salt        []byte    `gorm:"type:binary(64)"`
-}
-
-//UserInfo means user's infomation
-type UserInfo struct {
-	ID        uint64    `json:"id"`
-	Name      string    `json:"name,omitempty"`
-	Email     string    `json:"email"`
-	AvatarURL string    `json:"avatar_url"`
-	Bio       string    `json:"bio"`
-	IsActive  bool      `json:"is_active"`
-	CreatedAt time.Time `json:"created_at"`
-	UpdatedAt time.Time `json:"updated_at"`
+	ID          int64     `json:"id" gorm:"primaryKey;autoIncrement"`
+	Name        string    `json:"name" gorm:"type:varchar(32);index"`
+	Email       string    `json:"email" gorm:"type:varchar(256);uniqueIndex"`
+	AvatarURL   string    `json:"avatar_url" gorm:"type:varchar(256)"`
+	Bio         string    `json:"bio" gorm:"type:varchar(256)"`
+	GithubID    int64     `json:"github_id" gorm:"index"`
+	IsActive    bool      `json:"is_active" gorm:"index"`
+	CreatedAt   time.Time `json:"created_at"`
+	UpdatedAt   time.Time `json:"updated_at"`
+	LastLoginAt time.Time `json:"-"`
+	Password    []byte    `json:"-" gorm:"type:binary(64)"`
+	Salt        []byte    `json:"-" gorm:"type:binary(64)"`
 }
 
 //TableName return table name
@@ -44,29 +32,8 @@ func (*User) TableName() string {
 	return config.DB.TablePrefix + "users"
 }
 
-//GetUserByNameEmail gets a user by name or email
-func GetUserByNameEmail(login string, email string) *User {
-	var user []User
-	db.Where("name=? OR email=?", login, email).First(&user)
-	if len(user) > 0 {
-		return &user[0]
-	} else {
-		return nil
-	}
-}
-
-//GetUserByName gets a user by login_name
-func GetUserByName(name string) *User {
-	var user []User
-	db.Where("name=?", name).First(&user)
-	if len(user) > 0 {
-		return &user[0]
-	}
-	return nil
-}
-
 //GetUserByID gets a user by id
-func GetUserByID(id uint64) *User {
+func GetUserByID(id int64) *User {
 	var user []User
 	db.First(&user, id)
 	if len(user) > 0 {
@@ -86,25 +53,13 @@ func GetUserByEmail(email string) *User {
 }
 
 //GetUserByGithubID gets a user by github id
-func GetUserByGithubID(ghid uint64) *User {
+func GetUserByGithubID(ghid int64) *User {
 	var user []User
 	db.Where("github_id=?", ghid).First(&user)
 	if len(user) > 0 {
 		return &user[0]
 	}
 	return nil
-}
-
-//GetUserInfoFromUser gen UserInfo from User
-func GetUserInfoFromUser(user *User) *UserInfo {
-	return &UserInfo{
-		ID:        user.ID,
-		Name:      user.Name,
-		Email:     user.Email,
-		IsActive:  user.IsActive,
-		CreatedAt: user.CreatedAt,
-		UpdatedAt: user.UpdatedAt,
-	}
 }
 
 //HashSalt calcs H(pass+salt)
@@ -131,7 +86,7 @@ func CreateUser(user *User) (*User, error) {
 
 //NewUserFromGithub creates a new user from OAuth
 func NewUserFromGithub(ext *goth.User) (*User, error) {
-	ext_id, _ := strconv.ParseUint(ext.UserID, 10, 64)
+	ext_id, _ := strconv.ParseInt(ext.UserID, 10, 64)
 	bio, ok := ext.RawData["bio"].(string)
 	if !ok {
 		bio = ""
@@ -153,7 +108,7 @@ func GenSalt() string {
 }
 
 //UpdateUserGithubID update a user github_id
-func UpdateUserGithubID(user *User, github_id uint64) *User {
+func UpdateUserGithubID(user *User, github_id int64) *User {
 	db.Model(user).Select("github_id").Updates(map[string]interface{}{"github_id": github_id})
 	user.GithubID = github_id
 	return user

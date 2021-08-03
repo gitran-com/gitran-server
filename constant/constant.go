@@ -30,8 +30,10 @@ const (
 const (
 	//ProjStatCreated 项目已创建未初始化
 	ProjStatCreated int = iota
-	//ProjStatInit 项目已初始化完成
-	ProjStatInit
+	//ProjStatReady 项目已就绪
+	ProjStatReady
+	//ProjStatProcessingString 项目正在处理string
+	ProjStatProcessingString
 )
 
 const (

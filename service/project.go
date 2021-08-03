@@ -18,7 +18,6 @@ import (
 	log "github.com/sirupsen/logrus"
 	"github.com/wzru/gitran-server/config"
 	"github.com/wzru/gitran-server/constant"
-	"github.com/wzru/gitran-server/middleware"
 	"github.com/wzru/gitran-server/model"
 )
 
@@ -47,16 +46,6 @@ func createGitProj(ctx *gin.Context) error {
 	return nil
 }
 
-//GetUserProjByName get a user project info
-func GetUserProjByName(ctx *gin.Context, owner string, name string) *model.Project {
-	user := model.GetUserByName(owner)
-	if user == nil {
-		return nil
-	}
-	self := (middleware.HasUserPermission(ctx, user.ID))
-	return model.GetProjByOwnerIDName(user.ID, name, self)
-}
-
 //GetOrgProjByName get an org project info
 func GetOrgProjByName(ctx *gin.Context, owner string, name string) *model.Project {
 	//TODO
@@ -65,7 +54,7 @@ func GetOrgProjByName(ctx *gin.Context, owner string, name string) *model.Projec
 
 //GetProj get a project info
 func GetProj(ctx *gin.Context) {
-	id, _ := strconv.ParseUint(ctx.Param("id"), 10, 64)
+	id, _ := strconv.ParseInt(ctx.Param("id"), 10, 64)
 	proj := model.GetProjByID(id)
 	if proj == nil {
 		ctx.JSON(http.StatusNotFound, model.Result404)
@@ -73,8 +62,7 @@ func GetProj(ctx *gin.Context) {
 	}
 	projInfo := model.GetProjInfoFromProj(proj)
 	ctx.JSON(http.StatusOK, model.Result{
-		Success: false,
-		Msg:     "",
+		Success: true,
 		Data: gin.H{
 			"proj_info": *projInfo,
 		},
@@ -83,7 +71,7 @@ func GetProj(ctx *gin.Context) {
 
 //ListUserProj list all projects
 func ListUserProj(ctx *gin.Context) {
-	user_id, _ := strconv.ParseUint(ctx.Param("id"), 10, 64)
+	user_id, _ := strconv.ParseInt(ctx.Param("id"), 10, 64)
 	ctx.JSON(http.StatusOK, model.Result{
 		Success: true,
 		Msg:     "",
@@ -105,9 +93,9 @@ func CreateUserProj(ctx *gin.Context) {
 	trnLangs := model.ParseLangs(trn)
 	tp, _ := strconv.Atoi(ctx.PostForm("type"))
 	var token *model.Token
-	var token_id uint64
+	var token_id int64
 	var err error
-	if token_id, err = strconv.ParseUint(ctx.PostForm("token_id"), 10, 64); err == nil {
+	if token_id, err = strconv.ParseInt(ctx.PostForm("token_id"), 10, 64); err == nil {
 		token = model.GetTokenByID(token_id)
 	} else {
 		token = nil
@@ -187,7 +175,6 @@ func CreateUserProj(ctx *gin.Context) {
 	}
 	proj, err := model.NewProj(&model.Project{
 		Name:     name,
-		URI:      uri,
 		OwnerID:  user.ID,
 		TokenID:  token_id,
 		Token:    token,
@@ -225,7 +212,7 @@ func initProj(proj *model.Project) {
 			SingleBranch: false,
 		})
 		if err == nil {
-			model.UpdateProjStatus(proj, constant.ProjStatInit)
+			model.UpdateProjStatus(proj, constant.ProjStatReady)
 		} else {
 			log.Warnf("git clone error : %v", err.Error())
 		}
@@ -241,7 +228,7 @@ func initProj(proj *model.Project) {
 			SingleBranch: false,
 		})
 		if err == nil {
-			model.UpdateProjStatus(proj, constant.ProjStatInit)
+			model.UpdateProjStatus(proj, constant.ProjStatReady)
 		} else {
 			log.Warnf("git clone error : %v", err.Error())
 		}

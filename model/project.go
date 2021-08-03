@@ -8,11 +8,10 @@ import (
 
 //Project means project model
 type Project struct {
-	ID        uint64    `gorm:"primaryKey;autoIncrement"`
-	Name      string    `gorm:"type:varchar(32);index;notNull"`
-	URI       string    `gorm:"type:varchar(32);uniqueIndex;notNull"`
-	OwnerID   uint64    `gorm:"index;notNull"`
-	TokenID   uint64    `gorm:"index"`
+	ID        int64     `gorm:"primaryKey;autoIncrement"`
+	Name      string    `gorm:"type:varchar(32);uniqueIndex;notNull"`
+	OwnerID   int64     `gorm:"index;notNull"`
+	TokenID   int64     `gorm:"index"`
 	Token     *Token    `gorm:"-"`
 	Type      int       `gorm:"index;notNull"`
 	Status    int       `gorm:"notNull"`
@@ -27,10 +26,10 @@ type Project struct {
 
 //ProjInfo means project's infomation
 type ProjInfo struct {
-	ID        uint64     `json:"id"`
+	ID        int64      `json:"id"`
 	Name      string     `json:"name"`
 	URI       string     `json:"uri"`
-	OwnerID   uint64     `json:"owner_id"`
+	OwnerID   int64      `json:"owner_id"`
 	Type      int        `json:"type"`
 	Status    int        `json:"status"`
 	Desc      string     `json:"desc"`
@@ -47,7 +46,7 @@ func (*Project) TableName() string {
 }
 
 //GetProjByID get project by id
-func GetProjByID(id uint64) *Project {
+func GetProjByID(id int64) *Project {
 	var proj []Project
 	db.Where("id=?", id).First(&proj)
 	if len(proj) > 0 {
@@ -67,7 +66,7 @@ func GetProjByURI(uri string) *Project {
 }
 
 //GetProjByOwnerIDName get project by oid & name
-func GetProjByOwnerIDName(oid uint64, name string, self bool) *Project {
+func GetProjByOwnerIDName(oid int64, name string, self bool) *Project {
 	var proj []Project
 	if self {
 		db.Where("owner_id=? AND name=?", oid, name).First(&proj)
@@ -118,14 +117,14 @@ func GetProjInfosFromProjs(projs []Project) []ProjInfo {
 }
 
 //ListUserProj list all projects from a user
-func ListUserProj(user_id uint64) []Project {
+func ListUserProj(user_id int64) []Project {
 	var proj []Project
 	db.Where("owner_id=?", user_id).Find(&proj)
 	return proj
 }
 
 //ListProjFromOwnerID list all projects from an owner id
-func ListProjFromOwnerID(oid uint64, priv bool) []Project {
+func ListProjFromOwnerID(oid int64, priv bool) []Project {
 	var proj []Project
 	if priv {
 		db.Where("owner_id=?", oid).Find(&proj)

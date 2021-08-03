@@ -11,8 +11,8 @@ import (
 
 //ProjCfg means project config
 type ProjCfg struct {
-	ID         uint64    `json:"id" gorm:"primaryKey;autoIncrement"`
-	ProjID     uint64    `json:"project_id" gorm:"index;notNull"`
+	ID         int64     `json:"id" gorm:"primaryKey;autoIncrement"`
+	ProjID     int64     `json:"project_id" gorm:"index;notNull"`
 	FileName   string    `json:"file_name" gorm:"type:varchar(32);notNull"`
 	Changed    bool      `json:"-" gorm:"index;notNull"`
 	SrcBr      string    `json:"src_branch" gorm:"type:varchar(32);notNull"`
@@ -27,19 +27,20 @@ type ProjCfg struct {
 
 //BrchRule means branch rules
 type BrchRule struct {
-	ID        uint64 `gorm:"primaryKey;autoIncrement"`
-	ProjCfgID uint64 `gorm:"index;notNull"`
-	Status    int    `gorm:"index;notNull"`
-	SrcFiles  string `yaml:"source_files" json:"src_files" gorm:"type:varchar(128);notNull"`
-	TrnFiles  string `yaml:"translation_files" json:"trn_files" gorm:"type:varchar(128);notNull"`
-	IgnFiles  string `yaml:"ignore_files" json:"ign_files" gorm:"type:varchar(256);"`
-	Extension string `gorm:"type:varchar(256)"`
+	ID          int64    `gorm:"primaryKey;autoIncrement"`
+	ProjCfgID   int64    `gorm:"index;notNull"`
+	Status      int      `gorm:"index;notNull"`
+	SrcFiles    string   `yaml:"source_files" json:"src_files" gorm:"type:varchar(128);notNull"`
+	TrnFiles    string   `yaml:"translation_files" json:"trn_files" gorm:"type:varchar(128);notNull"`
+	IgnFiles    string   `yaml:"ignore_files" json:"ign_files" gorm:"type:varchar(256);"`
+	IgnFileRegs []string `yaml:"-" gorm:"-"`
+	Extension   string   `gorm:"type:varchar(256)"`
 }
 
 //BrchRuleInfo means branch rules info
 type BrchRuleInfo struct {
-	ID        uint64                 `yaml:"-" json:"id"`
-	ProjCfgID uint64                 `yaml:"-" json:"project_config_id"`
+	ID        int64                  `yaml:"-" json:"id"`
+	ProjCfgID int64                  `yaml:"-" json:"project_config_id"`
 	Status    int                    `yaml:"-" json:"status"`
 	SrcFiles  string                 `yaml:"source_files" json:"src_files"`
 	TrnFiles  string                 `yaml:"translation_files" json:"trn_files"`
@@ -66,14 +67,14 @@ func NewProjCfg(cfg *ProjCfg) (*ProjCfg, error) {
 }
 
 //ListProjCfgByProjID list all project config by project id
-func ListProjCfgByProjID(pid uint64) []ProjCfg {
+func ListProjCfgByProjID(pid int64) []ProjCfg {
 	var pc []ProjCfg
 	db.Where("proj_id=?", pid).Find(&pc)
 	return pc
 }
 
 //GetProjCfgByID get a project config by config id
-func GetProjCfgByID(cid uint64) *ProjCfg {
+func GetProjCfgByID(cid int64) *ProjCfg {
 	var pc []ProjCfg
 	db.Where("id=?", cid).First(&pc)
 	if len(pc) > 0 {
@@ -91,7 +92,7 @@ func NewBrchRule(rule *BrchRule) (*BrchRule, error) {
 }
 
 //ListBrchRuleByCfgID list all branch rules by project config id
-func ListBrchRuleByCfgID(cid uint64) []BrchRule {
+func ListBrchRuleByCfgID(cid int64) []BrchRule {
 	var br []BrchRule
 	db.Where("proj_cfg_id=?", cid).Find(&br)
 	return br

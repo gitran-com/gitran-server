@@ -74,14 +74,14 @@ var (
 	IsDebug    = false
 	configFile = flag.String("config", "config.json", "配置文件路径")
 	pwd, _     = os.Getwd()
-	logPath    = pwd + "/log/"
+	logPath    = pwd + "/log"
 	//DataPath 数据目录
-	DataPath = "data/"
+	DataPath = pwd + "/data"
 	//ProjPath 项目目录
-	ProjPath    = DataPath + "project/"
-	mainLogFile = logPath + "gitran.log"
+	ProjPath    = DataPath + "/project"
+	mainLogFile = logPath + "/gitran.log"
 	//GinLogFile Gin日志目录
-	GinLogFile = logPath + "api"
+	GinLogFile = logPath + "/api"
 	//TimeFormat 日志时间格式
 	TimeFormat = "2006/01/02 15:04:05"
 )

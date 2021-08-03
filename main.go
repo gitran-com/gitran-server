@@ -46,9 +46,7 @@ func main() {
 	api := r.Group(config.APP.APIPrefix + "/api")
 	{
 		apiv1 := api.Group("/v1")
-		{
-			v1.Init(apiv1)
-		}
+		v1.Init(apiv1)
 	}
 	if err := r.Run(config.APP.Addr); err != nil {
 		log.Fatalf("server run error : %v\n", err.Error())

@@ -4,6 +4,7 @@ import (
 	"net/http"
 
 	"github.com/gin-gonic/gin"
+	"github.com/wzru/gitran-server/service"
 )
 
 var html = `
@@ -20,4 +21,8 @@ func PingV1(ctx *gin.Context) {
 	// ctx.String(http.StatusOK, "Pong! from Gitran API v1.")
 	ctx.Header("Content-Type", "text/html")
 	ctx.String(http.StatusOK, html)
+}
+
+func Test(ctx *gin.Context) {
+	ctx.JSON(http.StatusAccepted, service.ListMatchFiles("/mnt/d/Workspace/gitran-server/data/project/ops/", "bash/*.sh", []string{}))
 }

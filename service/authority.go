@@ -98,13 +98,17 @@ func RefreshToken(ctx *gin.Context) {
 		ctx.JSON(http.StatusUnauthorized, model.Result401)
 	} else {
 		id, _ := strconv.Atoi(clm.Id)
-		user := model.GetUserByID(uint64(id))
-		ctx.JSON(http.StatusOK, model.Result{
-			Success: true,
-			Msg:     "刷新成功",
-			Data: gin.H{
-				"token": middleware.GenTokenFromUser(user, "refresh"),
-			},
-		})
+		user := model.GetUserByID(int64(id))
+		if user == nil {
+			ctx.JSON(http.StatusNotFound, model.Result404)
+		} else {
+			ctx.JSON(http.StatusOK, model.Result{
+				Success: true,
+				Msg:     "刷新成功",
+				Data: gin.H{
+					"token": middleware.GenTokenFromUser(user, "refresh"),
+				},
+			})
+		}
 	}
 }
