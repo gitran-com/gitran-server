@@ -7,13 +7,13 @@ import (
 
 	"github.com/gin-contrib/sessions"
 	"github.com/gin-gonic/gin"
-	"github.com/google/go-github/github"
-	"github.com/markbates/goth/gothic"
-	log "github.com/sirupsen/logrus"
 	"github.com/gitran-com/gitran-server/config"
 	"github.com/gitran-com/gitran-server/constant"
 	"github.com/gitran-com/gitran-server/middleware"
 	"github.com/gitran-com/gitran-server/model"
+	"github.com/google/go-github/github"
+	"github.com/markbates/goth/gothic"
+	log "github.com/sirupsen/logrus"
 	"golang.org/x/oauth2"
 )
 
@@ -32,8 +32,13 @@ func AuthGithubLogin(ctx *gin.Context) {
 	//get next jump url
 	// next, _ := gothic.GetFromSession("next", ctx.Request)
 	session := sessions.Default(ctx)
-	next := session.Get("next").(string)
-	// fmt.Printf("next=%+v\n", next)
+	var (
+		next string
+		ok   bool
+	)
+	if next, ok = session.Get("next").(string); !ok {
+		next = ""
+	}
 	//finish github auth
 	github_user, err := gothic.CompleteUserAuth(ctx.Writer, ctx.Request)
 	if err != nil {
@@ -73,8 +78,10 @@ func AuthGithubImport(ctx *gin.Context) {
 	//get next jump url
 	// next, _ := gothic.GetFromSession("next", ctx.Request)
 	session := sessions.Default(ctx)
-	var next string
-	var ok bool
+	var (
+		next string
+		ok   bool
+	)
 	if next, ok = session.Get("next").(string); !ok {
 		next = ""
 	}

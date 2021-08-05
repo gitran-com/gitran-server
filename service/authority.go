@@ -4,6 +4,7 @@ import (
 	"net/http"
 	"strconv"
 	"strings"
+	"time"
 
 	"github.com/gin-gonic/gin"
 	"github.com/gitran-com/gitran-server/config"
@@ -46,11 +47,12 @@ func Register(ctx *gin.Context) {
 		var err error
 		salt := []byte(model.GenSalt())
 		user, err = model.CreateUser(&model.User{
-			Name:     name,
-			Email:    email,
-			Password: model.HashSalt(passwd, salt),
-			Salt:     salt,
-			IsActive: !config.Email.Enable,
+			Name:        name,
+			Email:       email,
+			Password:    model.HashSalt(passwd, salt),
+			Salt:        salt,
+			IsActive:    !config.Email.Enable,
+			LastLoginAt: time.Now(),
 		})
 		if err == nil {
 			ctx.JSON(http.StatusCreated,
