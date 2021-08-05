@@ -7,8 +7,8 @@ import (
 	"time"
 
 	"github.com/markbates/goth"
-	"github.com/wzru/gitran-server/config"
-	"github.com/wzru/gitran-server/util"
+	"github.com/gitran-com/gitran-server/config"
+	"github.com/gitran-com/gitran-server/util"
 )
 
 //User means user

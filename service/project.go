@@ -16,9 +16,9 @@ import (
 	gitconfig "github.com/go-git/go-git/v5/config"
 	"github.com/go-git/go-git/v5/storage/memory"
 	log "github.com/sirupsen/logrus"
-	"github.com/wzru/gitran-server/config"
-	"github.com/wzru/gitran-server/constant"
-	"github.com/wzru/gitran-server/model"
+	"github.com/gitran-com/gitran-server/config"
+	"github.com/gitran-com/gitran-server/constant"
+	"github.com/gitran-com/gitran-server/model"
 )
 
 var (

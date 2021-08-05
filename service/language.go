@@ -5,7 +5,7 @@ import (
 	"strconv"
 
 	"github.com/gin-gonic/gin"
-	"github.com/wzru/gitran-server/model"
+	"github.com/gitran-com/gitran-server/model"
 )
 
 //GetLangs list all languages

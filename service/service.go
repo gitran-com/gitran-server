@@ -7,8 +7,8 @@ import (
 	"github.com/markbates/goth"
 	"github.com/markbates/goth/providers/github"
 	log "github.com/sirupsen/logrus"
-	"github.com/wzru/gitran-server/config"
-	"github.com/wzru/gitran-server/model"
+	"github.com/gitran-com/gitran-server/config"
+	"github.com/gitran-com/gitran-server/model"
 )
 
 var (

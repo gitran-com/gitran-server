@@ -3,7 +3,7 @@ package model
 import (
 	"time"
 
-	"github.com/wzru/gitran-server/config"
+	"github.com/gitran-com/gitran-server/config"
 )
 
 //Project means project model

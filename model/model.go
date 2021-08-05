@@ -7,7 +7,7 @@ import (
 	"io/ioutil"
 
 	log "github.com/sirupsen/logrus"
-	"github.com/wzru/gitran-server/config"
+	"github.com/gitran-com/gitran-server/config"
 	"gorm.io/driver/mysql"
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"

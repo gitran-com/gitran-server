@@ -10,10 +10,10 @@ import (
 	"github.com/google/go-github/github"
 	"github.com/markbates/goth/gothic"
 	log "github.com/sirupsen/logrus"
-	"github.com/wzru/gitran-server/config"
-	"github.com/wzru/gitran-server/constant"
-	"github.com/wzru/gitran-server/middleware"
-	"github.com/wzru/gitran-server/model"
+	"github.com/gitran-com/gitran-server/config"
+	"github.com/gitran-com/gitran-server/constant"
+	"github.com/gitran-com/gitran-server/middleware"
+	"github.com/gitran-com/gitran-server/model"
 	"golang.org/x/oauth2"
 )
 

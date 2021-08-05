@@ -9,7 +9,7 @@ import (
 	"github.com/rifflock/lfshook"
 	"github.com/sirupsen/logrus"
 	log "github.com/sirupsen/logrus"
-	"github.com/wzru/gitran-server/config"
+	"github.com/gitran-com/gitran-server/config"
 )
 
 func Logger() gin.HandlerFunc {

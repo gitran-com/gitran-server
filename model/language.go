@@ -5,7 +5,7 @@ import (
 	"strings"
 
 	log "github.com/sirupsen/logrus"
-	"github.com/wzru/gitran-server/constant"
+	"github.com/gitran-com/gitran-server/constant"
 )
 
 //Language 语言

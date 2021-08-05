@@ -1,4 +1,4 @@
-module github.com/wzru/gitran-server
+module github.com/gitran-com/gitran-server
 
 go 1.13
 

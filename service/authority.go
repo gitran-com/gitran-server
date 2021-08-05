@@ -6,10 +6,10 @@ import (
 	"strings"
 
 	"github.com/gin-gonic/gin"
-	"github.com/wzru/gitran-server/config"
-	"github.com/wzru/gitran-server/constant"
-	"github.com/wzru/gitran-server/middleware"
-	"github.com/wzru/gitran-server/model"
+	"github.com/gitran-com/gitran-server/config"
+	"github.com/gitran-com/gitran-server/constant"
+	"github.com/gitran-com/gitran-server/middleware"
+	"github.com/gitran-com/gitran-server/model"
 )
 
 //Login make users login

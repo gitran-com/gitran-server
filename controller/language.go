@@ -2,7 +2,7 @@ package controller
 
 import (
 	"github.com/gin-gonic/gin"
-	"github.com/wzru/gitran-server/service"
+	"github.com/gitran-com/gitran-server/service"
 )
 
 //GetLangs list all languages

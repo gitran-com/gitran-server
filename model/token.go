@@ -3,7 +3,7 @@ package model
 import (
 	"time"
 
-	"github.com/wzru/gitran-server/config"
+	"github.com/gitran-com/gitran-server/config"
 )
 
 //Token 存储Github等来源的Token

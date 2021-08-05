@@ -1,5 +1,5 @@
 config*.json
-!config-example.json
+!config_example.json
 *.exe
 gitran-server
 

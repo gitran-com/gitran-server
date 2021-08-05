@@ -10,8 +10,8 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/golang-jwt/jwt"
-	"github.com/wzru/gitran-server/config"
-	"github.com/wzru/gitran-server/model"
+	"github.com/gitran-com/gitran-server/config"
+	"github.com/gitran-com/gitran-server/model"
 )
 
 //AuthUserJWT verifies a token

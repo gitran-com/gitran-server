@@ -17,9 +17,9 @@ import (
 	"github.com/go-git/go-git/v5/plumbing"
 	"github.com/go-git/go-git/v5/plumbing/object"
 	log "github.com/sirupsen/logrus"
-	"github.com/wzru/gitran-server/constant"
-	"github.com/wzru/gitran-server/model"
-	"github.com/wzru/gitran-server/util"
+	"github.com/gitran-com/gitran-server/constant"
+	"github.com/gitran-com/gitran-server/model"
+	"github.com/gitran-com/gitran-server/util"
 	"gopkg.in/yaml.v2"
 )
 

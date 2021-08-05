@@ -9,11 +9,11 @@ import (
 	"github.com/gin-contrib/sessions"
 	"github.com/gin-contrib/sessions/cookie"
 	"github.com/gin-gonic/gin"
-	v1 "github.com/wzru/gitran-server/api/v1"
-	"github.com/wzru/gitran-server/config"
-	"github.com/wzru/gitran-server/middleware"
-	"github.com/wzru/gitran-server/model"
-	"github.com/wzru/gitran-server/service"
+	v1 "github.com/gitran-com/gitran-server/api/v1"
+	"github.com/gitran-com/gitran-server/config"
+	"github.com/gitran-com/gitran-server/middleware"
+	"github.com/gitran-com/gitran-server/model"
+	"github.com/gitran-com/gitran-server/service"
 )
 
 func main() {

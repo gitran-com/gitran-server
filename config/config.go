@@ -11,7 +11,7 @@ import (
 
 	"github.com/gin-gonic/gin"
 	log "github.com/sirupsen/logrus"
-	"github.com/wzru/gitran-server/constant"
+	"github.com/gitran-com/gitran-server/constant"
 )
 
 type oauth struct {

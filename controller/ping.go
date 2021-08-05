@@ -4,7 +4,7 @@ import (
 	"net/http"
 
 	"github.com/gin-gonic/gin"
-	"github.com/wzru/gitran-server/service"
+	"github.com/gitran-com/gitran-server/service"
 )
 
 var html = `
