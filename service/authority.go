@@ -24,6 +24,7 @@ func Login(ctx *gin.Context) {
 			Msg:     "登录成功",
 			Data: gin.H{
 				"token": middleware.GenTokenFromUser(user, "login"),
+				"url":   ctx.Request.Referer(),
 			},
 		})
 	} else {
@@ -103,6 +104,8 @@ func RefreshToken(ctx *gin.Context) {
 		user := model.GetUserByID(int64(id))
 		if user == nil {
 			ctx.JSON(http.StatusNotFound, model.Result404)
+		} else if clm.NotBefore+int64(config.JWT.RefreshTime) < time.Now().Unix() {
+			ctx.JSON(http.StatusUnauthorized, model.Result401)
 		} else {
 			ctx.JSON(http.StatusOK, model.Result{
 				Success: true,

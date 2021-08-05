@@ -1,5 +1,7 @@
 package model
 
+import "github.com/gin-gonic/gin"
+
 //Result is HTTP JSON result
 type Result struct {
 	Success bool                   `json:"success"`
@@ -19,9 +21,11 @@ var Result400 = Result{
 //Result401 is 401 JSON response
 var Result401 = Result{
 	Success: false,
-	Data:    nil,
-	Code:    401,
-	Msg:     "unauthorized",
+	Data: gin.H{
+		"can_refresh": false,
+	},
+	Code: 401,
+	Msg:  "unauthorized",
 }
 
 //Result404 is 404 JSON response

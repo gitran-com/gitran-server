@@ -9,9 +9,9 @@ import (
 	"time"
 
 	"github.com/gin-gonic/gin"
-	"github.com/golang-jwt/jwt"
 	"github.com/gitran-com/gitran-server/config"
 	"github.com/gitran-com/gitran-server/model"
+	"github.com/golang-jwt/jwt"
 )
 
 //AuthUserJWT verifies a token
@@ -26,7 +26,18 @@ func AuthUserJWT() gin.HandlerFunc {
 		token := strings.Fields(auth)[1]
 		clm, err := ParseToken(token) // 校验token
 		if err != nil {
-			ctx.JSON(http.StatusUnauthorized, model.Result401)
+			if clm == nil {
+				ctx.JSON(http.StatusUnauthorized, model.Result401)
+			} else {
+				ctx.JSON(http.StatusUnauthorized, model.Result{
+					Success: false,
+					Data: gin.H{
+						"can_refresh": clm.NotBefore+int64(config.JWT.RefreshTime) >= time.Now().Unix(),
+					},
+					Code: http.StatusUnauthorized,
+					Msg:  "token is expired",
+				})
+			}
 			ctx.Abort()
 			return
 		}
