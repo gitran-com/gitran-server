@@ -11,6 +11,7 @@ import (
 	"github.com/gitran-com/gitran-server/constant"
 	"github.com/gitran-com/gitran-server/middleware"
 	"github.com/gitran-com/gitran-server/model"
+	"github.com/gitran-com/gitran-server/util"
 )
 
 //Login make users login
@@ -19,16 +20,13 @@ func Login(ctx *gin.Context) {
 	passwd := ctx.PostForm("password")
 	user := model.GetUserByEmail(email)
 	if model.CheckPass(user, passwd) {
-		ctx.JSON(http.StatusOK, model.Result{
+		ctx.JSON(http.StatusOK, util.Result{
 			Success: true,
 			Msg:     "登录成功",
-			Data: gin.H{
-				"token": middleware.GenTokenFromUser(user, "login"),
-				"url":   ctx.Request.Referer(),
-			},
+			Data:    GenUserTokenData(user, "login", ctx.Request.Referer()),
 		})
 	} else {
-		ctx.JSON(http.StatusUnauthorized, model.Result{
+		ctx.JSON(http.StatusUnauthorized, util.Result{
 			Success: false,
 			Msg:     "用户名或密码错误",
 			Code:    constant.ErrLoginOrPasswordIncorrect,
@@ -57,18 +55,15 @@ func Register(ctx *gin.Context) {
 		})
 		if err == nil {
 			ctx.JSON(http.StatusCreated,
-				model.Result{
+				util.Result{
 					Success: true,
 					Msg:     "注册成功",
-					Data: gin.H{
-						"token": middleware.GenTokenFromUser(user, "register"),
-						"url":   ctx.Request.Referer(),
-					},
+					Data:    GenUserTokenData(user, "register", ctx.Request.Referer()),
 				})
 			return
 		} else {
 			ctx.JSON(http.StatusBadRequest,
-				model.Result{
+				util.Result{
 					Success: false,
 					Msg:     err.Error(),
 					Data:    nil,
@@ -78,7 +73,7 @@ func Register(ctx *gin.Context) {
 		}
 	} else {
 		ctx.JSON(http.StatusBadRequest,
-			model.Result{
+			util.Result{
 				Success: false,
 				Msg:     "邮箱不可用",
 				Code:    constant.ErrEmailExists,
@@ -91,29 +86,38 @@ func Register(ctx *gin.Context) {
 func RefreshToken(ctx *gin.Context) {
 	auth := ctx.Request.Header.Get("Authorization")
 	if len(auth) == 0 {
-		ctx.JSON(http.StatusUnauthorized, model.Result401)
+		ctx.JSON(http.StatusUnauthorized, util.Result401)
 		ctx.Abort()
 		return
 	}
 	token := strings.Fields(auth)[1]
 	clm, _ := middleware.ParseToken(token) // 校验token
 	if clm == nil {
-		ctx.JSON(http.StatusUnauthorized, model.Result401)
+		ctx.JSON(http.StatusUnauthorized, util.Result401)
 	} else {
 		id, _ := strconv.Atoi(clm.Id)
 		user := model.GetUserByID(int64(id))
 		if user == nil {
-			ctx.JSON(http.StatusNotFound, model.Result404)
+			ctx.JSON(http.StatusNotFound, util.Result404)
 		} else if clm.NotBefore+int64(config.JWT.RefreshTime) < time.Now().Unix() {
-			ctx.JSON(http.StatusUnauthorized, model.Result401)
+			ctx.JSON(http.StatusUnauthorized, util.Result401)
 		} else {
-			ctx.JSON(http.StatusOK, model.Result{
+			ctx.JSON(http.StatusOK, util.Result{
 				Success: true,
 				Msg:     "刷新成功",
-				Data: gin.H{
-					"token": middleware.GenTokenFromUser(user, "refresh"),
-				},
+				Data:    GenUserTokenData(user, "refresh", ctx.Request.Referer()),
 			})
 		}
 	}
+}
+
+func GenUserTokenData(user *model.User, subj string, url string) map[string]interface{} {
+	token, expired, refresh := middleware.GenUserToken(user.Name, user.ID, subj)
+	dat := map[string]interface{}{
+		"url":            url,
+		"token":          token,
+		"expires_at":     expired,
+		"refresh_before": refresh,
+	}
+	return dat
 }

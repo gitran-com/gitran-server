@@ -2,6 +2,7 @@ config*.json
 !config_example.json
 *.exe
 gitran-server
+nohup.out
 
 bin/
 log/

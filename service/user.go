@@ -6,6 +6,7 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/gitran-com/gitran-server/model"
+	"github.com/gitran-com/gitran-server/util"
 )
 
 //GetUser get a user info
@@ -13,11 +14,11 @@ func GetUser(ctx *gin.Context) {
 	id, _ := strconv.ParseInt(ctx.Param("id"), 10, 64)
 	user := model.GetUserByID(id)
 	if user == nil {
-		ctx.JSON(http.StatusNotFound, model.Result404)
+		ctx.JSON(http.StatusNotFound, util.Result404)
 		return
 	}
 	ctx.JSON(http.StatusOK,
-		model.Result{
+		util.Result{
 			Success: true,
 			Data: gin.H{
 				"user": user,
@@ -32,7 +33,7 @@ func UpdateUser(ctx *gin.Context) {
 
 	} else {
 		ctx.JSON(http.StatusBadRequest,
-			model.Result{
+			util.Result{
 				Success: false,
 				Msg:     "Invalid arguments",
 				Data:    nil,

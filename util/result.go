@@ -1,6 +1,4 @@
-package model
-
-import "github.com/gin-gonic/gin"
+package util
 
 //Result is HTTP JSON result
 type Result struct {
@@ -21,7 +19,7 @@ var Result400 = Result{
 //Result401 is 401 JSON response
 var Result401 = Result{
 	Success: false,
-	Data: gin.H{
+	Data: map[string]interface{}{
 		"can_refresh": false,
 	},
 	Code: 401,

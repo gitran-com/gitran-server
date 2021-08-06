@@ -11,6 +11,7 @@ import (
 	"github.com/gitran-com/gitran-server/constant"
 	"github.com/gitran-com/gitran-server/middleware"
 	"github.com/gitran-com/gitran-server/model"
+	"github.com/gitran-com/gitran-server/util"
 	"github.com/google/go-github/github"
 	"github.com/markbates/goth/gothic"
 	log "github.com/sirupsen/logrus"
@@ -64,7 +65,7 @@ func AuthGithubLogin(ctx *gin.Context) {
 		}
 	}
 	//sign token in cookie
-	token := middleware.GenTokenFromUser(user, "github-login")
+	token, _, _ := middleware.GenUserToken(user.Name, user.ID, "github-login")
 	ctx.SetCookie("token", token, 3600, "/", ctx.Request.Host, false, false)
 	if next == "" {
 		ctx.Redirect(http.StatusTemporaryRedirect, config.APP.Addr)
@@ -114,7 +115,7 @@ func AuthGithubImport(ctx *gin.Context) {
 func GetGithubTokens(ctx *gin.Context) {
 	user := ctx.Keys["user"].(*model.User)
 	tk := model.GetValidTokensByOwnerID(user.ID, constant.TypeGithub)
-	ctx.JSON(http.StatusOK, model.Result{
+	ctx.JSON(http.StatusOK, util.Result{
 		Success: true,
 		Data: gin.H{
 			"tokens": tk,
@@ -127,9 +128,9 @@ func GetGithubRepos(ctx *gin.Context) {
 	token_id, _ := strconv.ParseInt(ctx.Param("id"), 10, 64)
 	tk := model.GetTokenByID(token_id)
 	if tk == nil || tk.OwnerID != user.ID {
-		ctx.JSON(http.StatusBadRequest, model.Result404)
+		ctx.JSON(http.StatusBadRequest, util.Result404)
 	} else {
-		ctx.JSON(http.StatusOK, model.Result{
+		ctx.JSON(http.StatusOK, util.Result{
 			Success: true,
 			Data: gin.H{
 				"repo_infos": getGithubReposFromToken(tk.AccessToken),

@@ -10,8 +10,8 @@ import (
 	"time"
 
 	"github.com/gin-gonic/gin"
-	log "github.com/sirupsen/logrus"
 	"github.com/gitran-com/gitran-server/constant"
+	log "github.com/sirupsen/logrus"
 )
 
 type oauth struct {
@@ -33,8 +33,8 @@ type db struct {
 type jwt struct {
 	Secret       string   `json:"secret"`
 	SkipperPaths []string `json:"skipper_paths"`
-	ValidTime    uint     `json:"valid_time"`
-	RefreshTime  uint     `json:"refresh_time"`
+	ValidTime    int64    `json:"valid_time"`
+	RefreshTime  int64    `json:"refresh_time"`
 }
 
 type app struct {

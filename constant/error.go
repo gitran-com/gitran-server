@@ -23,6 +23,10 @@ const (
 )
 
 const (
+	ErrTokenExpired = 4000 + iota
+)
+
+const (
 	//ErrGitUpToDate git already up-to-date
 	ErrGitUpToDate = "already up-to-date"
 )
