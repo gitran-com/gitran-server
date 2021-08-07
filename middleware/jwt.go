@@ -10,6 +10,7 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/gitran-com/gitran-server/config"
+	"github.com/gitran-com/gitran-server/constant"
 	"github.com/gitran-com/gitran-server/model"
 	"github.com/gitran-com/gitran-server/util"
 	"github.com/golang-jwt/jwt"
@@ -26,7 +27,7 @@ func AuthUserJWT() gin.HandlerFunc {
 		}
 		token := strings.Fields(auth)[1]
 		clm, err := ParseToken(token) // 校验token
-		if err != nil {
+		if err != nil || clm.Subject == constant.SubjGithubFirstLogin {
 			ctx.JSON(http.StatusUnauthorized, util.ResultInvalidToken)
 			ctx.Abort()
 			return
@@ -64,6 +65,34 @@ func AuthUserProjJWT() gin.HandlerFunc {
 	}
 }
 
+//AuthNewGithubUserJWT verifies a token
+func AuthNewGithubUserJWT() gin.HandlerFunc {
+	return func(ctx *gin.Context) {
+		auth := ctx.Request.Header.Get("Authorization")
+		if len(auth) <= 0 {
+			ctx.JSON(http.StatusUnauthorized, util.ResultInvalidToken)
+			ctx.Abort()
+			return
+		}
+		token := strings.Fields(auth)[1]
+		clm, err := ParseToken(token) // 校验token
+		if err != nil || clm.Subject != constant.SubjGithubFirstLogin {
+			ctx.JSON(http.StatusUnauthorized, util.ResultInvalidToken)
+			ctx.Abort()
+			return
+		}
+		id, _ := strconv.ParseInt(clm.Id, 10, 64)
+		user := model.GetUserByID(id)
+		if user == nil {
+			ctx.JSON(http.StatusUnauthorized, util.ResultInvalidToken)
+			ctx.Abort()
+			return
+		}
+		ctx.Set("user", user)
+		ctx.Next()
+	}
+}
+
 //GenUserToken gen a token from User
 func GenUserToken(audience string, id int64, subj string) (string, int64, int64) {
 	now := time.Now().Unix()
@@ -95,16 +124,4 @@ func ParseToken(tokenStr string) (*jwt.StandardClaims, error) {
 		}
 	}
 	return nil, err
-}
-
-//HasUserPermission check if this user has permission to user uid by checking JWT
-func HasUserPermission(ctx *gin.Context, uid int64) bool {
-	auth := ctx.Request.Header.Get("Authorization")
-	if len(auth) == 0 {
-		return false
-	}
-	token := strings.Fields(auth)[1]
-	clm, err := ParseToken(token)
-	id, _ := strconv.ParseInt(clm.Id, 10, 64)
-	return err == nil && uid == id
 }

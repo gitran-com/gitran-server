@@ -31,24 +31,22 @@ func AuthGithub(ctx *gin.Context) {
 
 //GitHub OAuth login callback
 func AuthGithubLogin(ctx *gin.Context) {
-	//get next jump url
-	// next, _ := gothic.GetFromSession("next", ctx.Request)
-	session := sessions.Default(ctx)
 	var (
 		next string
 		ok   bool
+		subj = constant.SubjGithubLogin
 	)
+	session := sessions.Default(ctx)
 	if next, ok = session.Get("next").(string); !ok {
-		next = ""
+		next = "/"
 	}
 	//finish github auth
 	github_user, err := gothic.CompleteUserAuth(ctx.Writer, ctx.Request)
 	if err != nil {
 		log.Errorf("auth/github/login: %+v", err.Error())
-		ctx.Redirect(http.StatusTemporaryRedirect, config.APP.Addr)
+		ctx.Redirect(http.StatusTemporaryRedirect, "/")
 		return
 	}
-	// fmt.Printf("github_user=%+v\n", github_user)
 	//get github id
 	github_id, _ := strconv.ParseInt(github_user.UserID, 10, 64)
 	//check if this user has ever login
@@ -59,6 +57,8 @@ func AuthGithubLogin(ctx *gin.Context) {
 		if user == nil { //if not, register
 			user = model.NewUserFromGithub(&github_user)
 			user.Create()
+			next = "/login/github/new"
+			subj = constant.SubjGithubFirstLogin
 		} else { //else, update if diff
 			if user.GithubID != github_id {
 				user.GithubID = github_id
@@ -66,17 +66,13 @@ func AuthGithubLogin(ctx *gin.Context) {
 			}
 		}
 	}
+	token, expires_at, refresh_before := middleware.GenUserToken(user.Name, user.ID, subj)
 	//sign token in cookie
-	token, expires_at, refresh_before := middleware.GenUserToken(user.Name, user.ID, "github-login")
 	domain := ctx.Request.URL.Hostname()
 	ctx.SetCookie("token", token, 3600, "/", domain, false, false)
 	ctx.SetCookie("expires_at", fmt.Sprintf("%v", expires_at), 3600, "/", domain, false, false)
 	ctx.SetCookie("refresh_before", fmt.Sprintf("%v", refresh_before), 3600, "/", domain, false, false)
-	if next == "" {
-		ctx.Redirect(http.StatusTemporaryRedirect, "/")
-	} else {
-		ctx.Redirect(http.StatusTemporaryRedirect, next)
-	}
+	ctx.Redirect(http.StatusTemporaryRedirect, next)
 }
 
 //GitHub OAuth import callback
@@ -133,6 +129,18 @@ func GetGithubRepos(ctx *gin.Context) {
 		Data: gin.H{
 			"repos": repos,
 		},
+	})
+}
+
+func NewGithubUser(ctx *gin.Context) {
+	passwd := ctx.GetString("password")
+	user := ctx.Keys["user"].(*model.User)
+	user.Salt = model.GenSalt()
+	user.Password = model.HashSalt(passwd, user.Salt)
+	user.Write()
+	ctx.JSON(http.StatusOK, util.Result{
+		Success: true,
+		Data:    GenUserTokenData(user, constant.SubjGithubLogin, ""),
 	})
 }
 

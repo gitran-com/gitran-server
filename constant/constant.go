@@ -65,3 +65,11 @@ const (
 	//GithubTokenScopeDelim 是GitHub token作用域的分隔符
 	GithubTokenScopeDelim = ","
 )
+
+const (
+	SubjLogin            = "login"
+	SubjRegister         = "register"
+	SubjRefresh          = "refresh"
+	SubjGithubLogin      = "github-login"
+	SubjGithubFirstLogin = "github-first-login"
+)

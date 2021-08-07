@@ -104,6 +104,6 @@ func NewUserFromGithub(ext *goth.User) *User {
 }
 
 //GenSalt gens a random 64-byte salt
-func GenSalt() string {
-	return util.RandString(64)
+func GenSalt() []byte {
+	return []byte(util.RandString(64))
 }

@@ -28,6 +28,8 @@ func initAuth(g *gin.RouterGroup) {
 		gg.GET("/github/login", controller.AuthGithubLogin)
 		//GitHub引入repo回调
 		gg.GET("/github/import", middleware.AuthUserJWT(), controller.AuthGithubImport)
+		//新注册GitHub用户
+		gg.GET("/github/new", middleware.AuthNewGithubUserJWT(), controller.NewGithubUser)
 		//获得所有GitHub仓库
 		gg.GET("/github/repos", middleware.AuthUserJWT(), controller.GetGithubRepos)
 	}

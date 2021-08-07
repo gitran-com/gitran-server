@@ -26,7 +26,7 @@ func Login(ctx *gin.Context) {
 		ctx.JSON(http.StatusOK, util.Result{
 			Success: true,
 			Msg:     "login successfully",
-			Data:    GenUserTokenData(user, "login", ctx.Request.Referer()),
+			Data:    GenUserTokenData(user, constant.SubjLogin, ctx.Request.Referer()),
 		})
 	} else {
 		ctx.JSON(http.StatusOK, util.Result{
@@ -69,7 +69,7 @@ func Register(ctx *gin.Context) {
 				util.Result{
 					Success: true,
 					Msg:     "register successfully",
-					Data:    GenUserTokenData(user, "register", ctx.Request.Referer()),
+					Data:    GenUserTokenData(user, constant.SubjRegister, ctx.Request.Referer()),
 				})
 			return
 		}
@@ -104,7 +104,7 @@ func RefreshToken(ctx *gin.Context) {
 			ctx.JSON(http.StatusOK, util.Result{
 				Success: true,
 				Msg:     "refresh successfully",
-				Data:    GenUserTokenData(user, "refresh", ctx.Request.Referer()),
+				Data:    GenUserTokenData(user, constant.SubjRefresh, ctx.Request.Referer()),
 			})
 		}
 	}

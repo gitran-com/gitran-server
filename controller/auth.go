@@ -32,3 +32,7 @@ func AuthGithubImport(ctx *gin.Context) {
 func GetGithubRepos(ctx *gin.Context) {
 	service.GetGithubRepos(ctx)
 }
+
+func NewGithubUser(ctx *gin.Context) {
+	service.NewGithubUser(ctx)
+}
