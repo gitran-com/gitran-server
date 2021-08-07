@@ -47,28 +47,29 @@ func Register(ctx *gin.Context) {
 	user := model.GetUserByEmail(req.Email)
 	if user == nil { //create new user
 		salt := []byte(model.GenSalt())
-		user, err := model.CreateUser(&model.User{
+		user := &model.User{
 			Name:        req.Name,
 			Email:       req.Email,
 			Password:    model.HashSalt(req.Password, salt),
 			Salt:        salt,
 			IsActive:    !config.Email.Enable,
 			LastLoginAt: time.Now(),
-		})
-		if err == nil {
-			ctx.JSON(http.StatusCreated,
-				util.Result{
-					Success: true,
-					Msg:     "register successfully",
-					Data:    GenUserTokenData(user, "register", ctx.Request.Referer()),
-				})
-			return
-		} else {
+		}
+		if err := user.Create(); err != nil {
 			ctx.JSON(http.StatusOK,
 				util.Result{
 					Success: false,
 					Msg:     err.Error(),
 					Code:    constant.ErrUnknown,
+				})
+			return
+
+		} else {
+			ctx.JSON(http.StatusCreated,
+				util.Result{
+					Success: true,
+					Msg:     "register successfully",
+					Data:    GenUserTokenData(user, "register", ctx.Request.Referer()),
 				})
 			return
 		}

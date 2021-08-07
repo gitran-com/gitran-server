@@ -24,10 +24,12 @@ func initAuth(g *gin.RouterGroup) {
 	gg.POST("/refresh", controller.Refresh)
 	if config.Github.Enable {
 		gg.GET("/github", controller.AuthGithub)
+		//GitHub登录回调
 		gg.GET("/github/login", controller.AuthGithubLogin)
+		//GitHub引入repo回调
 		gg.GET("/github/import", middleware.AuthUserJWT(), controller.AuthGithubImport)
-		gg.GET("/github/tokens", middleware.AuthUserJWT(), controller.GetGithubTokens)
-		gg.GET("/github/repos/:id", middleware.AuthUserJWT(), controller.GetGithubRepos)
+		//获得所有GitHub仓库
+		gg.GET("/github/repos", middleware.AuthUserJWT(), controller.GetGithubRepos)
 	}
 }
 

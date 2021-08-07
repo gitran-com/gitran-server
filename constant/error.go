@@ -4,11 +4,13 @@ const (
 	ErrUnknown = -1
 )
 
+// auth error
 const (
-	//ErrEmailOrPassIncorrect 用户名或密码错误
+	//ErrEmailOrPassIncorrect 邮箱或密码错误
 	ErrEmailOrPassIncorrect = 1000 + iota
 	//ErrEmailExists 邮箱已存在
 	ErrEmailExists
+	ErrGithubRepoUnauthorized
 )
 
 const (

@@ -57,19 +57,21 @@ func AuthGithubLogin(ctx *gin.Context) {
 		//check if this github email has ever register
 		user = model.GetUserByEmail(github_user.Email)
 		if user == nil { //if not, register
-			user, _ = model.NewUserFromGithub(&github_user)
-			user, _ = model.CreateUser(user)
+			user = model.NewUserFromGithub(&github_user)
+			user.Create()
 		} else { //else, update if diff
 			if user.GithubID != github_id {
-				model.UpdateUserGithubID(user, github_id)
+				user.GithubID = github_id
+				user.Write()
 			}
 		}
 	}
 	//sign token in cookie
 	token, expires_at, refresh_before := middleware.GenUserToken(user.Name, user.ID, "github-login")
-	ctx.SetCookie("token", token, 3600, "/", ctx.Request.Host, false, false)
-	ctx.SetCookie("expires_at", fmt.Sprintf("%v", expires_at), 3600, "/", ctx.Request.Host, false, false)
-	ctx.SetCookie("refresh_before", fmt.Sprintf("%v", refresh_before), 3600, "/", ctx.Request.Host, false, false)
+	domain := ctx.Request.URL.Hostname()
+	ctx.SetCookie("token", token, 3600, "/", domain, false, false)
+	ctx.SetCookie("expires_at", fmt.Sprintf("%v", expires_at), 3600, "/", domain, false, false)
+	ctx.SetCookie("refresh_before", fmt.Sprintf("%v", refresh_before), 3600, "/", domain, false, false)
 	if next == "" {
 		ctx.Redirect(http.StatusTemporaryRedirect, "/")
 	} else {
@@ -87,7 +89,7 @@ func AuthGithubImport(ctx *gin.Context) {
 		ok   bool
 	)
 	if next, ok = session.Get("next").(string); !ok {
-		next = ""
+		next = "/"
 	}
 	// fmt.Printf("next=%+v\n", next)
 	// finish github auth
@@ -98,51 +100,43 @@ func AuthGithubImport(ctx *gin.Context) {
 		return
 	}
 	user := ctx.Keys["user"].(*model.User)
-	model.NewToken(&model.Token{
-		Valid:          true,
-		Source:         constant.TypeGithub,
-		OwnerID:        user.ID,
-		OwnerName:      github_user.Name,
-		OwnerAvatarURL: github_user.AvatarURL,
-		AccessToken:    github_user.AccessToken,
-		Scope:          "repo",
-	})
+	user.GithubRepoToken = github_user.AccessToken
+	user.Write()
 	// fmt.Printf("github_user=%+v\ntoken=%+v\n", github_user, tk)
-	if next == "" {
-		ctx.Redirect(http.StatusTemporaryRedirect, "/")
-	} else {
-		ctx.Redirect(http.StatusTemporaryRedirect, next)
-	}
-}
-
-func GetGithubTokens(ctx *gin.Context) {
-	user := ctx.Keys["user"].(*model.User)
-	tk := model.GetValidTokensByOwnerID(user.ID, constant.TypeGithub)
-	ctx.JSON(http.StatusOK, util.Result{
-		Success: true,
-		Data: gin.H{
-			"tokens": tk,
-		},
-	})
+	ctx.Redirect(http.StatusTemporaryRedirect, next)
 }
 
 func GetGithubRepos(ctx *gin.Context) {
 	user := ctx.Keys["user"].(*model.User)
-	token_id, _ := strconv.ParseInt(ctx.Param("id"), 10, 64)
-	tk := model.GetTokenByID(token_id)
-	if tk == nil || tk.OwnerID != user.ID {
-		ctx.JSON(http.StatusBadRequest, util.Result404)
-	} else {
+	tk := user.GithubRepoToken
+	if tk == "" {
 		ctx.JSON(http.StatusOK, util.Result{
-			Success: true,
-			Data: gin.H{
-				"repo_infos": getGithubReposFromToken(tk.AccessToken),
-			},
+			Success: false,
+			Msg:     "github repo unauthorized",
+			Code:    constant.ErrGithubRepoUnauthorized,
 		})
+		return
 	}
+	repos, err := getGithubReposFromToken(tk)
+	if err != nil {
+		ctx.JSON(http.StatusOK, util.Result{
+			Success: false,
+			Msg:     "github repo authorize error: " + err.Error(),
+			Code:    constant.ErrGithubRepoUnauthorized,
+		})
+		user.GithubRepoToken = ""
+		user.Write()
+		return
+	}
+	ctx.JSON(http.StatusOK, util.Result{
+		Success: true,
+		Data: gin.H{
+			"repos": repos,
+		},
+	})
 }
 
-func getGithubReposFromToken(token string) []model.RepoInfo {
+func getGithubReposFromToken(token string) ([]model.RepoInfo, error) {
 	ts := oauth2.StaticTokenSource(
 		&oauth2.Token{AccessToken: token},
 	)
@@ -153,14 +147,15 @@ func getGithubReposFromToken(token string) []model.RepoInfo {
 	var repo_infos []model.RepoInfo
 	if err != nil {
 		log.Warnf("getGithubReposFromToken error: %+v", err.Error())
+		return nil, err
 	}
 	for _, repo := range repos {
 		repo_infos = append(repo_infos, model.RepoInfo{
-			ID:        int64(*repo.ID),
+			ID:        *repo.ID,
 			OwnerName: *repo.Owner.Login,
 			Name:      *repo.Name,
 			URL:       *repo.HTMLURL,
 		})
 	}
-	return repo_infos
+	return repo_infos, nil
 }

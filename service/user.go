@@ -9,7 +9,7 @@ import (
 	"github.com/gitran-com/gitran-server/util"
 )
 
-//GetUser get a user info
+//GetUser gets a user info
 func GetUser(ctx *gin.Context) {
 	id, _ := strconv.ParseInt(ctx.Param("id"), 10, 64)
 	user := model.GetUserByID(id)
@@ -26,7 +26,7 @@ func GetUser(ctx *gin.Context) {
 		})
 }
 
-//UpdateUser update a user info
+//UpdateUser updates a user info
 func UpdateUser(ctx *gin.Context) {
 	upd := &model.User{}
 	if ctx.BindJSON(upd) == nil {
@@ -35,7 +35,7 @@ func UpdateUser(ctx *gin.Context) {
 		ctx.JSON(http.StatusBadRequest,
 			util.Result{
 				Success: false,
-				Msg:     "Invalid arguments",
+				Msg:     "invalid arguments",
 				Data:    nil,
 			})
 	}
