@@ -84,19 +84,19 @@ func Register(ctx *gin.Context) {
 func RefreshToken(ctx *gin.Context) {
 	auth := ctx.Request.Header.Get("Authorization")
 	if len(auth) == 0 {
-		ctx.JSON(http.StatusUnauthorized, util.Result401)
+		ctx.JSON(http.StatusOK, util.ResultInvalidToken)
 		ctx.Abort()
 		return
 	}
 	token := strings.Fields(auth)[1]
 	clm, _ := middleware.ParseToken(token) // 校验token
 	if clm == nil {
-		ctx.JSON(http.StatusUnauthorized, util.Result401)
+		ctx.JSON(http.StatusOK, util.ResultInvalidToken)
 	} else {
-		id, _ := strconv.Atoi(clm.Id)
-		user := model.GetUserByID(int64(id))
-		if user == nil || clm.NotBefore+int64(config.JWT.RefreshTime) < time.Now().Unix() {
-			ctx.JSON(http.StatusUnauthorized, util.Result401)
+		id, _ := strconv.ParseInt(clm.Id, 10, 64)
+		user := model.GetUserByID(id)
+		if user == nil || clm.NotBefore+config.JWT.RefreshTime < time.Now().Unix() {
+			ctx.JSON(http.StatusOK, util.ResultInvalidToken)
 		} else {
 			ctx.JSON(http.StatusOK, util.Result{
 				Success: true,

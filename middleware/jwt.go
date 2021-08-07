@@ -20,32 +20,21 @@ func AuthUserJWT() gin.HandlerFunc {
 	return func(ctx *gin.Context) {
 		auth := ctx.Request.Header.Get("Authorization")
 		if len(auth) <= 0 {
-			ctx.JSON(http.StatusUnauthorized, util.Result401)
+			ctx.JSON(http.StatusUnauthorized, util.ResultInvalidToken)
 			ctx.Abort()
 			return
 		}
 		token := strings.Fields(auth)[1]
 		clm, err := ParseToken(token) // 校验token
 		if err != nil {
-			if clm == nil {
-				ctx.JSON(http.StatusUnauthorized, util.Result401)
-			} else {
-				ctx.JSON(http.StatusUnauthorized, util.Result{
-					Success: false,
-					Data: gin.H{
-						"can_refresh": clm.NotBefore+int64(config.JWT.RefreshTime) >= time.Now().Unix(),
-					},
-					Code: http.StatusUnauthorized,
-					Msg:  "token is expired",
-				})
-			}
+			ctx.JSON(http.StatusUnauthorized, util.ResultInvalidToken)
 			ctx.Abort()
 			return
 		}
 		id, _ := strconv.ParseInt(clm.Id, 10, 64)
 		user := model.GetUserByID(id)
 		if user == nil {
-			ctx.JSON(http.StatusUnauthorized, util.Result401)
+			ctx.JSON(http.StatusUnauthorized, util.ResultInvalidToken)
 			ctx.Abort()
 			return
 		}
@@ -66,7 +55,7 @@ func AuthUserProjJWT() gin.HandlerFunc {
 		}
 		user := ctx.Keys["user"].(*model.User)
 		if proj.OwnerID != user.ID {
-			ctx.JSON(http.StatusNotFound, util.Result401)
+			ctx.JSON(http.StatusNotFound, util.ResultInvalidToken)
 			ctx.Abort()
 			return
 		}
