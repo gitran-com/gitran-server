@@ -11,7 +11,6 @@ type Result struct {
 //Result400 is 400 JSON response
 var Result400 = Result{
 	Success: false,
-	Data:    nil,
 	Code:    400,
 	Msg:     "bad request",
 }
@@ -19,7 +18,6 @@ var Result400 = Result{
 //Result404 is 404 JSON response
 var Result404 = Result{
 	Success: false,
-	Data:    nil,
 	Code:    404,
 	Msg:     "not found",
 }

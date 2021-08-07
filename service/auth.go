@@ -16,10 +16,13 @@ import (
 
 //Login make users login
 func Login(ctx *gin.Context) {
-	email := ctx.PostForm("email")
-	passwd := ctx.PostForm("password")
-	user := model.GetUserByEmail(email)
-	if model.CheckPass(user, passwd) {
+	var req LoginRequest
+	if err := ctx.BindJSON(&req); err != nil {
+		ctx.JSON(http.StatusBadRequest, util.Result400)
+		return
+	}
+	user := model.GetUserByEmail(req.Email)
+	if model.CheckPass(user, req.Password) {
 		ctx.JSON(http.StatusOK, util.Result{
 			Success: true,
 			Msg:     "login successfully",
@@ -36,18 +39,18 @@ func Login(ctx *gin.Context) {
 
 //Register register new user
 func Register(ctx *gin.Context) {
-	name := ctx.PostForm("name")
-	email := ctx.PostForm("email")
-	passwd := ctx.PostForm("password")
-	user := model.GetUserByEmail(email)
+	var req RegisterRequest
+	if err := ctx.BindJSON(&req); err != nil {
+		ctx.JSON(http.StatusBadRequest, util.Result400)
+		return
+	}
+	user := model.GetUserByEmail(req.Email)
 	if user == nil { //create new user
-		var user *model.User
-		var err error
 		salt := []byte(model.GenSalt())
-		user, err = model.CreateUser(&model.User{
-			Name:        name,
-			Email:       email,
-			Password:    model.HashSalt(passwd, salt),
+		user, err := model.CreateUser(&model.User{
+			Name:        req.Name,
+			Email:       req.Email,
+			Password:    model.HashSalt(req.Password, salt),
 			Salt:        salt,
 			IsActive:    !config.Email.Enable,
 			LastLoginAt: time.Now(),
@@ -75,7 +78,6 @@ func Register(ctx *gin.Context) {
 				Success: false,
 				Msg:     "email exists",
 				Code:    constant.ErrEmailExists,
-				Data:    nil,
 			})
 	}
 }
