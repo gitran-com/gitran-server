@@ -35,7 +35,7 @@ func main() {
 	var r *gin.Engine
 	if config.IsDebug {
 		r = gin.Default()
-		r.Use(cors.Default())
+		r.Use(debugCORS())
 	} else {
 		log.Infof("writing log in file...")
 		r = gin.New()
@@ -50,5 +50,20 @@ func main() {
 	}
 	if err := r.Run(config.APP.Addr); err != nil {
 		log.Fatalf("server run error : %v\n", err.Error())
+	}
+}
+
+func debugCORS() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		c.Writer.Header().Set("Access-Control-Allow-Origin", c.Request.Header.Get("Origin"))
+		c.Writer.Header().Set("Access-Control-Allow-Credentials", "true")
+		c.Writer.Header().Set("Access-Control-Allow-Headers", "Content-Type, Content-Length, Accept-Encoding, X-CSRF-Token, Authorization, accept, origin, Cache-Control, X-Requested-With")
+		c.Writer.Header().Set("Access-Control-Allow-Methods", "OPTIONS, GET, POST, DELETE")
+		c.Writer.Header().Set("Content-Type", "*; charset=utf-8")
+		if c.Request.Method == "OPTIONS" {
+			c.AbortWithStatus(204)
+			return
+		}
+		c.Next()
 	}
 }

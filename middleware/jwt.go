@@ -119,12 +119,3 @@ func HasUserPermission(ctx *gin.Context, uid int64) bool {
 	id, _ := strconv.ParseInt(clm.Id, 10, 64)
 	return err == nil && uid == id
 }
-
-//HasUserPermission check if this user has permission to user uid by checking JWT
-// func HasUserProjPermission(uid int64, pid int64) bool {
-// 	proj := model.GetProjByID(pid)
-// 	if proj == nil || proj.OwnerType != constant.OwnerUsr || proj.OwnerID != uid {
-// 		return false
-// 	}
-// 	return true
-// }

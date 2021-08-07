@@ -2,6 +2,7 @@ package service
 
 import (
 	"context"
+	"fmt"
 	"net/http"
 	"strconv"
 
@@ -65,10 +66,12 @@ func AuthGithubLogin(ctx *gin.Context) {
 		}
 	}
 	//sign token in cookie
-	token, _, _ := middleware.GenUserToken(user.Name, user.ID, "github-login")
+	token, expires_at, refresh_before := middleware.GenUserToken(user.Name, user.ID, "github-login")
 	ctx.SetCookie("token", token, 3600, "/", ctx.Request.Host, false, false)
+	ctx.SetCookie("expires_at", fmt.Sprintf("%v", expires_at), 3600, "/", ctx.Request.Host, false, false)
+	ctx.SetCookie("refresh_before", fmt.Sprintf("%v", refresh_before), 3600, "/", ctx.Request.Host, false, false)
 	if next == "" {
-		ctx.Redirect(http.StatusTemporaryRedirect, config.APP.Addr)
+		ctx.Redirect(http.StatusTemporaryRedirect, "/")
 	} else {
 		ctx.Redirect(http.StatusTemporaryRedirect, next)
 	}
@@ -106,7 +109,7 @@ func AuthGithubImport(ctx *gin.Context) {
 	})
 	// fmt.Printf("github_user=%+v\ntoken=%+v\n", github_user, tk)
 	if next == "" {
-		ctx.Redirect(http.StatusTemporaryRedirect, config.APP.Addr)
+		ctx.Redirect(http.StatusTemporaryRedirect, "/")
 	} else {
 		ctx.Redirect(http.StatusTemporaryRedirect, next)
 	}

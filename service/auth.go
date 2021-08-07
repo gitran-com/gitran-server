@@ -22,15 +22,14 @@ func Login(ctx *gin.Context) {
 	if model.CheckPass(user, passwd) {
 		ctx.JSON(http.StatusOK, util.Result{
 			Success: true,
-			Msg:     "登录成功",
+			Msg:     "login successfully",
 			Data:    GenUserTokenData(user, "login", ctx.Request.Referer()),
 		})
 	} else {
-		ctx.JSON(http.StatusUnauthorized, util.Result{
+		ctx.JSON(http.StatusOK, util.Result{
 			Success: false,
-			Msg:     "用户名或密码错误",
-			Code:    constant.ErrLoginOrPasswordIncorrect,
-			Data:    nil,
+			Msg:     "email or password incorrect",
+			Code:    constant.ErrEmailOrPassIncorrect,
 		})
 	}
 }
@@ -57,25 +56,24 @@ func Register(ctx *gin.Context) {
 			ctx.JSON(http.StatusCreated,
 				util.Result{
 					Success: true,
-					Msg:     "注册成功",
+					Msg:     "register successfully",
 					Data:    GenUserTokenData(user, "register", ctx.Request.Referer()),
 				})
 			return
 		} else {
-			ctx.JSON(http.StatusBadRequest,
+			ctx.JSON(http.StatusOK,
 				util.Result{
 					Success: false,
 					Msg:     err.Error(),
-					Data:    nil,
-					Code:    -1,
+					Code:    constant.ErrUnknown,
 				})
 			return
 		}
 	} else {
-		ctx.JSON(http.StatusBadRequest,
+		ctx.JSON(http.StatusOK,
 			util.Result{
 				Success: false,
-				Msg:     "邮箱不可用",
+				Msg:     "email exists",
 				Code:    constant.ErrEmailExists,
 				Data:    nil,
 			})
@@ -97,14 +95,12 @@ func RefreshToken(ctx *gin.Context) {
 	} else {
 		id, _ := strconv.Atoi(clm.Id)
 		user := model.GetUserByID(int64(id))
-		if user == nil {
-			ctx.JSON(http.StatusNotFound, util.Result404)
-		} else if clm.NotBefore+int64(config.JWT.RefreshTime) < time.Now().Unix() {
+		if user == nil || clm.NotBefore+int64(config.JWT.RefreshTime) < time.Now().Unix() {
 			ctx.JSON(http.StatusUnauthorized, util.Result401)
 		} else {
 			ctx.JSON(http.StatusOK, util.Result{
 				Success: true,
-				Msg:     "刷新成功",
+				Msg:     "refresh successfully",
 				Data:    GenUserTokenData(user, "refresh", ctx.Request.Referer()),
 			})
 		}

@@ -1,8 +1,12 @@
 package constant
 
 const (
-	//ErrLoginOrPasswordIncorrect 用户名或密码错误
-	ErrLoginOrPasswordIncorrect = 1000 + iota
+	ErrUnknown = -1
+)
+
+const (
+	//ErrEmailOrPassIncorrect 用户名或密码错误
+	ErrEmailOrPassIncorrect = 1000 + iota
 	//ErrEmailExists 邮箱已存在
 	ErrEmailExists
 )

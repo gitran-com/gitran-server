@@ -92,12 +92,13 @@ func NewUserFromGithub(ext *goth.User) (*User, error) {
 		bio = ""
 	}
 	user := &User{
-		Name:      ext.Name,
-		Email:     ext.Email,
-		AvatarURL: ext.AvatarURL,
-		Bio:       bio,
-		GithubID:  ext_id,
-		IsActive:  true,
+		Name:        ext.Name,
+		Email:       ext.Email,
+		AvatarURL:   ext.AvatarURL,
+		Bio:         bio,
+		GithubID:    ext_id,
+		IsActive:    true,
+		LastLoginAt: time.Now(),
 	}
 	return user, nil
 }
