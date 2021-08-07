@@ -106,7 +106,7 @@ func GetGithubRepos(ctx *gin.Context) {
 	user := ctx.Keys["user"].(*model.User)
 	tk := user.GithubRepoToken
 	if tk == "" {
-		ctx.JSON(http.StatusOK, util.Result{
+		ctx.JSON(http.StatusOK, util.Response{
 			Success: false,
 			Msg:     "github repo unauthorized",
 			Code:    constant.ErrGithubRepoUnauthorized,
@@ -115,7 +115,7 @@ func GetGithubRepos(ctx *gin.Context) {
 	}
 	repos, err := getGithubReposFromToken(tk)
 	if err != nil {
-		ctx.JSON(http.StatusOK, util.Result{
+		ctx.JSON(http.StatusOK, util.Response{
 			Success: false,
 			Msg:     "github repo authorize error: " + err.Error(),
 			Code:    constant.ErrGithubRepoUnauthorized,
@@ -124,7 +124,7 @@ func GetGithubRepos(ctx *gin.Context) {
 		user.Write()
 		return
 	}
-	ctx.JSON(http.StatusOK, util.Result{
+	ctx.JSON(http.StatusOK, util.Response{
 		Success: true,
 		Data: gin.H{
 			"repos": repos,
@@ -138,7 +138,7 @@ func NewGithubUser(ctx *gin.Context) {
 	user.Salt = model.GenSalt()
 	user.Password = model.HashSalt(passwd, user.Salt)
 	user.Write()
-	ctx.JSON(http.StatusOK, util.Result{
+	ctx.JSON(http.StatusOK, util.Response{
 		Success: true,
 		Data:    GenUserTokenData(user, constant.SubjGithubLogin, ""),
 	})

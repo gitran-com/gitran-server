@@ -58,11 +58,11 @@ func GetProj(ctx *gin.Context) {
 	id, _ := strconv.ParseInt(ctx.Param("id"), 10, 64)
 	proj := model.GetProjByID(id)
 	if proj == nil {
-		ctx.JSON(http.StatusNotFound, util.Result404)
+		ctx.JSON(http.StatusNotFound, util.Resp404)
 		return
 	}
 	projInfo := model.GetProjInfoFromProj(proj)
-	ctx.JSON(http.StatusOK, util.Result{
+	ctx.JSON(http.StatusOK, util.Response{
 		Success: true,
 		Data: gin.H{
 			"proj_info": *projInfo,
@@ -73,7 +73,7 @@ func GetProj(ctx *gin.Context) {
 //ListUserProj list all projects
 func ListUserProj(ctx *gin.Context) {
 	user_id, _ := strconv.ParseInt(ctx.Param("id"), 10, 64)
-	ctx.JSON(http.StatusOK, util.Result{
+	ctx.JSON(http.StatusOK, util.Response{
 		Success: true,
 		Msg:     "",
 		Data: gin.H{
@@ -102,7 +102,7 @@ func CreateUserProj(ctx *gin.Context) {
 		token = nil
 	}
 	if token == nil && tp == constant.TypeGithub {
-		ctx.JSON(http.StatusBadRequest, util.Result{
+		ctx.JSON(http.StatusBadRequest, util.Response{
 			Success: false,
 			Msg:     "Token不合法",
 			Data:    nil,
@@ -111,7 +111,7 @@ func CreateUserProj(ctx *gin.Context) {
 		return
 	}
 	if model.GetProjByURI(uri) != nil {
-		ctx.JSON(http.StatusBadRequest, util.Result{
+		ctx.JSON(http.StatusBadRequest, util.Response{
 			Success: false,
 			Msg:     "URI已被占用",
 			Data:    nil,
@@ -120,7 +120,7 @@ func CreateUserProj(ctx *gin.Context) {
 		return
 	}
 	if !validateURLName(name) {
-		ctx.JSON(http.StatusBadRequest, util.Result{
+		ctx.JSON(http.StatusBadRequest, util.Response{
 			Success: false,
 			Msg:     "名字不合法",
 			Data:    nil,
@@ -129,7 +129,7 @@ func CreateUserProj(ctx *gin.Context) {
 		return
 	}
 	if len(srcLangs) == 0 {
-		ctx.JSON(http.StatusBadRequest, util.Result{
+		ctx.JSON(http.StatusBadRequest, util.Response{
 			Success: false,
 			Msg:     "源语言不能为空",
 			Data:    nil,
@@ -138,7 +138,7 @@ func CreateUserProj(ctx *gin.Context) {
 		return
 	}
 	if !model.ValidateLangs(srcLangs) {
-		ctx.JSON(http.StatusBadRequest, util.Result{
+		ctx.JSON(http.StatusBadRequest, util.Response{
 			Success: false,
 			Msg:     "源语言不合法",
 			Data:    nil,
@@ -147,7 +147,7 @@ func CreateUserProj(ctx *gin.Context) {
 		return
 	}
 	if !model.ValidateLangs(trnLangs) {
-		ctx.JSON(http.StatusBadRequest, util.Result{
+		ctx.JSON(http.StatusBadRequest, util.Response{
 			Success: false,
 			Msg:     "目标语言不合法",
 			Data:    nil,
@@ -156,7 +156,7 @@ func CreateUserProj(ctx *gin.Context) {
 		return
 	}
 	if tp == constant.TypeGitURL && !validateGitURL(gitURL) {
-		ctx.JSON(http.StatusBadRequest, util.Result{
+		ctx.JSON(http.StatusBadRequest, util.Response{
 			Success: false,
 			Msg:     "Git URL不合法",
 			Data:    nil,
@@ -166,7 +166,7 @@ func CreateUserProj(ctx *gin.Context) {
 	}
 	fmt.Printf("token=%+v\n", token)
 	if token != nil && token.OwnerID != user.ID {
-		ctx.JSON(http.StatusBadRequest, util.Result{
+		ctx.JSON(http.StatusBadRequest, util.Response{
 			Success: false,
 			Msg:     "Token不合法",
 			Data:    nil,
@@ -188,7 +188,7 @@ func CreateUserProj(ctx *gin.Context) {
 		TrnLangs: trn,
 	})
 	if err != nil {
-		ctx.JSON(http.StatusBadRequest, util.Result{
+		ctx.JSON(http.StatusBadRequest, util.Response{
 			Success: false,
 			Msg:     err.Error(),
 			Data:    nil,
@@ -196,7 +196,7 @@ func CreateUserProj(ctx *gin.Context) {
 		return
 	}
 	go initProj(proj)
-	ctx.JSON(http.StatusCreated, util.Result{
+	ctx.JSON(http.StatusCreated, util.Response{
 		Success: true,
 		Msg:     "创建项目成功",
 		Data:    nil,
@@ -253,7 +253,7 @@ func ListProjBrch(ctx *gin.Context) {
 		// fmt.Printf("branch-name=%+v\n", getBrchFromRef(string(r.Name())))
 		return nil
 	})
-	ctx.JSON(http.StatusOK, util.Result{
+	ctx.JSON(http.StatusOK, util.Response{
 		Success: true,
 		Data: gin.H{
 			"branches": brchs,

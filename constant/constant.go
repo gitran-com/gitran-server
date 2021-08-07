@@ -73,3 +73,16 @@ const (
 	SubjGithubLogin      = "github-login"
 	SubjGithubFirstLogin = "github-first-login"
 )
+
+const (
+	//RoleAdmin can read, submit, vote and commit translations. Can also manage project settings, including adding collaborators
+	RoleAdmin int8 = iota
+	//RoleCommit can read, submit, vote and commit translations
+	RoleCommit
+	//RoleVote can read, submit and vote translations
+	RoleVote
+	//RoleContribute can read and submit translations
+	RoleContribute
+	//RoleRead can read translations
+	RoleRead
+)

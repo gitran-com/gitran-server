@@ -21,21 +21,21 @@ func AuthUserJWT() gin.HandlerFunc {
 	return func(ctx *gin.Context) {
 		auth := ctx.Request.Header.Get("Authorization")
 		if len(auth) <= 0 {
-			ctx.JSON(http.StatusUnauthorized, util.ResultInvalidToken)
+			ctx.JSON(http.StatusUnauthorized, util.RespInvalidToken)
 			ctx.Abort()
 			return
 		}
 		token := strings.Fields(auth)[1]
 		clm, err := ParseToken(token) // 校验token
 		if err != nil || clm.Subject == constant.SubjGithubFirstLogin {
-			ctx.JSON(http.StatusUnauthorized, util.ResultInvalidToken)
+			ctx.JSON(http.StatusUnauthorized, util.RespInvalidToken)
 			ctx.Abort()
 			return
 		}
 		id, _ := strconv.ParseInt(clm.Id, 10, 64)
 		user := model.GetUserByID(id)
 		if user == nil {
-			ctx.JSON(http.StatusUnauthorized, util.ResultInvalidToken)
+			ctx.JSON(http.StatusUnauthorized, util.RespInvalidToken)
 			ctx.Abort()
 			return
 		}
@@ -50,13 +50,13 @@ func AuthUserProjJWT() gin.HandlerFunc {
 		id, _ := strconv.ParseInt(ctx.Param("id"), 10, 64)
 		proj := model.GetProjByID(id)
 		if proj == nil {
-			ctx.JSON(http.StatusNotFound, util.Result404)
+			ctx.JSON(http.StatusNotFound, util.Resp404)
 			ctx.Abort()
 			return
 		}
 		user := ctx.Keys["user"].(*model.User)
 		if proj.OwnerID != user.ID {
-			ctx.JSON(http.StatusNotFound, util.ResultInvalidToken)
+			ctx.JSON(http.StatusNotFound, util.RespInvalidToken)
 			ctx.Abort()
 			return
 		}
@@ -70,21 +70,21 @@ func AuthNewGithubUserJWT() gin.HandlerFunc {
 	return func(ctx *gin.Context) {
 		auth := ctx.Request.Header.Get("Authorization")
 		if len(auth) <= 0 {
-			ctx.JSON(http.StatusUnauthorized, util.ResultInvalidToken)
+			ctx.JSON(http.StatusUnauthorized, util.RespInvalidToken)
 			ctx.Abort()
 			return
 		}
 		token := strings.Fields(auth)[1]
 		clm, err := ParseToken(token) // 校验token
 		if err != nil || clm.Subject != constant.SubjGithubFirstLogin {
-			ctx.JSON(http.StatusUnauthorized, util.ResultInvalidToken)
+			ctx.JSON(http.StatusUnauthorized, util.RespInvalidToken)
 			ctx.Abort()
 			return
 		}
 		id, _ := strconv.ParseInt(clm.Id, 10, 64)
 		user := model.GetUserByID(id)
 		if user == nil {
-			ctx.JSON(http.StatusUnauthorized, util.ResultInvalidToken)
+			ctx.JSON(http.StatusUnauthorized, util.RespInvalidToken)
 			ctx.Abort()
 			return
 		}

@@ -14,11 +14,11 @@ func GetUser(ctx *gin.Context) {
 	id, _ := strconv.ParseInt(ctx.Param("id"), 10, 64)
 	user := model.GetUserByID(id)
 	if user == nil {
-		ctx.JSON(http.StatusNotFound, util.Result404)
+		ctx.JSON(http.StatusNotFound, util.Resp404)
 		return
 	}
 	ctx.JSON(http.StatusOK,
-		util.Result{
+		util.Response{
 			Success: true,
 			Data: gin.H{
 				"user": user,
@@ -33,7 +33,7 @@ func UpdateUser(ctx *gin.Context) {
 
 	} else {
 		ctx.JSON(http.StatusBadRequest,
-			util.Result{
+			util.Response{
 				Success: false,
 				Msg:     "invalid arguments",
 				Data:    nil,
