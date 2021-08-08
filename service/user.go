@@ -9,7 +9,7 @@ import (
 	"github.com/gitran-com/gitran-server/util"
 )
 
-//GetUser gets a user info
+//GetMe gets current user info
 func GetMe(ctx *gin.Context) {
 	user := ctx.Keys["user"].(*model.User)
 	ctx.JSON(http.StatusOK,
@@ -17,6 +17,22 @@ func GetMe(ctx *gin.Context) {
 			Success: true,
 			Data: gin.H{
 				"user": user,
+			},
+		})
+}
+
+//GetMyProjects gets my project list
+func GetMyProjects(ctx *gin.Context) {
+	user := ctx.Keys["user"].(*model.User)
+	projs := model.ListUserProj(user.ID)
+	for i := range projs {
+		projs[i].FillLangs()
+	}
+	ctx.JSON(http.StatusOK,
+		util.Response{
+			Success: true,
+			Data: gin.H{
+				"projs": projs,
 			},
 		})
 }

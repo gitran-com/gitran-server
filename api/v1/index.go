@@ -13,6 +13,7 @@ func Init(g *gin.RouterGroup) {
 	g.GET("/test", controller.Test)
 	initAuth(g)
 	initUser(g)
+	initUsers(g)
 	initProj(g)
 	initLang(g)
 }
@@ -36,7 +37,15 @@ func initAuth(g *gin.RouterGroup) {
 }
 
 func initUser(g *gin.RouterGroup) {
-	g.GET("/user", middleware.AuthUserJWT(), controller.GetMe)
+	gg := g.Group("/user")
+	gg.Use(middleware.AuthUserJWT())
+	{
+		gg.GET("", controller.GetMe)
+		gg.GET("/projects", controller.GetMyProjects)
+	}
+}
+
+func initUsers(g *gin.RouterGroup) {
 	gg := g.Group("/users")
 	gg.GET("/:id", controller.GetUser)
 	gg.GET("/:id/projects", controller.ListUserProj)
