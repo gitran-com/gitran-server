@@ -15,9 +15,6 @@ import (
 	"github.com/gitran-com/gitran-server/model"
 	"github.com/gitran-com/gitran-server/util"
 	"github.com/go-git/go-git/v5"
-	gitconfig "github.com/go-git/go-git/v5/config"
-	"github.com/go-git/go-git/v5/storage/memory"
-	log "github.com/sirupsen/logrus"
 )
 
 var (
@@ -30,21 +27,6 @@ func validateURLName(name string) bool {
 	return ok
 }
 
-func validateGitURL(url string) bool {
-	rmt := git.NewRemote(memory.NewStorage(), &gitconfig.RemoteConfig{
-		URLs: []string{url},
-	})
-	if _, err := rmt.List(&git.ListOptions{}); err != nil {
-		log.Warnf("Git url error : %v", err.Error())
-		return false
-	}
-	return true
-}
-
-func createGitProj(ctx *gin.Context) error {
-	return nil
-}
-
 //GetOrgProjByName get an org project info
 func GetOrgProjByName(ctx *gin.Context, owner string, name string) *model.Project {
 	//TODO
@@ -55,6 +37,7 @@ func GetOrgProjByName(ctx *gin.Context, owner string, name string) *model.Projec
 func GetProj(ctx *gin.Context) {
 	uri := ctx.Param("uri")
 	proj := model.GetProjByURI(uri)
+	proj.FillLangs()
 	if proj == nil {
 		ctx.JSON(http.StatusNotFound, util.Resp404)
 		return
@@ -70,11 +53,15 @@ func GetProj(ctx *gin.Context) {
 //ListUserProj list all projects
 func ListUserProj(ctx *gin.Context) {
 	user_id, _ := strconv.ParseInt(ctx.Param("id"), 10, 64)
+	projs := model.ListUserProj(user_id)
+	for i := range projs {
+		projs[i].FillLangs()
+	}
 	ctx.JSON(http.StatusOK, util.Response{
 		Success: true,
 		Msg:     "",
 		Data: gin.H{
-			"proj_infos": model.ListUserProj(user_id),
+			"projs": projs,
 		}})
 }
 

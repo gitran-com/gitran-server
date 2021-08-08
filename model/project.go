@@ -90,6 +90,11 @@ func (proj *Project) UpdateStatus(stat int) {
 	proj.Write()
 }
 
+func (proj *Project) FillLangs() {
+	proj.SourceLanguages, _ = ParseLangsFromStr(proj.SrcLangs)
+	proj.TranslateLanguages, _ = ParseLangsFromStr(proj.TrnLangs)
+}
+
 //GetProjByID get project by id
 func GetProjByID(id int64) *Project {
 	var proj []Project

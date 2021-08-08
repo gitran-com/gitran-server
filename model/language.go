@@ -36,9 +36,9 @@ func ParseLangsFromStr(s string) ([]Language, bool) {
 func ParseLangsFromCodes(codes []string) ([]Language, bool) {
 	langs := make([]Language, len(codes))
 	ok := true
-	for _, code := range codes {
+	for i, code := range codes {
 		if lang, ok := GetLangByCode(code); ok {
-			langs = append(langs, lang)
+			langs[i] = lang
 		} else {
 			ok = false
 		}
