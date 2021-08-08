@@ -10,6 +10,18 @@ import (
 )
 
 //GetUser gets a user info
+func GetMe(ctx *gin.Context) {
+	user := ctx.Keys["user"].(*model.User)
+	ctx.JSON(http.StatusOK,
+		util.Response{
+			Success: true,
+			Data: gin.H{
+				"user": user,
+			},
+		})
+}
+
+//GetUser gets a user info
 func GetUser(ctx *gin.Context) {
 	id, _ := strconv.ParseInt(ctx.Param("id"), 10, 64)
 	user := model.GetUserByID(id)

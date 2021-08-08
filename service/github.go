@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"net/http"
+	"path"
 	"strconv"
 
 	"github.com/gin-contrib/sessions"
@@ -44,7 +45,7 @@ func AuthGithubLogin(ctx *gin.Context) {
 	github_user, err := gothic.CompleteUserAuth(ctx.Writer, ctx.Request)
 	if err != nil {
 		log.Errorf("auth/github/login: %+v", err.Error())
-		ctx.Redirect(http.StatusTemporaryRedirect, "/")
+		ctx.Redirect(http.StatusTemporaryRedirect, ctx.Request.Host)
 		return
 	}
 	//get github id
@@ -69,10 +70,12 @@ func AuthGithubLogin(ctx *gin.Context) {
 	token, expires_at, refresh_before := middleware.GenUserToken(user.Name, user.ID, subj)
 	//sign token in cookie
 	domain := ctx.Request.URL.Hostname()
+	// fmt.Printf("domain=%v\n", domain)
 	ctx.SetCookie("token", token, 3600, "/", domain, false, false)
 	ctx.SetCookie("expires_at", fmt.Sprintf("%v", expires_at), 3600, "/", domain, false, false)
 	ctx.SetCookie("refresh_before", fmt.Sprintf("%v", refresh_before), 3600, "/", domain, false, false)
-	ctx.Redirect(http.StatusTemporaryRedirect, next)
+	// fmt.Printf("/auth/github/login jump: %v", path.Join(ctx.Request.Host, next))
+	ctx.Redirect(http.StatusTemporaryRedirect, path.Join(ctx.Request.Host, next))
 }
 
 //GitHub OAuth import callback
@@ -99,7 +102,7 @@ func AuthGithubImport(ctx *gin.Context) {
 	user.GithubRepoToken = github_user.AccessToken
 	user.Write()
 	// fmt.Printf("github_user=%+v\ntoken=%+v\n", github_user, tk)
-	ctx.Redirect(http.StatusTemporaryRedirect, next)
+	ctx.Redirect(http.StatusTemporaryRedirect, path.Join(ctx.Request.Host, next))
 }
 
 func GetGithubRepos(ctx *gin.Context) {
@@ -140,7 +143,7 @@ func NewGithubUser(ctx *gin.Context) {
 	user.Write()
 	ctx.JSON(http.StatusOK, util.Response{
 		Success: true,
-		Data:    GenUserTokenData(user, constant.SubjGithubLogin, ""),
+		Data:    GenUserTokenData(user, constant.SubjGithubLogin, "/"),
 	})
 }
 

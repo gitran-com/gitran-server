@@ -5,6 +5,10 @@ import (
 	"github.com/gitran-com/gitran-server/service"
 )
 
+func GetMe(ctx *gin.Context) {
+	service.GetMe(ctx)
+}
+
 func GetUser(ctx *gin.Context) {
 	service.GetUser(ctx)
 }

@@ -29,13 +29,14 @@ func initAuth(g *gin.RouterGroup) {
 		//GitHub引入repo回调
 		gg.GET("/github/import", middleware.AuthUserJWT(), controller.AuthGithubImport)
 		//新注册GitHub用户
-		gg.GET("/github/new", middleware.AuthNewGithubUserJWT(), controller.NewGithubUser)
+		gg.POST("/github/new", middleware.AuthNewGithubUserJWT(), controller.NewGithubUser)
 		//获得所有GitHub仓库
 		gg.GET("/github/repos", middleware.AuthUserJWT(), controller.GetGithubRepos)
 	}
 }
 
 func initUser(g *gin.RouterGroup) {
+	g.GET("/user", middleware.AuthUserJWT(), controller.GetMe)
 	gg := g.Group("/users")
 	gg.GET("/:id", controller.GetUser)
 	gg.GET("/:id/projects", controller.ListUserProj)
