@@ -106,7 +106,7 @@ func CreateUserProj(ctx *gin.Context) {
 		})
 		return
 	}
-	if model.GetProjByURI(req.URI) != nil {
+	if req.URI == "" || model.GetProjByURI(req.URI) != nil {
 		ctx.JSON(http.StatusOK, util.Response{
 			Success: false,
 			Msg:     "uri exists",
@@ -115,6 +115,7 @@ func CreateUserProj(ctx *gin.Context) {
 		return
 	}
 	proj := &model.Project{
+		URI:                req.URI,
 		Name:               req.Name,
 		OwnerID:            user.ID,
 		Type:               req.Type,

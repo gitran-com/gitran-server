@@ -14,9 +14,10 @@ import (
 //Project means project model
 type Project struct {
 	ID                 int64      `json:"id" gorm:"primaryKey;autoIncrement"`
-	Name               string     `json:"name" gorm:"type:varchar(32);uniqueIndex;notNull"`
+	URI                string     `json:"uri" gorm:"type:varchar(32);uniqueIndex;notNull"`
+	Name               string     `json:"name" gorm:"type:varchar(32);notNull"`
 	OwnerID            int64      `json:"owner_id" gorm:"index;notNull"`
-	Token              string     `json:"-" gorm:"-"`
+	Token              string     `json:"-"`
 	Type               int        `json:"type" gorm:"index;notNull"`
 	Status             int        `json:"status" gorm:"notNull"`
 	Desc               string     `json:"desc" gorm:"type:varchar(256)"`
