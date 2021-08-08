@@ -20,7 +20,8 @@ type User struct {
 	Bio             string    `json:"bio" gorm:"type:varchar(256)"`
 	GithubID        int64     `json:"github_id" gorm:"index"`
 	GithubRepoToken string    `json:"-" gorm:"type:varchar(64)"`
-	IsActive        bool      `json:"is_active" gorm:"index"`
+	IsActive        bool      `json:"is_active"`
+	NoPassword      bool      `json:"-"`
 	CreatedAt       time.Time `json:"created_at"`
 	UpdatedAt       time.Time `json:"updated_at"`
 	LastLoginAt     time.Time `json:"-"`
@@ -98,6 +99,7 @@ func NewUserFromGithub(ext *goth.User) *User {
 		Bio:         bio,
 		GithubID:    ext_id,
 		IsActive:    true,
+		NoPassword:  true,
 		LastLoginAt: time.Now(),
 	}
 	return user

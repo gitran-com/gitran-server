@@ -140,6 +140,7 @@ func NewGithubUser(ctx *gin.Context) {
 	user := ctx.Keys["user"].(*model.User)
 	user.Salt = model.GenSalt()
 	user.Password = model.HashSalt(passwd, user.Salt)
+	user.NoPassword = false
 	user.Write()
 	ctx.JSON(http.StatusOK, util.Response{
 		Success: true,

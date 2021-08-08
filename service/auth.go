@@ -22,17 +22,17 @@ func Login(ctx *gin.Context) {
 		return
 	}
 	user := model.GetUserByEmail(req.Email)
-	if model.CheckPass(user, req.Password) {
-		ctx.JSON(http.StatusOK, util.Response{
-			Success: true,
-			Msg:     "login successfully",
-			Data:    GenUserTokenData(user, constant.SubjLogin, ctx.Request.Referer()),
-		})
-	} else {
+	if user.NoPassword || !model.CheckPass(user, req.Password) {
 		ctx.JSON(http.StatusOK, util.Response{
 			Success: false,
 			Msg:     "email or password incorrect",
 			Code:    constant.ErrEmailOrPassIncorrect,
+		})
+	} else {
+		ctx.JSON(http.StatusOK, util.Response{
+			Success: true,
+			Msg:     "login successfully",
+			Data:    GenUserTokenData(user, constant.SubjLogin, ctx.Request.Referer()),
 		})
 	}
 }
@@ -53,6 +53,7 @@ func Register(ctx *gin.Context) {
 			Password:    model.HashSalt(req.Password, salt),
 			Salt:        salt,
 			IsActive:    !config.Email.Enable,
+			NoPassword:  false,
 			LastLoginAt: time.Now(),
 		}
 		if err := user.Create(); err != nil {
