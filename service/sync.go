@@ -8,10 +8,10 @@ import (
 	"github.com/go-git/go-git/v5/plumbing/transport/http"
 	log "github.com/sirupsen/logrus"
 
-	"github.com/go-co-op/gocron"
 	"github.com/gitran-com/gitran-server/config"
 	"github.com/gitran-com/gitran-server/constant"
 	"github.com/gitran-com/gitran-server/model"
+	"github.com/go-co-op/gocron"
 )
 
 var (
@@ -55,8 +55,8 @@ func pushGit(cfg *model.ProjCfg) {
 		model.UpdateProjCfgPushStatus(cfg, constant.SyncStatFail)
 		return
 	}
-	tk := model.GetTokenByID(proj.TokenID)
-	if tk == nil {
+	tk := proj.Token
+	if tk == "" {
 		log.Warnf("%v get token failed", proj.Path)
 		model.UpdateProjCfgPushStatus(cfg, constant.SyncStatFail)
 		return
@@ -65,7 +65,7 @@ func pushGit(cfg *model.ProjCfg) {
 		RemoteName: "origin",
 		Auth: &http.BasicAuth{
 			Username: config.APP.Name,
-			Password: tk.AccessToken,
+			Password: tk,
 		}})
 	if err != nil && err.Error() != constant.ErrGitUpToDate {
 		log.Warnf("%v push failed : %v", proj.Path, err.Error())
@@ -112,19 +112,19 @@ func pullGit(cfg *model.ProjCfg) {
 		model.UpdateProjCfgPullStatus(cfg, constant.SyncStatFail)
 		return
 	}
-	tk := model.GetTokenByID(proj.TokenID)
-	if proj.Type == constant.TypeGithub && tk == nil {
+	tk := proj.Token
+	if proj.Type == constant.ProjTypeGithub && tk == "" {
 		log.Warnf("%v get token failed", proj.Path)
 		model.UpdateProjCfgPushStatus(cfg, constant.SyncStatFail)
 		return
 	}
-	if tk != nil {
+	if tk != "" {
 		err = wt.Pull(&git.PullOptions{
 			RemoteName:   "origin",
 			SingleBranch: true,
 			Auth: &http.BasicAuth{
 				Username: config.APP.Name,
-				Password: tk.AccessToken,
+				Password: tk,
 			}})
 	} else {
 		err = wt.Pull(&git.PullOptions{

@@ -48,7 +48,7 @@ func initUser(g *gin.RouterGroup) {
 
 func initProj(g *gin.RouterGroup) {
 	gg := g.Group("/projects")
-	gg.GET("/:id", controller.GetProj)
+	gg.GET("/:uri", controller.GetProj)
 	gg.Use(middleware.AuthUserJWT())
 	{
 		gg.POST("", controller.CreateUserProj)
@@ -56,21 +56,21 @@ func initProj(g *gin.RouterGroup) {
 	gg.Use(middleware.AuthUserProjJWT())
 	{
 		//Repo Branch
-		gg.GET("/:id/branches", controller.ListProjBrch)
+		gg.GET("/:uri/branches", controller.ListProjBrch)
 
 		//Project Config
-		gg.GET("/:id/configs", controller.ListUserProjCfg)
-		gg.POST("/:id/configs", controller.CreateUserProjCfg)
-		gg.POST("/:id/configs/save", controller.SaveUserProjCfg)
+		gg.GET("/:uri/configs", controller.ListUserProjCfg)
+		gg.POST("/:uri/configs", controller.CreateUserProjCfg)
+		gg.POST("/:uri/configs/save", controller.SaveUserProjCfg)
 
 		//Branch Rule
-		gg.GET("/:id/configs/:config_id/rules", controller.ListUserProjBrchRule)
-		gg.POST("/:id/configs/:config_id/rules", controller.CreateUserProjBrchRule)
+		gg.GET("/:uri/configs/:config_id/rules", controller.ListUserProjBrchRule)
+		gg.POST("/:uri/configs/:config_id/rules", controller.CreateUserProjBrchRule)
 	}
 }
 
 func initLang(g *gin.RouterGroup) {
 	gg := g.Group("/languages")
-	gg.GET("", controller.GetLangs)
-	gg.GET("/:id", controller.GetLang)
+	gg.GET("", controller.ListLangs)
+	gg.GET("/:code", controller.GetLang)
 }

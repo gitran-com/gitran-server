@@ -2,39 +2,28 @@ package service
 
 import (
 	"net/http"
-	"strconv"
 
 	"github.com/gin-gonic/gin"
 	"github.com/gitran-com/gitran-server/model"
 	"github.com/gitran-com/gitran-server/util"
 )
 
-//GetLangs list all languages
-func GetLangs(ctx *gin.Context) {
+//ListLangs list all languages
+func ListLangs(ctx *gin.Context) {
 	ctx.JSON(http.StatusOK,
 		util.Response{
 			Success: true,
 			Data: gin.H{
-				"languages": model.GetLangs(),
+				"langs": model.ListLangs(),
 			},
 		})
 }
 
 //GetLang get a language
 func GetLang(ctx *gin.Context) {
-	id, err := strconv.Atoi(ctx.Param("id"))
-	if err != nil {
-		ctx.JSON(http.StatusBadRequest,
-			util.Response{
-				Success: false,
-				Msg:     err.Error(),
-				Code:    http.StatusBadRequest,
-				Data:    nil,
-			})
-		return
-	}
-	lang := model.GetLangByID(id)
-	if lang == nil {
+	code := ctx.Param("code")
+	lang, ok := model.GetLangByCode(code)
+	if !ok {
 		ctx.JSON(http.StatusNotFound, util.Resp404)
 		return
 	}
@@ -42,7 +31,7 @@ func GetLang(ctx *gin.Context) {
 		util.Response{
 			Success: true,
 			Data: gin.H{
-				"language": *lang,
+				"lang": lang,
 			},
 		})
 }

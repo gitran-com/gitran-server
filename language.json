@@ -2,50 +2,43 @@
     {
         "id": 0,
         "iso": "Chinese Simplified",
-        "name": "中文",
-        "code": "zh",
-        "code3": "zho"
+        "name": "简体中文",
+        "code": "zh-CN"
     },
     {
         "id": 1,
         "iso": "English",
         "name": "English",
-        "code": "en",
-        "code3": "eng"
+        "code": "en"
     },
     {
         "id": 2,
         "iso": "Russian",
         "name": "русский",
-        "code": "ru",
-        "code3": "rus"
+        "code": "ru"
     },
     {
         "id": 3,
         "iso": "French",
         "name": "français",
-        "code": "fr",
-        "code3": "fra"
+        "code": "fr"
     },
     {
         "id": 4,
         "iso": "Arabic",
         "name": "العربية",
-        "code": "ar",
-        "code3": "ara"
+        "code": "ar"
     },
     {
         "id": 5,
         "iso": "Spanish, Castilian",
         "name": "Español",
-        "code": "es",
-        "code3": "spa"
+        "code": "es"
     },
     {
         "id": 6,
         "iso": "Japanese",
         "name": "日本語",
-        "code": "ja",
-        "code3": "jpn"
+        "code": "ja"
     }
 ]

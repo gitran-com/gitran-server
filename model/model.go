@@ -6,8 +6,8 @@ import (
 	"fmt"
 	"io/ioutil"
 
-	log "github.com/sirupsen/logrus"
 	"github.com/gitran-com/gitran-server/config"
+	log "github.com/sirupsen/logrus"
 	"gorm.io/driver/mysql"
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
@@ -17,6 +17,7 @@ var (
 	db       *gorm.DB
 	langs    []Language
 	langFile = flag.String("language", "language.json", "语言列表文件路径")
+	langMap  = make(map[string]Language)
 )
 
 func initDB() error {
@@ -71,6 +72,9 @@ func initLangs() error {
 	if err := json.Unmarshal(langData, &langs); err != nil {
 		log.Fatalf("language JSON unmarshal failed: %v", err)
 		return err
+	}
+	for _, lang := range langs {
+		langMap[lang.Code] = lang
 	}
 	// fmt.Printf("langs:%+v", langs)
 	return nil

@@ -5,9 +5,9 @@ import (
 	"github.com/gitran-com/gitran-server/service"
 )
 
-//GetLangs list all languages
-func GetLangs(ctx *gin.Context) {
-	service.GetLangs(ctx)
+//ListLangs list all languages
+func ListLangs(ctx *gin.Context) {
+	service.ListLangs(ctx)
 }
 
 //GetLang get a language

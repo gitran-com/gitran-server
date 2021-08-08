@@ -1,15 +1,13 @@
 package service
 
 import (
-	"fmt"
 	"net/http"
-	"os"
+	"path/filepath"
 	"regexp"
 	"strconv"
 	"strings"
 
 	"github.com/go-git/go-git/v5/plumbing"
-	githttp "github.com/go-git/go-git/v5/plumbing/transport/http"
 
 	"github.com/gin-gonic/gin"
 	"github.com/gitran-com/gitran-server/config"
@@ -55,17 +53,16 @@ func GetOrgProjByName(ctx *gin.Context, owner string, name string) *model.Projec
 
 //GetProj get a project info
 func GetProj(ctx *gin.Context) {
-	id, _ := strconv.ParseInt(ctx.Param("id"), 10, 64)
-	proj := model.GetProjByID(id)
+	uri := ctx.Param("uri")
+	proj := model.GetProjByURI(uri)
 	if proj == nil {
 		ctx.JSON(http.StatusNotFound, util.Resp404)
 		return
 	}
-	projInfo := model.GetProjInfoFromProj(proj)
 	ctx.JSON(http.StatusOK, util.Response{
 		Success: true,
 		Data: gin.H{
-			"proj_info": *projInfo,
+			"proj": proj,
 		},
 	})
 }
@@ -77,166 +74,83 @@ func ListUserProj(ctx *gin.Context) {
 		Success: true,
 		Msg:     "",
 		Data: gin.H{
-			"proj_infos": model.GetProjInfosFromProjs(model.ListUserProj(user_id)),
+			"proj_infos": model.ListUserProj(user_id),
 		}})
 }
 
 //CreateUserProj create a new user project
 func CreateUserProj(ctx *gin.Context) {
-	name := ctx.PostForm("name")
-	uri := ctx.PostForm("uri")
-	desc := ctx.PostForm("desc")
-	user := ctx.Keys["user"].(*model.User)
-	gitURL := ctx.PostForm("git_url")
-	src := ctx.PostForm("src_langs")
-	trn := ctx.PostForm("trn_langs")
-	srcLangs := model.ParseLangs(src)
-	trnLangs := model.ParseLangs(trn)
-	tp, _ := strconv.Atoi(ctx.PostForm("type"))
-	var token *model.Token
-	var token_id int64
-	var err error
-	if token_id, err = strconv.ParseInt(ctx.PostForm("token_id"), 10, 64); err == nil {
-		token = model.GetTokenByID(token_id)
-	} else {
-		token = nil
-	}
-	if token == nil && tp == constant.TypeGithub {
-		ctx.JSON(http.StatusBadRequest, util.Response{
-			Success: false,
-			Msg:     "Token不合法",
-			Data:    nil,
-			Code:    constant.ErrTokenIllegal,
-		})
+	var (
+		req                CreateProjRequest
+		srcLangs, trnLangs []model.Language
+		ok                 bool
+		user               = ctx.Keys["user"].(*model.User)
+	)
+	if err := ctx.BindJSON(&req); err != nil {
+		ctx.JSON(http.StatusBadRequest, util.Resp400)
 		return
 	}
-	if model.GetProjByURI(uri) != nil {
-		ctx.JSON(http.StatusBadRequest, util.Response{
+	if srcLangs, ok = model.ParseLangsFromCodes(req.SrcLangs); !ok {
+		ctx.JSON(http.StatusOK, util.Response{
 			Success: false,
-			Msg:     "URI已被占用",
-			Data:    nil,
-			Code:    constant.ErrProjUriIllegal,
-		})
-		return
-	}
-	if !validateURLName(name) {
-		ctx.JSON(http.StatusBadRequest, util.Response{
-			Success: false,
-			Msg:     "名字不合法",
-			Data:    nil,
-			Code:    constant.ErrProjNameIllegal,
-		})
-		return
-	}
-	if len(srcLangs) == 0 {
-		ctx.JSON(http.StatusBadRequest, util.Response{
-			Success: false,
-			Msg:     "源语言不能为空",
-			Data:    nil,
-			Code:    constant.ErrProjSrcLangEmpty,
-		})
-		return
-	}
-	if !model.ValidateLangs(srcLangs) {
-		ctx.JSON(http.StatusBadRequest, util.Response{
-			Success: false,
-			Msg:     "源语言不合法",
-			Data:    nil,
+			Msg:     "src_langs illegal",
 			Code:    constant.ErrProjSrcLangIllegal,
 		})
 		return
 	}
-	if !model.ValidateLangs(trnLangs) {
-		ctx.JSON(http.StatusBadRequest, util.Response{
+	if trnLangs, ok = model.ParseLangsFromCodes(req.TrnLangs); !ok {
+		ctx.JSON(http.StatusOK, util.Response{
 			Success: false,
-			Msg:     "目标语言不合法",
-			Data:    nil,
+			Msg:     "trn_langs illegal",
 			Code:    constant.ErrProjTrnLangIllegal,
 		})
 		return
 	}
-	if tp == constant.TypeGitURL && !validateGitURL(gitURL) {
-		ctx.JSON(http.StatusBadRequest, util.Response{
+	if model.GetProjByURI(req.URI) != nil {
+		ctx.JSON(http.StatusOK, util.Response{
 			Success: false,
-			Msg:     "Git URL不合法",
-			Data:    nil,
-			Code:    constant.ErrGitUrlIllegal,
+			Msg:     "uri exists",
+			Code:    constant.ErrProjUriExists,
 		})
 		return
 	}
-	fmt.Printf("token=%+v\n", token)
-	if token != nil && token.OwnerID != user.ID {
-		ctx.JSON(http.StatusBadRequest, util.Response{
+	proj := &model.Project{
+		Name:               req.Name,
+		OwnerID:            user.ID,
+		Type:               req.Type,
+		Status:             constant.ProjStatCreated,
+		Desc:               req.Desc,
+		GitURL:             req.GitURL,
+		Path:               filepath.Join(config.ProjPath, req.URI),
+		SrcLangs:           strings.Join(req.SrcLangs, constant.Delim),
+		TrnLangs:           strings.Join(req.TrnLangs, constant.Delim),
+		SourceLanguages:    srcLangs,
+		TranslateLanguages: trnLangs,
+	}
+	if req.Type == constant.ProjTypeGitURL {
+		//Nothing to do
+	} else if req.Type == constant.ProjTypeGithub {
+		proj.Token = user.GithubRepoToken
+	} else {
+		ctx.JSON(http.StatusOK, util.Response{
 			Success: false,
-			Msg:     "Token不合法",
-			Data:    nil,
-			Code:    constant.ErrTokenIllegal,
+			Msg:     "type illegal",
+			Code:    constant.ErrProjTypeIllegal,
 		})
 		return
 	}
-	proj, err := model.NewProj(&model.Project{
-		Name:     name,
-		OwnerID:  user.ID,
-		TokenID:  token_id,
-		Token:    token,
-		Type:     tp,
-		Status:   constant.ProjStatCreated,
-		Desc:     desc,
-		GitURL:   gitURL,
-		Path:     config.ProjPath + "/" + uri + "/",
-		SrcLangs: src,
-		TrnLangs: trn,
-	})
-	if err != nil {
-		ctx.JSON(http.StatusBadRequest, util.Response{
+	if err := proj.Create(); err != nil {
+		ctx.JSON(http.StatusOK, util.Response{
 			Success: false,
+			Code:    constant.ErrUnknown,
 			Msg:     err.Error(),
-			Data:    nil,
 		})
-		return
 	}
-	go initProj(proj)
 	ctx.JSON(http.StatusCreated, util.Response{
 		Success: true,
-		Msg:     "创建项目成功",
-		Data:    nil,
+		Msg:     "create project successfully",
 	})
-}
-
-//initProj init a new project
-func initProj(proj *model.Project) {
-	if proj.Type == constant.TypeGitURL {
-		_, err := git.PlainClone(proj.Path, false, &git.CloneOptions{
-			URL:          proj.GitURL,
-			Progress:     os.Stdout, //TODO: update progress in DB
-			Depth:        1,
-			SingleBranch: false,
-		})
-		if err == nil {
-			model.UpdateProjStatus(proj, constant.ProjStatReady)
-		} else {
-			log.Warnf("git clone error : %v", err.Error())
-		}
-	} else if proj.Type == constant.TypeGithub {
-		_, err := git.PlainClone(proj.Path, false, &git.CloneOptions{
-			URL: proj.GitURL,
-			Auth: &githttp.BasicAuth{
-				Username: config.APP.Name,
-				Password: proj.Token.AccessToken,
-			},
-			Progress:     os.Stdout,
-			Depth:        1,
-			SingleBranch: false,
-		})
-		if err == nil {
-			model.UpdateProjStatus(proj, constant.ProjStatReady)
-		} else {
-			log.Warnf("git clone error : %v", err.Error())
-		}
-	} else {
-		log.Errorf("initProj error: type %v has not been implemented", proj.Type)
-		//TODO
-	}
+	go proj.Init()
 }
 
 func getBrchFromRef(ref string) string {

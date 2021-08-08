@@ -155,7 +155,7 @@ func CreateUserProjCfg(ctx *gin.Context) {
 	if pullItv != 0 {
 		pullSchd.Every(pullItv).Minutes().Do(pullGit, projCfg)
 	}
-	if proj.Type == constant.TypeGithub && pushItv != 0 {
+	if proj.Type == constant.ProjTypeGithub && pushItv != 0 {
 		pushSchd.Every(pushItv).Minutes().Do(pushGit, projCfg)
 	}
 }
@@ -235,9 +235,9 @@ func SaveUserProjCfg(ctx *gin.Context) {
 
 func processCfg(cfg *model.ProjCfg, proj *model.Project, rules []model.BrchRule) {
 	lk := projMutexMap.Lock(proj.ID)
-	model.UpdateProjStatus(proj, constant.ProjStatProcessingString)
+	proj.UpdateStatus(constant.ProjStatProcessingString)
 	defer lk.Unlock()
-	defer model.UpdateProjStatus(proj, constant.ProjStatReady)
+	defer proj.UpdateStatus(constant.ProjStatReady)
 	repo, err := git.PlainOpen(proj.Path)
 	if err != nil {
 		log.Errorf("processCfg error when git.PlainOpen(): %+v", err.Error())

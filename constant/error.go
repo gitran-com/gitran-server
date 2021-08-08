@@ -14,13 +14,11 @@ const (
 )
 
 const (
-	ErrProjNameIllegal = 2000 + iota
-	ErrProjUriIllegal
+	ErrProjUriExists = 2000 + iota
 	ErrProjSrcLangEmpty
 	ErrProjSrcLangIllegal
 	ErrProjTrnLangIllegal
-	ErrGitUrlIllegal
-	ErrTokenIllegal
+	ErrProjTypeIllegal
 )
 
 const (
