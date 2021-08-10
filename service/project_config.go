@@ -29,7 +29,7 @@ var (
 
 func ListUserProjCfg(ctx *gin.Context) {
 	proj := ctx.Keys["project"].(*model.Project)
-	ctx.JSON(http.StatusOK, util.Response{
+	ctx.JSON(http.StatusOK, model.Response{
 		Success: true,
 		Msg:     "success",
 		Data: gin.H{
@@ -42,14 +42,14 @@ func ListUserProjBrchRule(ctx *gin.Context) {
 	proj := ctx.Keys["project"].(*model.Project)
 	cfg := model.GetProjCfgByID(configID)
 	if cfg == nil {
-		ctx.JSON(http.StatusNotFound, util.Resp404)
+		ctx.JSON(http.StatusNotFound, model.Resp404)
 		return
 	}
 	if cfg.ProjID != proj.ID {
-		ctx.JSON(http.StatusNotFound, util.Resp404)
+		ctx.JSON(http.StatusNotFound, model.Resp404)
 		return
 	}
-	ctx.JSON(http.StatusOK, util.Response{
+	ctx.JSON(http.StatusOK, model.Response{
 		Success: true,
 		Msg:     "success",
 		Data: gin.H{
@@ -61,7 +61,7 @@ func CreateUserProjBrchRule(ctx *gin.Context) {
 	configID, _ := strconv.ParseInt(ctx.Param("config_id"), 10, 64)
 	cfg := model.GetProjCfgByID(configID)
 	if cfg == nil {
-		ctx.JSON(http.StatusNotFound, util.Resp404)
+		ctx.JSON(http.StatusNotFound, model.Resp404)
 		return
 	}
 	srcFiles := ctx.PostForm("src_files")
@@ -76,7 +76,7 @@ func CreateUserProjBrchRule(ctx *gin.Context) {
 	}
 	_, err := model.NewBrchRule(rule)
 	if err != nil {
-		ctx.JSON(http.StatusBadRequest, util.Response{
+		ctx.JSON(http.StatusBadRequest, model.Response{
 			Success: false,
 			Msg:     err.Error(),
 			Data:    nil,
@@ -84,7 +84,7 @@ func CreateUserProjBrchRule(ctx *gin.Context) {
 		return
 	}
 	model.UpdateProjCfgChanged(cfg, true)
-	ctx.JSON(http.StatusCreated, util.Response{
+	ctx.JSON(http.StatusCreated, model.Response{
 		Success: true,
 		Msg:     "分支规则创建成功",
 		Data:    nil,
@@ -108,7 +108,7 @@ func CreateUserProjCfg(ctx *gin.Context) {
 		Branch: plumbing.ReferenceName(srcBrName),
 	})
 	if err != nil {
-		ctx.JSON(http.StatusBadRequest, util.Response{
+		ctx.JSON(http.StatusBadRequest, model.Response{
 			Success: false,
 			Msg:     err.Error(),
 			Data:    nil,
@@ -120,7 +120,7 @@ func CreateUserProjCfg(ctx *gin.Context) {
 	srcHead, _ := repo.Head()
 	ref := plumbing.NewHashReference(plumbing.ReferenceName(trnBrName), srcHead.Hash())
 	if err := repo.Storer.SetReference(ref); err != nil {
-		ctx.JSON(http.StatusBadRequest, util.Response{
+		ctx.JSON(http.StatusBadRequest, model.Response{
 			Success: false,
 			Msg:     err.Error(),
 			Data:    nil,
@@ -139,7 +139,7 @@ func CreateUserProjCfg(ctx *gin.Context) {
 	}
 	projCfg, err = model.NewProjCfg(projCfg)
 	if err != nil {
-		ctx.JSON(http.StatusBadRequest, util.Response{
+		ctx.JSON(http.StatusBadRequest, model.Response{
 			Success: false,
 			Msg:     err.Error(),
 			Data:    nil,
@@ -147,7 +147,7 @@ func CreateUserProjCfg(ctx *gin.Context) {
 		})
 		return
 	}
-	ctx.JSON(http.StatusCreated, util.Response{
+	ctx.JSON(http.StatusCreated, model.Response{
 		Success: true,
 		Msg:     "项目配置创建成功",
 		Data:    nil,
@@ -178,7 +178,7 @@ func SaveUserProjCfg(ctx *gin.Context) {
 			Branch: plumbing.ReferenceName(srcBr),
 		})
 		if err != nil {
-			ctx.JSON(http.StatusBadRequest, util.Response{
+			ctx.JSON(http.StatusBadRequest, model.Response{
 				Success: false,
 				Msg:     err.Error(),
 				Data:    nil,
@@ -189,7 +189,7 @@ func SaveUserProjCfg(ctx *gin.Context) {
 		rules := model.ListBrchRuleByCfgID(cfg.ID)
 		err = ioutil.WriteFile(proj.Path+cfg.FileName, genCfgFileByRuleInfos(model.GetBrchRuleInfosFromBrchRules(rules)), os.ModeAppend|os.ModePerm)
 		if err != nil {
-			ctx.JSON(http.StatusBadRequest, util.Response{
+			ctx.JSON(http.StatusBadRequest, model.Response{
 				Success: false,
 				Msg:     err.Error(),
 				Data:    nil,
@@ -214,7 +214,7 @@ func SaveUserProjCfg(ctx *gin.Context) {
 				}})
 			if err != nil {
 				log.Warn(err.Error())
-				ctx.JSON(http.StatusBadRequest, util.Response{
+				ctx.JSON(http.StatusBadRequest, model.Response{
 					Success: false,
 					Msg:     err.Error(),
 					Data:    nil,
@@ -226,7 +226,7 @@ func SaveUserProjCfg(ctx *gin.Context) {
 		model.UpdateProjCfgChanged(&cfg, false)
 		go processCfg(&cfg, proj, rules)
 	}
-	ctx.JSON(http.StatusCreated, util.Response{
+	ctx.JSON(http.StatusCreated, model.Response{
 		Success: true,
 		Msg:     "项目配置更新成功",
 		Data:    nil,

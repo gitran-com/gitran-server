@@ -5,13 +5,12 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/gitran-com/gitran-server/model"
-	"github.com/gitran-com/gitran-server/util"
 )
 
 //ListLangs list all languages
 func ListLangs(ctx *gin.Context) {
 	ctx.JSON(http.StatusOK,
-		util.Response{
+		model.Response{
 			Success: true,
 			Data: gin.H{
 				"langs": model.ListLangs(),
@@ -24,11 +23,11 @@ func GetLang(ctx *gin.Context) {
 	code := ctx.Param("code")
 	lang, ok := model.GetLangByCode(code)
 	if !ok {
-		ctx.JSON(http.StatusNotFound, util.Resp404)
+		ctx.JSON(http.StatusNotFound, model.Resp404)
 		return
 	}
 	ctx.JSON(http.StatusOK,
-		util.Response{
+		model.Response{
 			Success: true,
 			Data: gin.H{
 				"lang": lang,

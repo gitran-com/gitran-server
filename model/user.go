@@ -14,10 +14,10 @@ import (
 //User means user
 type User struct {
 	ID              int64     `json:"id" gorm:"primaryKey;autoIncrement"`
-	Name            string    `json:"name" gorm:"type:varchar(32);index"`
 	Email           string    `json:"email" gorm:"type:varchar(256);uniqueIndex"`
-	AvatarURL       string    `json:"avatar_url" gorm:"type:varchar(256)"`
+	Name            string    `json:"name" gorm:"type:varchar(32);index;notNull"`
 	Bio             string    `json:"bio" gorm:"type:varchar(256)"`
+	AvatarURL       string    `json:"avatar_url" gorm:"type:varchar(256)"`
 	GithubID        int64     `json:"github_id" gorm:"index"`
 	GithubRepoToken string    `json:"-" gorm:"type:varchar(64)"`
 	IsActive        bool      `json:"is_active"`
@@ -42,6 +42,10 @@ func (user *User) Write() {
 //Create creates new user
 func (user *User) Create() error {
 	return db.Create(user).Error
+}
+
+func (user *User) UpdateProfile(mp map[string]interface{}) error {
+	return db.Model(user).Updates(mp).Error
 }
 
 //GetUserByID gets a user by id

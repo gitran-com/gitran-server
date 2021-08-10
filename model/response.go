@@ -1,4 +1,4 @@
-package util
+package model
 
 //Response is HTTP JSON result
 type Response struct {
@@ -8,14 +8,14 @@ type Response struct {
 	Msg     string                 `json:"message"`
 }
 
-//Resp400 is 400 JSON response
+//Resp400 is 400 JSON response for 'Bad Request'
 var Resp400 = Response{
 	Success: false,
 	Code:    400,
 	Msg:     "bad request",
 }
 
-//Resp404 is 404 JSON response
+//Resp404 is 404 JSON response for 'Not Found'
 var Resp404 = Response{
 	Success: false,
 	Code:    404,

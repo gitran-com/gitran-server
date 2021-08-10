@@ -1,4 +1,4 @@
-package service
+package model
 
 type LoginRequest struct {
 	Email    string `json:"email"`
@@ -19,4 +19,20 @@ type CreateProjRequest struct {
 	SrcLangs []string `json:"src_langs"`
 	TrnLangs []string `json:"trn_langs"`
 	Type     int      `json:"type"`
+}
+
+type UpdateProfileRequest struct {
+	Name string `json:"name"`
+	Bio  string `json:"bio"`
+}
+
+func (req *UpdateProfileRequest) Map() map[string]interface{} {
+	return map[string]interface{}{
+		"name": req.Name,
+		"bio":  req.Bio,
+	}
+}
+
+func (req *UpdateProfileRequest) Valid() bool {
+	return req.Name != ""
 }

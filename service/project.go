@@ -13,7 +13,6 @@ import (
 	"github.com/gitran-com/gitran-server/config"
 	"github.com/gitran-com/gitran-server/constant"
 	"github.com/gitran-com/gitran-server/model"
-	"github.com/gitran-com/gitran-server/util"
 	"github.com/go-git/go-git/v5"
 )
 
@@ -39,10 +38,10 @@ func GetProj(ctx *gin.Context) {
 	proj := model.GetProjByURI(uri)
 	proj.FillLangs()
 	if proj == nil {
-		ctx.JSON(http.StatusNotFound, util.Resp404)
+		ctx.JSON(http.StatusNotFound, model.Resp404)
 		return
 	}
-	ctx.JSON(http.StatusOK, util.Response{
+	ctx.JSON(http.StatusOK, model.Response{
 		Success: true,
 		Data: gin.H{
 			"proj": proj,
@@ -57,7 +56,7 @@ func ListUserProj(ctx *gin.Context) {
 	for i := range projs {
 		projs[i].FillLangs()
 	}
-	ctx.JSON(http.StatusOK, util.Response{
+	ctx.JSON(http.StatusOK, model.Response{
 		Success: true,
 		Msg:     "",
 		Data: gin.H{
@@ -68,17 +67,17 @@ func ListUserProj(ctx *gin.Context) {
 //CreateUserProj create a new user project
 func CreateUserProj(ctx *gin.Context) {
 	var (
-		req                CreateProjRequest
+		req                model.CreateProjRequest
 		srcLangs, trnLangs []model.Language
 		ok                 bool
 		user               = ctx.Keys["user"].(*model.User)
 	)
 	if err := ctx.BindJSON(&req); err != nil {
-		ctx.JSON(http.StatusBadRequest, util.Resp400)
+		ctx.JSON(http.StatusBadRequest, model.Resp400)
 		return
 	}
 	if srcLangs, ok = model.ParseLangsFromCodes(req.SrcLangs); !ok {
-		ctx.JSON(http.StatusOK, util.Response{
+		ctx.JSON(http.StatusOK, model.Response{
 			Success: false,
 			Msg:     "src_langs illegal",
 			Code:    constant.ErrProjSrcLangIllegal,
@@ -86,7 +85,7 @@ func CreateUserProj(ctx *gin.Context) {
 		return
 	}
 	if trnLangs, ok = model.ParseLangsFromCodes(req.TrnLangs); !ok {
-		ctx.JSON(http.StatusOK, util.Response{
+		ctx.JSON(http.StatusOK, model.Response{
 			Success: false,
 			Msg:     "trn_langs illegal",
 			Code:    constant.ErrProjTrnLangIllegal,
@@ -94,7 +93,7 @@ func CreateUserProj(ctx *gin.Context) {
 		return
 	}
 	if req.URI == "" || model.GetProjByURI(req.URI) != nil {
-		ctx.JSON(http.StatusOK, util.Response{
+		ctx.JSON(http.StatusOK, model.Response{
 			Success: false,
 			Msg:     "uri exists",
 			Code:    constant.ErrProjUriExists,
@@ -120,7 +119,7 @@ func CreateUserProj(ctx *gin.Context) {
 	} else if req.Type == constant.ProjTypeGithub {
 		proj.Token = user.GithubRepoToken
 	} else {
-		ctx.JSON(http.StatusOK, util.Response{
+		ctx.JSON(http.StatusOK, model.Response{
 			Success: false,
 			Msg:     "type illegal",
 			Code:    constant.ErrProjTypeIllegal,
@@ -128,13 +127,13 @@ func CreateUserProj(ctx *gin.Context) {
 		return
 	}
 	if err := proj.Create(); err != nil {
-		ctx.JSON(http.StatusOK, util.Response{
+		ctx.JSON(http.StatusOK, model.Response{
 			Success: false,
 			Code:    constant.ErrUnknown,
 			Msg:     err.Error(),
 		})
 	}
-	ctx.JSON(http.StatusCreated, util.Response{
+	ctx.JSON(http.StatusCreated, model.Response{
 		Success: true,
 		Msg:     "create project successfully",
 	})
@@ -155,7 +154,7 @@ func ListProjBrch(ctx *gin.Context) {
 		// fmt.Printf("branch-name=%+v\n", getBrchFromRef(string(r.Name())))
 		return nil
 	})
-	ctx.JSON(http.StatusOK, util.Response{
+	ctx.JSON(http.StatusOK, model.Response{
 		Success: true,
 		Data: gin.H{
 			"branches": brchs,

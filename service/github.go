@@ -13,7 +13,6 @@ import (
 	"github.com/gitran-com/gitran-server/constant"
 	"github.com/gitran-com/gitran-server/middleware"
 	"github.com/gitran-com/gitran-server/model"
-	"github.com/gitran-com/gitran-server/util"
 	"github.com/google/go-github/github"
 	"github.com/markbates/goth/gothic"
 	log "github.com/sirupsen/logrus"
@@ -109,7 +108,7 @@ func GetGithubRepos(ctx *gin.Context) {
 	user := ctx.Keys["user"].(*model.User)
 	tk := user.GithubRepoToken
 	if tk == "" {
-		ctx.JSON(http.StatusOK, util.Response{
+		ctx.JSON(http.StatusOK, model.Response{
 			Success: false,
 			Msg:     "github repo unauthorized",
 			Code:    constant.ErrGithubRepoUnauthorized,
@@ -118,7 +117,7 @@ func GetGithubRepos(ctx *gin.Context) {
 	}
 	repos, err := getGithubReposFromToken(tk)
 	if err != nil {
-		ctx.JSON(http.StatusOK, util.Response{
+		ctx.JSON(http.StatusOK, model.Response{
 			Success: false,
 			Msg:     "github repo authorize error: " + err.Error(),
 			Code:    constant.ErrGithubRepoUnauthorized,
@@ -127,7 +126,7 @@ func GetGithubRepos(ctx *gin.Context) {
 		user.Write()
 		return
 	}
-	ctx.JSON(http.StatusOK, util.Response{
+	ctx.JSON(http.StatusOK, model.Response{
 		Success: true,
 		Data: gin.H{
 			"repos": repos,
@@ -142,7 +141,7 @@ func NewGithubUser(ctx *gin.Context) {
 	user.Password = model.HashSalt(passwd, user.Salt)
 	user.NoPassword = false
 	user.Write()
-	ctx.JSON(http.StatusOK, util.Response{
+	ctx.JSON(http.StatusOK, model.Response{
 		Success: true,
 		Data:    GenUserTokenData(user, constant.SubjGithubLogin, "/"),
 	})
