@@ -36,7 +36,6 @@ func GetOrgProjByName(ctx *gin.Context, owner string, name string) *model.Projec
 func GetProj(ctx *gin.Context) {
 	uri := ctx.Param("uri")
 	proj := model.GetProjByURI(uri)
-	proj.FillLangs()
 	if proj == nil {
 		ctx.JSON(http.StatusNotFound, model.Resp404)
 		return
@@ -53,9 +52,6 @@ func GetProj(ctx *gin.Context) {
 func ListUserProj(ctx *gin.Context) {
 	user_id, _ := strconv.ParseInt(ctx.Param("id"), 10, 64)
 	projs := model.ListUserProj(user_id)
-	for i := range projs {
-		projs[i].FillLangs()
-	}
 	ctx.JSON(http.StatusOK, model.Response{
 		Success: true,
 		Msg:     "",

@@ -110,47 +110,18 @@ func GetProjByURI(uri string) *Project {
 	var proj []Project
 	db.Where("uri=?", uri).First(&proj)
 	if len(proj) > 0 {
+		proj[0].FillLangs()
 		return &proj[0]
 	}
 	return nil
-}
-
-//GetProjByOwnerIDName get project by oid & name
-func GetProjByOwnerIDName(oid int64, name string, self bool) *Project {
-	var proj []Project
-	if self {
-		db.Where("owner_id=? AND name=?", oid, name).First(&proj)
-	} else {
-		db.Where("owner_id=? AND name=? AND is_private=?", oid, name, false).First(&proj)
-	}
-	if len(proj) > 0 {
-		return &proj[0]
-	}
-	return nil
-}
-
-//NewProj creates a new project
-func NewProj(proj *Project) (*Project, error) {
-	if result := db.Create(proj); result.Error != nil {
-		return nil, result.Error
-	}
-	return proj, nil
 }
 
 //ListUserProj list all projects from a user
 func ListUserProj(user_id int64) []Project {
-	var proj []Project
-	db.Where("owner_id=?", user_id).Find(&proj)
-	return proj
-}
-
-//ListProjFromOwnerID list all projects from an owner id
-func ListProjFromOwnerID(oid int64, priv bool) []Project {
-	var proj []Project
-	if priv {
-		db.Where("owner_id=?", oid).Find(&proj)
-	} else {
-		db.Where("owner_id=? AND is_private=?", oid, false).Find(&proj)
+	var projs []Project
+	db.Where("owner_id=?", user_id).Find(&projs)
+	for i := range projs {
+		projs[i].FillLangs()
 	}
-	return proj
+	return projs
 }

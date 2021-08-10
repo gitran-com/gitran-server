@@ -41,9 +41,6 @@ func EditMe(ctx *gin.Context) {
 func GetMyProjects(ctx *gin.Context) {
 	user := ctx.Keys["user"].(*model.User)
 	projs := model.ListUserProj(user.ID)
-	for i := range projs {
-		projs[i].FillLangs()
-	}
 	ctx.JSON(http.StatusOK,
 		model.Response{
 			Success: true,
