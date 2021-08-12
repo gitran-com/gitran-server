@@ -48,6 +48,7 @@ func (proj *Project) Create() error {
 
 //Init init a new project
 func (proj *Project) Init() {
+	SetUserProjRole(proj.OwnerID, proj.ID, RoleAdmin)
 	if proj.Type == constant.ProjTypeGitURL {
 		_, err := git.PlainClone(proj.Path, false, &git.CloneOptions{
 			URL:          proj.GitURL,

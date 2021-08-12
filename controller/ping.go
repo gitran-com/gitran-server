@@ -2,9 +2,10 @@ package controller
 
 import (
 	"net/http"
+	"strconv"
 
 	"github.com/gin-gonic/gin"
-	"github.com/gitran-com/gitran-server/service"
+	"github.com/gitran-com/gitran-server/model"
 )
 
 var html = `
@@ -24,5 +25,11 @@ func PingV1(ctx *gin.Context) {
 }
 
 func Test(ctx *gin.Context) {
-	ctx.JSON(http.StatusAccepted, service.ListMatchFiles("/mnt/d/Workspace/gitran-server/data/project/ops/", "bash/*.sh", []string{}))
+	user_id, _ := strconv.ParseInt(ctx.Query("user_id"), 10, 64)
+	proj_id, _ := strconv.ParseInt(ctx.Query("proj_id"), 10, 64)
+	role, _ := strconv.ParseInt(ctx.Query("role"), 10, 64)
+	model.SetUserProjRole(user_id, proj_id, model.Role(role))
+	ctx.JSON(http.StatusOK, gin.H{
+		"data": *model.GetUserProjRole(user_id, proj_id),
+	})
 }
