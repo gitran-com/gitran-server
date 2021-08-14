@@ -28,18 +28,20 @@ const (
 )
 
 const (
-	MaxProjInitRetry = 5
+	MaxProjInitRetry        = 5
+	MinProjPullGap   uint16 = 5
+	MinProjPushGap   uint16 = 5
 )
 
 const (
-	//ProjStatFailed 项目初始化失败
-	ProjStatFailed int = -1
 	//ProjStatCreated 项目已创建未初始化
 	ProjStatCreated int = iota
 	//ProjStatReady 项目已就绪
 	ProjStatReady
 	//ProjStatProcessingString 项目正在处理string
 	ProjStatProcessingString
+	//ProjStatFailed 项目初始化失败
+	ProjStatFailed int = -1
 )
 
 const (

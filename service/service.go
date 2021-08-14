@@ -3,6 +3,7 @@ package service
 import (
 	"fmt"
 	"net/url"
+	"sync"
 
 	"github.com/gitran-com/gitran-server/config"
 	"github.com/gitran-com/gitran-server/model"
@@ -23,36 +24,42 @@ func Init() error {
 	pushSchd.StartAsync()
 	cfgs := model.ListSyncProjCfg()
 	for _, cfg := range cfgs {
-		proj := model.GetProjByID(cfg.ProjID)
+		proj := model.GetProjByID(cfg.ID)
 		if proj == nil {
-			log.Warnf("proj %v not found", cfg.ProjID)
+			log.Warnf("proj %v not found", cfg.ID)
 		} else {
-			if cfg.PullItv != 0 {
+			if cfg.PullGap != 0 {
 				// log.Infof("add pull task %+v", cfg)
-				_, err := pullSchd.Every(uint64(cfg.PullItv)).Minutes().Do(pullGit, &cfg)
+				_, err := pullSchd.Every(uint64(cfg.PullGap)).Minutes().Do(pullGit, &cfg)
 				if err != nil {
 					log.Warnf("add pull task err : %+v", err.Error())
 				}
 			}
-			if cfg.PushItv != 0 {
+			if cfg.PushGap != 0 {
 				// log.Infof("add push task %+v", cfg)
-				_, err := pushSchd.Every(uint64(cfg.PushItv)).Minutes().Do(pushGit, &cfg)
+				_, err := pushSchd.Every(uint64(cfg.PushGap)).Minutes().Do(pushGit, &cfg)
 				if err != nil {
 					log.Warnf("add push task err : %+v", err.Error())
 				}
 			}
 		}
 	}
-	InitProj()
 	InitGithubAuth()
+	go InitProj()
 	return nil
 }
 
 func InitProj() {
 	projs := model.ListUninitProj()
+	wg := sync.WaitGroup{}
+	wg.Add(len(projs))
 	for _, proj := range projs {
-		go proj.Init()
+		go func(wg *sync.WaitGroup, p model.Project) {
+			defer wg.Done()
+			p.Init()
+		}(&wg, proj)
 	}
+	wg.Wait()
 }
 
 func InitGithubAuth() {

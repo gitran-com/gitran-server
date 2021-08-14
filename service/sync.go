@@ -20,11 +20,11 @@ var (
 )
 
 func pushGit(cfg *model.ProjCfg) {
-	// log.Infof("begin to push project %v", cfg.ProjID)
+	// log.Infof("begin to push project %v", cfg.ID)
 	beg := time.Now().Unix()
-	lk := projMutexMap.Lock(cfg.ProjID)
+	lk := projMutexMap.Lock(cfg.ID)
 	defer lk.Unlock()
-	proj := model.GetProjByID(cfg.ProjID)
+	proj := model.GetProjByID(cfg.ID)
 	if proj == nil {
 		log.Warnf("project %v not found when pushing", proj.ID)
 		return
@@ -77,11 +77,11 @@ func pushGit(cfg *model.ProjCfg) {
 }
 
 func pullGit(cfg *model.ProjCfg) {
-	// log.Infof("begin to pull project %v", cfg.ProjID)
+	// log.Infof("begin to pull project %v", cfg.ID)
 	beg := time.Now().Unix()
-	lk := projMutexMap.Lock(cfg.ProjID)
+	lk := projMutexMap.Lock(cfg.ID)
 	defer lk.Unlock()
-	proj := model.GetProjByID(cfg.ProjID)
+	proj := model.GetProjByID(cfg.ID)
 	if proj == nil {
 		log.Warnf("project %v not found when pulling", proj.ID)
 		return

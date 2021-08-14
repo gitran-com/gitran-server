@@ -5,12 +5,9 @@ import (
 	"io/fs"
 	"io/ioutil"
 	"net/http"
-	"os"
 	"path/filepath"
-	"strconv"
 	"strings"
 	"sync"
-	"time"
 
 	"github.com/gin-gonic/gin"
 	"github.com/gitran-com/gitran-server/constant"
@@ -18,222 +15,51 @@ import (
 	"github.com/gitran-com/gitran-server/util"
 	"github.com/go-git/go-git/v5"
 	"github.com/go-git/go-git/v5/plumbing"
-	"github.com/go-git/go-git/v5/plumbing/object"
 	log "github.com/sirupsen/logrus"
-	"gopkg.in/yaml.v2"
 )
 
 var (
 	projMutexMap = util.NewMutexMap()
 )
 
-func ListUserProjCfg(ctx *gin.Context) {
+func GetProjCfg(ctx *gin.Context) {
 	proj := ctx.Keys["project"].(*model.Project)
 	ctx.JSON(http.StatusOK, model.Response{
 		Success: true,
-		Msg:     "success",
 		Data: gin.H{
-			"proj_cfgs": model.ListProjCfgByProjID(proj.ID),
+			"proj_cfg": model.GetCfgByProjID(proj.ID),
 		}})
 }
 
-func ListUserProjBrchRule(ctx *gin.Context) {
-	configID, _ := strconv.ParseInt(ctx.Param("config_id"), 10, 64)
-	proj := ctx.Keys["project"].(*model.Project)
-	cfg := model.GetProjCfgByID(configID)
+//UpdateProjCfg create a new project config
+func UpdateProjCfg(ctx *gin.Context) {
+	var (
+		req  model.UpdateProjCfgRequest
+		proj = ctx.Keys["proj"].(*model.Project)
+		cfg  = model.GetCfgByProjID(proj.ID)
+	)
 	if cfg == nil {
-		ctx.JSON(http.StatusNotFound, model.Resp404)
+		ctx.JSON(http.StatusBadRequest, model.Resp400)
 		return
 	}
-	if cfg.ProjID != proj.ID {
-		ctx.JSON(http.StatusNotFound, model.Resp404)
+	if err := ctx.BindJSON(&req); err != nil {
+		ctx.JSON(http.StatusBadRequest, model.Resp400)
 		return
 	}
+	if !req.Valid() {
+		ctx.JSON(http.StatusBadRequest, model.Resp400)
+		return
+	}
+	cfg.UpdateProjCfg(req.Map())
 	ctx.JSON(http.StatusOK, model.Response{
 		Success: true,
-		Msg:     "success",
 		Data: gin.H{
-			"branch_rules": model.GetBrchRuleInfosFromBrchRules(model.ListBrchRuleByCfgID(configID)),
-		}})
-}
-
-func CreateUserProjBrchRule(ctx *gin.Context) {
-	configID, _ := strconv.ParseInt(ctx.Param("config_id"), 10, 64)
-	cfg := model.GetProjCfgByID(configID)
-	if cfg == nil {
-		ctx.JSON(http.StatusNotFound, model.Resp404)
-		return
-	}
-	srcFiles := ctx.PostForm("src_files")
-	trnFiles := ctx.PostForm("trn_files")
-	ignFiles := ctx.PostFormArray("ign_files")
-	rule := &model.BrchRule{
-		ProjCfgID: configID,
-		Status:    constant.RuleStatCreated,
-		SrcFiles:  srcFiles,
-		TrnFiles:  trnFiles,
-		IgnFiles:  strings.Join(ignFiles, constant.Delim),
-	}
-	_, err := model.NewBrchRule(rule)
-	if err != nil {
-		ctx.JSON(http.StatusBadRequest, model.Response{
-			Success: false,
-			Msg:     err.Error(),
-			Data:    nil,
-		})
-		return
-	}
-	model.UpdateProjCfgChanged(cfg, true)
-	ctx.JSON(http.StatusCreated, model.Response{
-		Success: true,
-		Msg:     "分支规则创建成功",
-		Data:    nil,
+			"proj_cfg": cfg,
+		},
 	})
 }
 
-//CreateUserProjCfg create a new project config
-func CreateUserProjCfg(ctx *gin.Context) {
-	proj := ctx.Keys["project"].(*model.Project)
-	srcBrName := "refs/heads/" + ctx.PostForm("src_branch")
-	trnBrName := "refs/heads/" + ctx.PostForm("trn_branch")
-	pullItv, _ := strconv.ParseUint(ctx.PostForm("pull_interval"), 10, 16)
-	pushItv, _ := strconv.ParseUint(ctx.PostForm("push_interval"), 10, 16)
-	fileName := ctx.PostForm("file_name")
-	lk := projMutexMap.Lock(proj.ID)
-	defer lk.Unlock()
-	repo, _ := git.PlainOpen(proj.Path)
-	wt, _ := repo.Worktree()
-	//先切换到src分支
-	err := wt.Checkout(&git.CheckoutOptions{
-		Branch: plumbing.ReferenceName(srcBrName),
-	})
-	if err != nil {
-		ctx.JSON(http.StatusBadRequest, model.Response{
-			Success: false,
-			Msg:     err.Error(),
-			Data:    nil,
-			Code:    -1,
-		})
-		return
-	}
-	//然后新建trn分支
-	srcHead, _ := repo.Head()
-	ref := plumbing.NewHashReference(plumbing.ReferenceName(trnBrName), srcHead.Hash())
-	if err := repo.Storer.SetReference(ref); err != nil {
-		ctx.JSON(http.StatusBadRequest, model.Response{
-			Success: false,
-			Msg:     err.Error(),
-			Data:    nil,
-			Code:    -1,
-		})
-		return
-	}
-	projCfg := &model.ProjCfg{
-		ProjID:   proj.ID,
-		SrcBr:    ctx.PostForm("src_branch"),
-		TrnBr:    ctx.PostForm("trn_branch"),
-		Changed:  false,
-		PullItv:  uint16(pullItv),
-		PushItv:  uint16(pushItv),
-		FileName: fileName,
-	}
-	projCfg, err = model.NewProjCfg(projCfg)
-	if err != nil {
-		ctx.JSON(http.StatusBadRequest, model.Response{
-			Success: false,
-			Msg:     err.Error(),
-			Data:    nil,
-			Code:    -1,
-		})
-		return
-	}
-	ctx.JSON(http.StatusCreated, model.Response{
-		Success: true,
-		Msg:     "项目配置创建成功",
-		Data:    nil,
-	})
-	if pullItv != 0 {
-		pullSchd.Every(pullItv).Minutes().Do(pullGit, projCfg)
-	}
-	if proj.Type == constant.ProjTypeGithub && pushItv != 0 {
-		pushSchd.Every(pushItv).Minutes().Do(pushGit, projCfg)
-	}
-}
-
-//SaveUserProjCfg save a project config in config file and then commit
-func SaveUserProjCfg(ctx *gin.Context) {
-	proj := ctx.Keys["project"].(*model.Project)
-	user := ctx.Keys["user"].(*model.User)
-	cfgs := model.ListProjCfgByProjID(proj.ID)
-	lk := projMutexMap.Lock(proj.ID)
-	defer lk.Unlock()
-	repo, err := git.PlainOpen(proj.Path)
-	wt, _ := repo.Worktree()
-	for _, cfg := range cfgs {
-		if !cfg.Changed { //if no changed, no need to commit
-			continue
-		}
-		srcBr := "refs/heads/" + cfg.SrcBr
-		err = wt.Checkout(&git.CheckoutOptions{
-			Branch: plumbing.ReferenceName(srcBr),
-		})
-		if err != nil {
-			ctx.JSON(http.StatusBadRequest, model.Response{
-				Success: false,
-				Msg:     err.Error(),
-				Data:    nil,
-				Code:    constant.ErrGitChkout,
-			})
-			return
-		}
-		rules := model.ListBrchRuleByCfgID(cfg.ID)
-		err = ioutil.WriteFile(proj.Path+cfg.FileName, genCfgFileByRuleInfos(model.GetBrchRuleInfosFromBrchRules(rules)), os.ModeAppend|os.ModePerm)
-		if err != nil {
-			ctx.JSON(http.StatusBadRequest, model.Response{
-				Success: false,
-				Msg:     err.Error(),
-				Data:    nil,
-				Code:    -1,
-			})
-			return
-		}
-		wt.Add(cfg.FileName)
-		status, _ := wt.Status()
-		if len(status) > 0 {
-			var msg string
-			if status[cfg.FileName].Staging == git.Added {
-				msg = fmt.Sprintf("feat: add Gitran config file '%s'", cfg.FileName)
-			} else {
-				msg = fmt.Sprintf("feat: update Gitran config file '%s'", cfg.FileName)
-			}
-			_, err := wt.Commit(msg, &git.CommitOptions{
-				Author: &object.Signature{
-					Name:  user.Name,
-					Email: user.Email,
-					When:  time.Now(),
-				}})
-			if err != nil {
-				log.Warn(err.Error())
-				ctx.JSON(http.StatusBadRequest, model.Response{
-					Success: false,
-					Msg:     err.Error(),
-					Data:    nil,
-					Code:    constant.ErrGitCommit,
-				})
-				return
-			}
-		}
-		model.UpdateProjCfgChanged(&cfg, false)
-		go processCfg(&cfg, proj, rules)
-	}
-	ctx.JSON(http.StatusCreated, model.Response{
-		Success: true,
-		Msg:     "项目配置更新成功",
-		Data:    nil,
-	})
-}
-
-func processCfg(cfg *model.ProjCfg, proj *model.Project, rules []model.BrchRule) {
+func processCfg(cfg *model.ProjCfg, proj *model.Project, rules []model.FileMap) {
 	lk := projMutexMap.Lock(proj.ID)
 	proj.UpdateStatus(constant.ProjStatProcessingString)
 	defer lk.Unlock()
@@ -253,12 +79,11 @@ func processCfg(cfg *model.ProjCfg, proj *model.Project, rules []model.BrchRule)
 		return
 	}
 	for _, rule := range rules {
-		rule.IgnFileRegs = strings.Split(rule.IgnFiles, constant.Delim)
-		files := ListMatchFiles(proj.Path, rule.SrcFiles, rule.IgnFileRegs)
+		files := ListMatchFiles(proj.Path, rule.SrcFileReg, cfg.IgnRegs)
 		var wg sync.WaitGroup
 		wg.Add(len(files))
 		for _, file := range files {
-			go func(file string, cfg *model.ProjCfg, proj *model.Project, rule *model.BrchRule) {
+			go func(file string, cfg *model.ProjCfg, proj *model.Project, rule *model.FileMap) {
 				defer wg.Done()
 				abs := filepath.Join(proj.Path, file)
 				fmt.Printf("abs=%+v\n", abs)
@@ -268,7 +93,7 @@ func processCfg(cfg *model.ProjCfg, proj *model.Project, rules []model.BrchRule)
 	}
 }
 
-func processSrcFile(file string, cfg *model.ProjCfg, proj *model.Project, rule *model.BrchRule) {
+func processSrcFile(file string, cfg *model.ProjCfg, proj *model.Project, rule *model.FileMap) {
 	data, err := ioutil.ReadFile(file)
 	if err != nil {
 		return
@@ -311,14 +136,4 @@ func ListMatchFiles(root string, pattern string, ignore []string) []string {
 	})
 	// fmt.Printf("files=%+v\n", files)
 	return files
-}
-
-func genCfgFileByRuleInfos(rules []model.BrchRuleInfo) []byte {
-	data, err := yaml.Marshal(map[string]interface{}{
-		"rules": rules,
-	})
-	if err != nil {
-		log.Warn(err.Error())
-	}
-	return data
 }

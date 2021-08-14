@@ -28,17 +28,17 @@ func initAuth(g *gin.RouterGroup) {
 		//GitHub登录回调
 		gg.GET("/github/login", controller.AuthGithubLogin)
 		//GitHub引入repo回调
-		gg.GET("/github/import", middleware.AuthUserJWT(), controller.AuthGithubImport)
+		gg.GET("/github/import", middleware.AuthUser(), controller.AuthGithubImport)
 		//新注册GitHub用户
-		gg.POST("/github/new", middleware.AuthNewGithubUserJWT(), controller.NewGithubUser)
+		gg.POST("/github/new", middleware.AuthNewGithubUser(), controller.NewGithubUser)
 		//获得所有GitHub仓库
-		gg.GET("/github/repos", middleware.AuthUserJWT(), controller.GetGithubRepos)
+		gg.GET("/github/repos", middleware.AuthUser(), controller.GetGithubRepos)
 	}
 }
 
 func initUser(g *gin.RouterGroup) {
 	gg := g.Group("/user")
-	gg.Use(middleware.AuthUserJWT())
+	gg.Use(middleware.AuthUser())
 	{
 		gg.GET("", controller.GetMe)
 		gg.PUT("", controller.EditMe)
@@ -55,23 +55,17 @@ func initUsers(g *gin.RouterGroup) {
 func initProj(g *gin.RouterGroup) {
 	gg := g.Group("/projects")
 	gg.GET("/:uri", controller.GetProj)
-	gg.Use(middleware.AuthUserJWT())
+	gg.Use(middleware.AuthUser())
 	{
 		gg.POST("", controller.CreateUserProj)
 	}
-	gg.Use(middleware.AuthUserProjJWT())
+	gg.Use(middleware.AuthProjAdmin())
 	{
 		//Repo Branch
 		gg.GET("/:uri/branches", controller.ListProjBrch)
-
 		//Project Config
-		gg.GET("/:uri/configs", controller.ListUserProjCfg)
-		gg.POST("/:uri/configs", controller.CreateUserProjCfg)
-		gg.POST("/:uri/configs/save", controller.SaveUserProjCfg)
-
-		//Branch Rule
-		gg.GET("/:uri/configs/:config_id/rules", controller.ListUserProjBrchRule)
-		gg.POST("/:uri/configs/:config_id/rules", controller.CreateUserProjBrchRule)
+		gg.GET("/:uri/config", controller.GetProjCfg)
+		gg.PUT("/:uri/config", controller.UpdateProjCfg)
 	}
 }
 

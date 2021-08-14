@@ -1,13 +1,13 @@
 package model
 
 import (
-	"os"
+	"fmt"
+	"os/exec"
 	"time"
 
 	"github.com/gitran-com/gitran-server/config"
 	"github.com/gitran-com/gitran-server/constant"
-	"github.com/go-git/go-git/v5"
-	githttp "github.com/go-git/go-git/v5/plumbing/transport/http"
+	"github.com/gitran-com/gitran-server/util"
 	log "github.com/sirupsen/logrus"
 )
 
@@ -50,50 +50,40 @@ func (proj *Project) Create() error {
 //Init init a new project
 func (proj *Project) Init() {
 	var (
-		err error
+		gitURL string
+		err    error
 	)
 	for i := 0; i < constant.MaxProjInitRetry; i++ {
-		if proj.Type == constant.ProjTypeGitURL {
-			_, err = git.PlainClone(proj.Path, false, &git.CloneOptions{
-				URL: proj.GitURL,
-				Auth: &githttp.BasicAuth{
-					Username: config.APP.Name,
-					Password: proj.Token,
-				},
-				Progress:     os.Stdout, //TODO: update progress in DB
-				Depth:        1,
-				SingleBranch: false,
-			})
-			if err == nil {
-				proj.UpdateStatus(constant.ProjStatReady)
-				return
+		if proj.Type == constant.ProjTypeGitURL || proj.Type == constant.ProjTypeGithub {
+			if proj.Token == "" {
+				gitURL = proj.GitURL
 			} else {
-				log.Warnf("git clone error : %v", err.Error())
+				url, _ := util.ParseGitURL(proj.GitURL)
+				// fmt.Printf("url=%+v\n", *url)
+				gitURL = fmt.Sprintf("https://gitran:%s@%s/%s", proj.Token, url.Host, url.Path)
 			}
-		} else if proj.Type == constant.ProjTypeGithub {
-			_, err = git.PlainClone(proj.Path, false, &git.CloneOptions{
-				URL: proj.GitURL,
-				Auth: &githttp.BasicAuth{
-					Username: config.APP.Name,
-					Password: proj.Token,
-				},
-				Progress:     os.Stdout,
-				Depth:        1,
-				SingleBranch: false,
-			})
+			// fmt.Printf("GitURL=%v\n", gitURL)
+			cmd := exec.Command("git", "clone", "--no-single-branch", "--depth=1", gitURL, proj.Path)
+			// fmt.Printf("cmd=%v\n", cmd.String())
+			err := cmd.Run()
 			if err == nil {
 				proj.UpdateStatus(constant.ProjStatReady)
 				return
 			} else {
-				log.Warnf("git clone error : %v", err.Error())
+				log.Warnf("git clone %v error : %v", proj.URI, err.Error())
 			}
 		} else {
 			//TODO
 			log.Errorf("Project.Init error: type %v has not been implemented", proj.Type)
 			return
 		}
+		time.Sleep(time.Second * 5)
 	}
-	proj.Fail(err)
+	if err != nil {
+		proj.Fail(err)
+	} else {
+		NewProjCfg(&ProjCfg{ID: proj.ID})
+	}
 }
 
 func (proj *Project) UpdateStatus(stat int) {
@@ -146,7 +136,7 @@ func ListUserProj(user_id int64) []Project {
 //ListUninitProj list all uninitialized projects
 func ListUninitProj() []Project {
 	var projs []Project
-	db.Where("status=?", constant.ProjStatCreated).Find(&projs)
+	db.Where("status IN(?,?)", constant.ProjStatCreated, constant.ProjStatFailed).Find(&projs)
 	// for i := range projs {
 	// 	projs[i].FillLangs()
 	// }

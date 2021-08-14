@@ -15,8 +15,8 @@ import (
 	"github.com/golang-jwt/jwt"
 )
 
-//AuthUserJWT verifies a token
-func AuthUserJWT() gin.HandlerFunc {
+//AuthUser verifies a token
+func AuthUser() gin.HandlerFunc {
 	return func(ctx *gin.Context) {
 		auth := ctx.Request.Header.Get("Authorization")
 		if len(auth) <= 0 {
@@ -43,29 +43,30 @@ func AuthUserJWT() gin.HandlerFunc {
 	}
 }
 
-//AuthUserProjJWT verifies a jwt if can do something on a project
-func AuthUserProjJWT() gin.HandlerFunc {
+//AuthProjAdmin verifies a jwt if can do something on a project
+func AuthProjAdmin() gin.HandlerFunc {
 	return func(ctx *gin.Context) {
-		id, _ := strconv.ParseInt(ctx.Param("id"), 10, 64)
-		proj := model.GetProjByID(id)
+		uri := ctx.Param("uri")
+		proj := model.GetProjByURI(uri)
 		if proj == nil {
 			ctx.JSON(http.StatusNotFound, model.Resp404)
 			ctx.Abort()
 			return
 		}
 		user := ctx.Keys["user"].(*model.User)
-		if proj.OwnerID != user.ID {
+		role := model.GetUserProjRole(user.ID, proj.ID)
+		if role == nil || role.Role > model.RoleAdmin {
 			ctx.JSON(http.StatusNotFound, model.RespInvalidToken)
 			ctx.Abort()
 			return
 		}
-		ctx.Set("project", proj)
+		ctx.Set("proj", proj)
 		ctx.Next()
 	}
 }
 
-//AuthNewGithubUserJWT verifies a token
-func AuthNewGithubUserJWT() gin.HandlerFunc {
+//AuthNewGithubUser verifies a token
+func AuthNewGithubUser() gin.HandlerFunc {
 	return func(ctx *gin.Context) {
 		auth := ctx.Request.Header.Get("Authorization")
 		if len(auth) <= 0 {
