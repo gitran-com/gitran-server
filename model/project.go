@@ -29,6 +29,7 @@ type Project struct {
 	UpdatedAt          time.Time  `json:"updated_at"`
 	SourceLanguages    []Language `json:"src_langs" gorm:"-"`
 	TranslateLanguages []Language `json:"trn_langs" gorm:"-"`
+	ErrMsg             string     `json:"error_message"`
 }
 
 //TableName return table name
@@ -48,46 +49,61 @@ func (proj *Project) Create() error {
 
 //Init init a new project
 func (proj *Project) Init() {
-	SetUserProjRole(proj.OwnerID, proj.ID, RoleAdmin)
-	if proj.Type == constant.ProjTypeGitURL {
-		_, err := git.PlainClone(proj.Path, false, &git.CloneOptions{
-			URL:          proj.GitURL,
-			Progress:     os.Stdout, //TODO: update progress in DB
-			Depth:        1,
-			SingleBranch: false,
-		})
-		if err == nil {
-			proj.Status = constant.ProjStatReady
-			proj.Write()
+	var (
+		err error
+	)
+	for i := 0; i < constant.MaxProjInitRetry; i++ {
+		if proj.Type == constant.ProjTypeGitURL {
+			_, err = git.PlainClone(proj.Path, false, &git.CloneOptions{
+				URL: proj.GitURL,
+				Auth: &githttp.BasicAuth{
+					Username: config.APP.Name,
+					Password: proj.Token,
+				},
+				Progress:     os.Stdout, //TODO: update progress in DB
+				Depth:        1,
+				SingleBranch: false,
+			})
+			if err == nil {
+				proj.UpdateStatus(constant.ProjStatReady)
+				return
+			} else {
+				log.Warnf("git clone error : %v", err.Error())
+			}
+		} else if proj.Type == constant.ProjTypeGithub {
+			_, err = git.PlainClone(proj.Path, false, &git.CloneOptions{
+				URL: proj.GitURL,
+				Auth: &githttp.BasicAuth{
+					Username: config.APP.Name,
+					Password: proj.Token,
+				},
+				Progress:     os.Stdout,
+				Depth:        1,
+				SingleBranch: false,
+			})
+			if err == nil {
+				proj.UpdateStatus(constant.ProjStatReady)
+				return
+			} else {
+				log.Warnf("git clone error : %v", err.Error())
+			}
 		} else {
-			log.Warnf("git clone error : %v", err.Error())
+			//TODO
+			log.Errorf("Project.Init error: type %v has not been implemented", proj.Type)
+			return
 		}
-	} else if proj.Type == constant.ProjTypeGithub {
-		_, err := git.PlainClone(proj.Path, false, &git.CloneOptions{
-			URL: proj.GitURL,
-			Auth: &githttp.BasicAuth{
-				Username: config.APP.Name,
-				Password: proj.Token,
-			},
-			Progress:     os.Stdout,
-			Depth:        1,
-			SingleBranch: false,
-		})
-		if err == nil {
-			proj.Status = constant.ProjStatReady
-			proj.Write()
-		} else {
-			log.Warnf("git clone error : %v", err.Error())
-		}
-	} else {
-		//TODO
-		log.Errorf("Project.Init error: type %v has not been implemented", proj.Type)
-		return
 	}
+	proj.Fail(err)
 }
 
 func (proj *Project) UpdateStatus(stat int) {
 	proj.Status = stat
+	proj.Write()
+}
+
+func (proj *Project) Fail(err error) {
+	proj.Status = constant.ProjStatFailed
+	proj.ErrMsg = err.Error()
 	proj.Write()
 }
 
@@ -124,5 +140,15 @@ func ListUserProj(user_id int64) []Project {
 	for i := range projs {
 		projs[i].FillLangs()
 	}
+	return projs
+}
+
+//ListUninitProj list all uninitialized projects
+func ListUninitProj() []Project {
+	var projs []Project
+	db.Where("status=?", constant.ProjStatCreated).Find(&projs)
+	// for i := range projs {
+	// 	projs[i].FillLangs()
+	// }
 	return projs
 }

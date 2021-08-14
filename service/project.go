@@ -109,6 +109,7 @@ func CreateUserProj(ctx *gin.Context) {
 		TrnLangs:           strings.Join(req.TrnLangs, constant.Delim),
 		SourceLanguages:    srcLangs,
 		TranslateLanguages: trnLangs,
+		Token:              req.Token,
 	}
 	if req.Type == constant.ProjTypeGitURL {
 		//Nothing to do
@@ -129,6 +130,7 @@ func CreateUserProj(ctx *gin.Context) {
 			Msg:     err.Error(),
 		})
 	}
+	model.SetUserProjRole(proj.OwnerID, proj.ID, model.RoleAdmin)
 	ctx.JSON(http.StatusCreated, model.Response{
 		Success: true,
 		Msg:     "create project successfully",

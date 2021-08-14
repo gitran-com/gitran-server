@@ -19,6 +19,7 @@ type CreateProjRequest struct {
 	SrcLangs []string `json:"src_langs"`
 	TrnLangs []string `json:"trn_langs"`
 	Type     int      `json:"type"`
+	Token    string   `json:"token"`
 }
 
 type UpdateProfileRequest struct {

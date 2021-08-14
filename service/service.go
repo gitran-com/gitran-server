@@ -4,11 +4,11 @@ import (
 	"fmt"
 	"net/url"
 
+	"github.com/gitran-com/gitran-server/config"
+	"github.com/gitran-com/gitran-server/model"
 	"github.com/markbates/goth"
 	"github.com/markbates/goth/providers/github"
 	log "github.com/sirupsen/logrus"
-	"github.com/gitran-com/gitran-server/config"
-	"github.com/gitran-com/gitran-server/model"
 )
 
 var (
@@ -43,6 +43,19 @@ func Init() error {
 			}
 		}
 	}
+	InitProj()
+	InitGithubAuth()
+	return nil
+}
+
+func InitProj() {
+	projs := model.ListUninitProj()
+	for _, proj := range projs {
+		go proj.Init()
+	}
+}
+
+func InitGithubAuth() {
 	if config.Github.Enable {
 		url, err := url.Parse(config.APP.URL)
 		if err != nil {
@@ -59,5 +72,4 @@ func Init() error {
 		GithubRepoProvider.SetName("github-repo")
 		goth.UseProviders(GithubUserProvider, GithubRepoProvider)
 	}
-	return nil
 }
