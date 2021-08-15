@@ -32,6 +32,8 @@ type Project struct {
 	SourceLanguages    []Language `json:"src_langs" gorm:"-"`
 	TranslateLanguages []Language `json:"trn_langs" gorm:"-"`
 	ErrMsg             string     `json:"error_message"`
+	PublicView         bool       `json:"public_view"`
+	PublicContribute   bool       `json:"public_contribute"`
 	CreatedAt          time.Time  `json:"created_at"`
 	UpdatedAt          time.Time  `json:"updated_at"`
 }
@@ -89,7 +91,6 @@ func (proj *Project) Init() {
 	} else {
 		proj.InitSucc()
 		NewProjCfg(&ProjCfg{ID: proj.ID})
-		NewProjAccess(&ProjAccess{ID: proj.ID})
 	}
 }
 
