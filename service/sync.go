@@ -22,7 +22,7 @@ var (
 func pushGit(cfg *model.ProjCfg) {
 	// log.Infof("begin to push project %v", cfg.ID)
 	beg := time.Now().Unix()
-	lk := projMutexMap.Lock(cfg.ID)
+	lk := model.ProjMutexMap.Lock(cfg.ID)
 	defer lk.Unlock()
 	proj := model.GetProjByID(cfg.ID)
 	if proj == nil {
@@ -79,7 +79,7 @@ func pushGit(cfg *model.ProjCfg) {
 func pullGit(cfg *model.ProjCfg) {
 	// log.Infof("begin to pull project %v", cfg.ID)
 	beg := time.Now().Unix()
-	lk := projMutexMap.Lock(cfg.ID)
+	lk := model.ProjMutexMap.Lock(cfg.ID)
 	defer lk.Unlock()
 	proj := model.GetProjByID(cfg.ID)
 	if proj == nil {

@@ -66,6 +66,7 @@ func initProj(g *gin.RouterGroup) {
 		//Project Config
 		gg.GET("/:uri/config", controller.GetProjCfg)
 		gg.PUT("/:uri/config", controller.UpdateProjCfg)
+		gg.GET("/:uri/config/preview", controller.PreviewProjCfg)
 	}
 }
 

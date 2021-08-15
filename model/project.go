@@ -11,15 +11,19 @@ import (
 	log "github.com/sirupsen/logrus"
 )
 
+var (
+	ProjMutexMap = util.NewMutexMap()
+)
+
 //Project means project model
 type Project struct {
 	ID                 int64      `json:"id" gorm:"primaryKey;autoIncrement"`
 	URI                string     `json:"uri" gorm:"type:varchar(32);uniqueIndex;notNull"`
 	Name               string     `json:"name" gorm:"type:varchar(32);notNull"`
 	OwnerID            int64      `json:"owner_id" gorm:"index;notNull"`
-	Token              string     `json:"-"`
-	Type               int        `json:"type" gorm:"index;notNull"`
-	Status             int        `json:"status" gorm:"notNull"`
+	Token              string     `json:"-" gorm:"type:varchar(128)"`
+	Type               int        `json:"type" gorm:"type:tinyint;index;notNull"`
+	Status             int        `json:"status" gorm:"type:tinyint;notNull"`
 	Desc               string     `json:"desc" gorm:"type:varchar(256)"`
 	GitURL             string     `json:"git_url" gorm:"type:varchar(256)"`
 	Path               string     `json:"-" gorm:"type:varchar(256)"`

@@ -49,12 +49,12 @@ type UpdateProjCfgRequest struct {
 	TrnBr            string    `json:"trn_br"`
 	PullGap          uint16    `json:"pull_interval"`
 	PushGap          uint16    `json:"push_interval"`
-	PublicView       bool      `json:"public_view"`
-	PublicContribute bool      `json:"public_contribute"`
 	FileMaps         []FileMap `json:"file_maps"`
 	FileMapsBytes    []byte    `json:"-"`
 	IgnRegs          []string  `json:"ignores"`
 	IgnRegsBytes     []byte    `json:"-"`
+	PublicView       bool      `json:"public_view"`
+	PublicContribute bool      `json:"public_contribute"`
 }
 
 func (req *UpdateProjCfgRequest) Valid() bool {

@@ -38,17 +38,10 @@ const (
 	ProjStatCreated int = iota
 	//ProjStatReady 项目已就绪
 	ProjStatReady
-	//ProjStatProcessingString 项目正在处理string
-	ProjStatProcessingString
+	//ProjStatProcessing 项目正在处理string
+	ProjStatProcessing
 	//ProjStatFailed 项目初始化失败
 	ProjStatFailed int = -1
-)
-
-const (
-	//RuleStatCreated 规则已创建未保存到配置文件
-	RuleStatCreated int = iota
-	//RuleStatSaved 规则已保存到配置文件
-	RuleStatSaved
 )
 
 const (

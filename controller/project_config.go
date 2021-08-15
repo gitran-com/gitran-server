@@ -12,3 +12,7 @@ func UpdateProjCfg(ctx *gin.Context) {
 func GetProjCfg(ctx *gin.Context) {
 	service.GetProjCfg(ctx)
 }
+
+func PreviewProjCfg(ctx *gin.Context) {
+	service.PreviewProjCfg(ctx)
+}
