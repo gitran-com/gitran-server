@@ -45,16 +45,14 @@ func (req *UpdateProfileRequest) Valid() bool {
 }
 
 type UpdateProjCfgRequest struct {
-	SrcBr            string    `json:"src_br"`
-	TrnBr            string    `json:"trn_br"`
-	PullGap          uint16    `json:"pull_interval"`
-	PushGap          uint16    `json:"push_interval"`
-	FileMaps         []FileMap `json:"file_maps"`
-	FileMapsBytes    []byte    `json:"-"`
-	IgnRegs          []string  `json:"ignores"`
-	IgnRegsBytes     []byte    `json:"-"`
-	PublicView       bool      `json:"public_view"`
-	PublicContribute bool      `json:"public_contribute"`
+	SrcBr         string    `json:"src_br"`
+	TrnBr         string    `json:"trn_br"`
+	PullGap       uint16    `json:"pull_interval"`
+	PushGap       uint16    `json:"push_interval"`
+	FileMaps      []FileMap `json:"file_maps"`
+	FileMapsBytes []byte    `json:"-"`
+	IgnRegs       []string  `json:"ignores"`
+	IgnRegsBytes  []byte    `json:"-"`
 }
 
 func (req *UpdateProjCfgRequest) Valid() bool {
@@ -77,13 +75,11 @@ func (req *UpdateProjCfgRequest) Valid() bool {
 func (req *UpdateProjCfgRequest) Map() map[string]interface{} {
 	json.Marshal(req.FileMaps)
 	return map[string]interface{}{
-		"src_br":            req.SrcBr,
-		"trn_br":            req.TrnBr,
-		"pull_gap":          req.PullGap,
-		"push_gap":          req.PushGap,
-		"public_view":       req.PublicView,
-		"public_contribute": req.PublicContribute,
-		"file_maps":         req.FileMapsBytes,
-		"ignores":           req.IgnRegsBytes,
+		"src_br":    req.SrcBr,
+		"trn_br":    req.TrnBr,
+		"pull_gap":  req.PullGap,
+		"push_gap":  req.PushGap,
+		"file_maps": req.FileMapsBytes,
+		"ignores":   req.IgnRegsBytes,
 	}
 }

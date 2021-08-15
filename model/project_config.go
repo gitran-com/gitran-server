@@ -16,22 +16,20 @@ import (
 
 //ProjCfg means project config
 type ProjCfg struct {
-	ID               int64      `json:"id" gorm:"primaryKey;autoIncrement"`
-	Status           int        `json:"status" gorm:"type:tinyint;"`
-	SrcBr            string     `json:"src_branch" gorm:"type:varchar(32);notNull"`
-	TrnBr            string     `json:"trn_branch" gorm:"type:varchar(32);notNull"`
-	PullGap          uint16     `json:"pull_gap" gorm:"index;notNull"`
-	PushGap          uint16     `json:"push_gap" gorm:"index;notNull"`
-	PullStatus       int        `json:"pull_status" gorm:"notNull"`
-	PushStatus       int        `json:"push_status" gorm:"notNull"`
-	LastPullAt       *time.Time `json:"last_pull_at"`
-	LastPushAt       *time.Time `json:"last_push_at"`
-	PublicView       bool       `json:"public_view"`
-	PublicContribute bool       `json:"public_contribute"`
-	FileMapsBytes    []byte     `json:"-" gorm:"column:file_maps"`
-	FileMaps         []FileMap  `json:"file_maps" gorm:"-"`
-	IgnRegsBytes     []byte     `json:"-" gorm:"column:ignores"`
-	IgnRegs          []string   `json:"ignores" gorm:"-"`
+	ID            int64      `json:"id" gorm:"primaryKey;autoIncrement"`
+	Status        int        `json:"status" gorm:"type:tinyint;"`
+	SrcBr         string     `json:"src_branch" gorm:"type:varchar(32);notNull"`
+	TrnBr         string     `json:"trn_branch" gorm:"type:varchar(32);notNull"`
+	PullGap       uint16     `json:"pull_gap" gorm:"index;notNull"`
+	PushGap       uint16     `json:"push_gap" gorm:"index;notNull"`
+	PullStatus    int        `json:"pull_status" gorm:"notNull"`
+	PushStatus    int        `json:"push_status" gorm:"notNull"`
+	LastPullAt    *time.Time `json:"last_pull_at"`
+	LastPushAt    *time.Time `json:"last_push_at"`
+	FileMapsBytes []byte     `json:"-" gorm:"column:file_maps"`
+	FileMaps      []FileMap  `json:"file_maps" gorm:"-"`
+	IgnRegsBytes  []byte     `json:"-" gorm:"column:ignores"`
+	IgnRegs       []string   `json:"ignores" gorm:"-"`
 }
 
 //FileMap means source files => translate maps

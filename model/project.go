@@ -89,6 +89,7 @@ func (proj *Project) Init() {
 	} else {
 		proj.InitSucc()
 		NewProjCfg(&ProjCfg{ID: proj.ID})
+		NewProjAccess(&ProjAccess{ID: proj.ID})
 	}
 }
 
