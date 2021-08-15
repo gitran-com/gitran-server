@@ -47,13 +47,12 @@ func Register(ctx *gin.Context) {
 	if user == nil { //create new user
 		salt := []byte(model.GenSalt())
 		user := &model.User{
-			Name:        req.Name,
-			Email:       req.Email,
-			Password:    model.HashSalt(req.Password, salt),
-			Salt:        salt,
-			IsActive:    !config.Email.Enable,
-			NoPassword:  false,
-			LastLoginAt: time.Now(),
+			Name:       req.Name,
+			Email:      req.Email,
+			Password:   model.HashSalt(req.Password, salt),
+			Salt:       salt,
+			IsActive:   !config.Email.Enable,
+			NoPassword: false,
 		}
 		if err := user.Create(); err != nil {
 			ctx.JSON(http.StatusOK,

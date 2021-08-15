@@ -23,7 +23,7 @@ var (
 )
 
 func GetProjCfg(ctx *gin.Context) {
-	proj := ctx.Keys["project"].(*model.Project)
+	proj := ctx.Keys["proj"].(*model.Project)
 	ctx.JSON(http.StatusOK, model.Response{
 		Success: true,
 		Data: gin.H{

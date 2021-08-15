@@ -24,7 +24,6 @@ type User struct {
 	NoPassword      bool      `json:"-"`
 	CreatedAt       time.Time `json:"created_at"`
 	UpdatedAt       time.Time `json:"updated_at"`
-	LastLoginAt     time.Time `json:"-"`
 	Password        []byte    `json:"-" gorm:"type:binary(64)"`
 	Salt            []byte    `json:"-" gorm:"type:binary(64)"`
 }
@@ -97,14 +96,13 @@ func NewUserFromGithub(ext *goth.User) *User {
 	ext_id, _ := strconv.ParseInt(ext.UserID, 10, 64)
 	bio, _ := ext.RawData["bio"].(string)
 	user := &User{
-		Name:        ext.Name,
-		Email:       ext.Email,
-		AvatarURL:   ext.AvatarURL,
-		Bio:         bio,
-		GithubID:    ext_id,
-		IsActive:    true,
-		NoPassword:  true,
-		LastLoginAt: time.Now(),
+		Name:       ext.Name,
+		Email:      ext.Email,
+		AvatarURL:  ext.AvatarURL,
+		Bio:        bio,
+		GithubID:   ext_id,
+		IsActive:   true,
+		NoPassword: true,
 	}
 	return user
 }

@@ -139,17 +139,19 @@ func CreateUserProj(ctx *gin.Context) {
 }
 
 func getBrchFromRef(ref string) string {
-	return strings.TrimPrefix(ref, "refs/heads/")
+	return strings.TrimPrefix(ref, "refs/remotes/origin/")
 }
 
 func ListProjBrch(ctx *gin.Context) {
-	proj := ctx.Keys["project"].(*model.Project)
+	proj := ctx.Keys["proj"].(*model.Project)
 	repo, _ := git.PlainOpen(proj.Path)
-	refs, _ := repo.Branches()
+	refs, _ := repo.References()
 	var brchs []string
 	refs.ForEach(func(r *plumbing.Reference) error {
-		brchs = append(brchs, getBrchFromRef(string(r.Name())))
-		// fmt.Printf("branch-name=%+v\n", getBrchFromRef(string(r.Name())))
+		br := getBrchFromRef(string(r.Name()))
+		if br != "HEAD" && !strings.HasPrefix(br, "refs/heads/") {
+			brchs = append(brchs, br)
+		}
 		return nil
 	})
 	ctx.JSON(http.StatusOK, model.Response{

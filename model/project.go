@@ -25,11 +25,11 @@ type Project struct {
 	Path               string     `json:"-" gorm:"type:varchar(256)"`
 	SrcLangs           string     `json:"-" gorm:"type:varchar(128)"`
 	TrnLangs           string     `json:"-" gorm:"type:varchar(128)"`
-	CreatedAt          time.Time  `json:"created_at"`
-	UpdatedAt          time.Time  `json:"updated_at"`
 	SourceLanguages    []Language `json:"src_langs" gorm:"-"`
 	TranslateLanguages []Language `json:"trn_langs" gorm:"-"`
 	ErrMsg             string     `json:"error_message"`
+	CreatedAt          time.Time  `json:"created_at"`
+	UpdatedAt          time.Time  `json:"updated_at"`
 }
 
 //TableName return table name
@@ -67,21 +67,23 @@ func (proj *Project) Init() {
 			// fmt.Printf("cmd=%v\n", cmd.String())
 			err := cmd.Run()
 			if err == nil {
-				proj.UpdateStatus(constant.ProjStatReady)
-				return
+				break
 			} else {
 				log.Warnf("git clone %v error : %v", proj.URI, err.Error())
 			}
+		} else if proj.Type == constant.ProjTypePlain {
+			break
 		} else {
 			//TODO
-			log.Errorf("Project.Init error: type %v has not been implemented", proj.Type)
-			return
+			err = fmt.Errorf("Project.Init error: type %v has not been implemented", proj.Type)
+			break
 		}
 		time.Sleep(time.Second * 5)
 	}
 	if err != nil {
-		proj.Fail(err)
+		proj.InitFail(err)
 	} else {
+		proj.InitSucc()
 		NewProjCfg(&ProjCfg{ID: proj.ID})
 	}
 }
@@ -91,9 +93,15 @@ func (proj *Project) UpdateStatus(stat int) {
 	proj.Write()
 }
 
-func (proj *Project) Fail(err error) {
+func (proj *Project) InitFail(err error) {
 	proj.Status = constant.ProjStatFailed
 	proj.ErrMsg = err.Error()
+	proj.Write()
+}
+
+func (proj *Project) InitSucc() {
+	proj.Status = constant.ProjStatReady
+	proj.ErrMsg = ""
 	proj.Write()
 }
 

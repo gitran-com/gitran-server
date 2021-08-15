@@ -54,10 +54,10 @@ func InitProj() {
 	wg := sync.WaitGroup{}
 	wg.Add(len(projs))
 	for _, proj := range projs {
-		go func(wg *sync.WaitGroup, p model.Project) {
+		go func(wg *sync.WaitGroup, p *model.Project) {
 			defer wg.Done()
 			p.Init()
-		}(&wg, proj)
+		}(&wg, &proj)
 	}
 	wg.Wait()
 }
