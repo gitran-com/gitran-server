@@ -25,11 +25,7 @@ func PingV1(ctx *gin.Context) {
 }
 
 func Test(ctx *gin.Context) {
-	user_id, _ := strconv.ParseInt(ctx.Query("user_id"), 10, 64)
 	proj_id, _ := strconv.ParseInt(ctx.Query("proj_id"), 10, 64)
-	role, _ := strconv.ParseInt(ctx.Query("role"), 10, 64)
-	model.SetUserProjRole(user_id, proj_id, model.Role(role))
-	ctx.JSON(http.StatusOK, gin.H{
-		"data": *model.GetUserProjRole(user_id, proj_id),
-	})
+	cfg := model.GetProjCfgByID(proj_id)
+	cfg.Process()
 }

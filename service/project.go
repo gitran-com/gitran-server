@@ -34,16 +34,13 @@ func GetOrgProjByName(ctx *gin.Context, owner string, name string) *model.Projec
 
 //GetProj get a project info
 func GetProj(ctx *gin.Context) {
-	uri := ctx.Param("uri")
-	proj := model.GetProjByURI(uri)
-	if proj == nil {
-		ctx.JSON(http.StatusNotFound, model.Resp404)
-		return
-	}
+	proj := ctx.Keys["proj"].(*model.Project)
+	role := ctx.Keys["role"].(model.Role)
 	ctx.JSON(http.StatusOK, model.Response{
 		Success: true,
 		Data: gin.H{
 			"proj": proj,
+			"role": role,
 		},
 	})
 }
@@ -142,6 +139,7 @@ func getBrchFromRef(ref string) string {
 	return strings.TrimPrefix(ref, "refs/remotes/origin/")
 }
 
+// Lock-free
 func ListProjBrch(ctx *gin.Context) {
 	proj := ctx.Keys["proj"].(*model.Project)
 	repo, _ := git.PlainOpen(proj.Path)

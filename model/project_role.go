@@ -18,6 +18,7 @@ const (
 	RoleContributor
 	//RoleViewer can view translations
 	RoleViewer
+	RoleNone Role = Role(127)
 )
 
 type ProjRole struct {
