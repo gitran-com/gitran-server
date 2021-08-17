@@ -19,12 +19,12 @@ const (
 )
 
 const (
-	//ProjTypePlain 普通项目
-	ProjTypePlain int = iota
+	//ProjTypeGithub Github token引入的项目
+	ProjTypeGithub int = iota
 	//ProjTypeGitURL Git URL引入的公开项目
 	ProjTypeGitURL
-	//ProjTypeGithub Github token引入的项目
-	ProjTypeGithub
+	//ProjTypePlain 普通项目
+	ProjTypePlain
 )
 
 const (

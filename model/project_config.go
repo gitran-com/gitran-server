@@ -3,12 +3,15 @@ package model
 import (
 	"bytes"
 	"encoding/json"
+	"path/filepath"
+	"regexp"
 	"time"
 
 	log "github.com/sirupsen/logrus"
 
 	"github.com/gitran-com/gitran-server/config"
 	"github.com/gitran-com/gitran-server/constant"
+	"github.com/gitran-com/gitran-server/util"
 	"github.com/go-git/go-git/v5"
 	"github.com/go-git/go-git/v5/plumbing"
 	"gorm.io/gorm"
@@ -80,6 +83,7 @@ func (cfg *ProjCfg) UpdateProjCfg(req *UpdateProjCfgRequest) error {
 	return nil
 }
 
+//SSOT <== DB
 func (cfg *ProjCfg) UpdateStatus(stat int) {
 	cfg.Status = stat
 	cfg.Write()
@@ -144,6 +148,7 @@ func (cfg *ProjCfg) Process() {
 		stat = constant.ProjStatFailed
 		return
 	}
+	// util.ListMatchFiles(proj.Path, GetFileMapsSrcFiles(cfg.FileMaps), cfg.IgnRegs)
 	//TODO
 }
 
@@ -153,4 +158,55 @@ func GetFileMapsSrcFiles(fms []FileMap) []string {
 		files = append(files, fm.SrcFileReg)
 	}
 	return files
+}
+
+func GetFileMapsTrnFiles(fms []FileMap) []string {
+	files := []string{}
+	for _, fm := range fms {
+		files = append(files, fm.TrnFileReg)
+	}
+	return files
+}
+
+func GenTrnFilesFromSrcFiles(src []string, trn string, lang *Language, proj *Project) (res []string) {
+	reg := regexp.MustCompile(`\$.*?\$`)
+	for _, str := range src {
+		tmp := reg.ReplaceAllStringFunc(trn, func(s string) string {
+			switch s {
+			case `$dir_name$`, `$dir$`:
+				return filepath.Dir(str)
+			case `$full_name$`, `$full$`:
+				return filepath.Base(str)
+			case `$base_name$`, `$base$`:
+				return util.FilenameNoExt(str)
+			case `$ext_name$`, `ext`:
+				return filepath.Ext(str)
+			case `$language$`, `lang`:
+				return lang.ISO
+			case `$code$`:
+				return lang.Code
+			case `$code2$`:
+				return lang.Code2
+			default:
+				return ""
+			}
+		})
+		res = append(res, tmp)
+	}
+	return res
+}
+
+func GenMultiTrnFilesFromSrcFiles(fmps []FileMap, ignores []string, proj *Project) ([]string, map[string][]string) {
+	var (
+		srcFiles []string
+		trnMap   = make(map[string][]string)
+	)
+	for _, lang := range proj.TranslateLanguages {
+		for _, fmp := range fmps {
+			src := util.ListMatchFiles(proj.Path, fmp.SrcFileReg, ignores)
+			srcFiles = append(srcFiles, src...)
+			trnMap[lang.Code] = GenTrnFilesFromSrcFiles(src, fmp.TrnFileReg, &lang, proj)
+		}
+	}
+	return srcFiles, trnMap
 }

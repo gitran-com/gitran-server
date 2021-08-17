@@ -8,10 +8,10 @@ import (
 
 //Language 语言
 type Language struct {
-	ID   int    `json:"id"`
-	Code string `json:"code"`
-	ISO  string `json:"iso"`
-	Name string `json:"name"`
+	Code  string `json:"code"`
+	Code2 string `json:"code2"`
+	ISO   string `json:"iso"`
+	Name  string `json:"name"`
 }
 
 func ListLangs() []Language {

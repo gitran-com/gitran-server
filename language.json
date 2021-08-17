@@ -1,44 +1,50 @@
 [
     {
-        "id": 1,
+        "code": "zh-CN",
+        "code2": "zh",
         "iso": "Chinese Simplified",
-        "name": "简体中文",
-        "code": "zh-CN"
+        "name": "简体中文"
     },
     {
-        "id": 2,
+        "code": "en",
+        "code2": "en",
         "iso": "English",
-        "name": "English",
-        "code": "en"
+        "name": "English"
     },
     {
-        "id": 3,
+        "code": "ru",
+        "code2": "ru",
         "iso": "Russian",
-        "name": "русский",
-        "code": "ru"
+        "name": "русский"
     },
     {
-        "id": 4,
+        "code": "fr",
+        "code2": "fr",
         "iso": "French",
-        "name": "français",
-        "code": "fr"
+        "name": "français"
     },
     {
-        "id": 5,
+        "code": "ar",
+        "code2": "ar",
         "iso": "Arabic",
-        "name": "العربية",
-        "code": "ar"
+        "name": "العربية"
     },
     {
-        "id": 6,
+        "code": "es",
+        "code2": "es",
         "iso": "Spanish, Castilian",
-        "name": "Español",
-        "code": "es"
+        "name": "Español"
     },
     {
-        "id": 7,
+        "code": "de",
+        "code2": "de",
+        "iso": "German",
+        "name": "Deutsche"
+    },
+    {
+        "code": "ja",
+        "code2": "ja",
         "iso": "Japanese",
-        "name": "日本語",
-        "code": "ja"
+        "name": "日本語"
     }
 ]

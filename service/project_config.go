@@ -78,10 +78,12 @@ func PreviewProjCfg(ctx *gin.Context) {
 		ctx.JSON(http.StatusBadRequest, model.Resp400)
 		return
 	}
+	src_files, trn_files := model.GenMultiTrnFilesFromSrcFiles(req.FileMaps, req.IgnRegs, proj)
 	ctx.JSON(http.StatusOK, model.Response{
 		Success: true,
 		Data: gin.H{
-			"files": util.ListMatchFiles(proj.Path, model.GetFileMapsSrcFiles(req.FileMaps), req.IgnRegs),
+			"src_files": src_files,
+			"trn_files": trn_files,
 		},
 	})
 }
