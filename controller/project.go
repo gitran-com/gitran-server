@@ -20,3 +20,7 @@ func CreateUserProj(ctx *gin.Context) {
 func ListProjBrch(ctx *gin.Context) {
 	service.ListProjBrch(ctx)
 }
+
+func ProjExisted(ctx *gin.Context) {
+	service.ProjExisted(ctx)
+}

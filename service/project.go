@@ -159,3 +159,14 @@ func ListProjBrch(ctx *gin.Context) {
 		},
 	})
 }
+
+//ProjExisted query if a project existed
+func ProjExisted(ctx *gin.Context) {
+	uri := ctx.Param("uri")
+	ctx.JSON(http.StatusOK, model.Response{
+		Success: true,
+		Data: gin.H{
+			"existed": model.ProjExisted(uri),
+		},
+	})
+}

@@ -137,6 +137,12 @@ func GetProjByURI(uri string) *Project {
 	return nil
 }
 
+func ProjExisted(uri string) bool {
+	var proj Project
+	db.Where("uri=?", uri).First(&proj)
+	return proj.ID > 0
+}
+
 //ListUserProj list all projects from a user
 func ListUserProj(user_id int64) []Project {
 	var projs []Project

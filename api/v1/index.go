@@ -58,6 +58,7 @@ func initProj(g *gin.RouterGroup) {
 	gg.Use(middleware.MustAuthUser())
 	{
 		gg.POST("", controller.CreateUserProj)
+		gg.GET("/:uri/existed", controller.ProjExisted)
 	}
 	gg.Use(middleware.MustAuthProjAdmin())
 	{
