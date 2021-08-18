@@ -173,11 +173,14 @@ func ProjExisted(ctx *gin.Context) {
 }
 
 func ProjStatWS(ctx *gin.Context) {
+	proj := ctx.Keys["proj"].(*model.Project)
+	if proj.Status != constant.ProjStatCreated {
+		return
+	}
 	ws, err := upGrader.Upgrade(ctx.Writer, ctx.Request, nil)
 	if err != nil {
 		return
 	}
-	proj := ctx.Keys["proj"].(*model.Project)
 	defer ws.Close() //返回前关闭
 	for {
 		newProj := model.GetProjByID(proj.ID)
