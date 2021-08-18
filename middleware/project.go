@@ -29,17 +29,15 @@ func MustGetProjRole() gin.HandlerFunc {
 		)
 		proj := ctx.Keys["proj"].(*model.Project)
 		user := ctx.Keys["user"].(*model.User)
-		//No-login
-		if user == nil {
-			if proj.PublicContribute {
-				role = model.RoleContributor
-			} else if proj.PublicView {
-				role = model.RoleViewer
-			}
-		} else {
+		//No-login user is RoleNone
+		if user != nil {
 			projRole := model.GetUserProjRole(user.ID, proj.ID)
 			if projRole != nil {
 				role = projRole.Role
+			} else if proj.PublicContribute {
+				role = model.RoleContributor
+			} else if proj.PublicView {
+				role = model.RoleViewer
 			}
 		}
 		ctx.Set("role", role)
