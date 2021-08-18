@@ -54,7 +54,7 @@ func initUsers(g *gin.RouterGroup) {
 
 func initProj(g *gin.RouterGroup) {
 	gg := g.Group("/projects")
-	gg.GET("/:uri", middleware.TryAuthUser(), middleware.MustGetProjRole(), controller.GetProj)
+	gg.GET("/:uri", middleware.TryAuthUser(), middleware.MustGetProj(), middleware.MustGetProjRole(), controller.GetProj)
 	gg.GET("/:uri/status", middleware.MustGetProj(), controller.ProjStatWS)
 	gg.Use(middleware.MustAuthUser())
 	{

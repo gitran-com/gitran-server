@@ -7,8 +7,8 @@ import (
 	"github.com/gitran-com/gitran-server/model"
 )
 
-//MustGetProjRole finds the project by uri
-func MustGetProjRole() gin.HandlerFunc {
+//MustGetProj get a project
+func MustGetProj() gin.HandlerFunc {
 	return func(ctx *gin.Context) {
 		uri := ctx.Param("uri")
 		proj := model.GetProjByURI(uri)
@@ -18,17 +18,31 @@ func MustGetProjRole() gin.HandlerFunc {
 			return
 		}
 		ctx.Set("proj", proj)
+	}
+}
+
+//MustGetProjRole finds the project by uri
+func MustGetProjRole() gin.HandlerFunc {
+	return func(ctx *gin.Context) {
+		var (
+			role model.Role = model.RoleNone
+		)
+		proj := ctx.Keys["proj"].(*model.Project)
 		user := ctx.Keys["user"].(*model.User)
+		//No-login
 		if user == nil {
-			ctx.Set("role", model.RoleNone)
-			return
+			if proj.PublicContribute {
+				role = model.RoleContributor
+			} else if proj.PublicView {
+				role = model.RoleViewer
+			}
+		} else {
+			projRole := model.GetUserProjRole(user.ID, proj.ID)
+			if projRole != nil {
+				role = projRole.Role
+			}
 		}
-		role := model.GetUserProjRole(user.ID, proj.ID)
-		if role == nil {
-			ctx.Set("role", model.RoleNone)
-			return
-		}
-		ctx.Set("role", role.Role)
+		ctx.Set("role", role)
 		ctx.Next()
 	}
 }
