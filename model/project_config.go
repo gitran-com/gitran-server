@@ -19,26 +19,21 @@ import (
 
 //ProjCfg means project config
 type ProjCfg struct {
-	ID            int64      `json:"id" gorm:"primaryKey;autoIncrement"`
-	Status        int        `json:"status" gorm:"type:tinyint;"`
-	SrcBr         string     `json:"src_branch" gorm:"type:varchar(32);notNull"`
-	TrnBr         string     `json:"trn_branch" gorm:"type:varchar(32);notNull"`
-	PullGap       uint16     `json:"pull_gap" gorm:"index;notNull"`
-	PushGap       uint16     `json:"push_gap" gorm:"index;notNull"`
-	PullStatus    int        `json:"pull_status" gorm:"notNull"`
-	PushStatus    int        `json:"push_status" gorm:"notNull"`
-	LastPullAt    *time.Time `json:"last_pull_at"`
-	LastPushAt    *time.Time `json:"last_push_at"`
-	FileMapsBytes []byte     `json:"-" gorm:"column:file_maps"`
-	FileMaps      []FileMap  `json:"file_maps" gorm:"-"`
-	IgnRegsBytes  []byte     `json:"-" gorm:"column:ignores"`
-	IgnRegs       []string   `json:"ignores" gorm:"-"`
-}
-
-//FileMap means source files => translate maps
-type FileMap struct {
-	SrcFileReg string `json:"src_files"`
-	TrnFileReg string `json:"trn_files"`
+	ID           int64      `json:"id" gorm:"primaryKey;autoIncrement"`
+	Status       int        `json:"status" gorm:"type:tinyint;"`
+	SrcBr        string     `json:"src_branch" gorm:"type:varchar(32);notNull"`
+	TrnBr        string     `json:"trn_branch" gorm:"type:varchar(32);notNull"`
+	PullGap      uint16     `json:"pull_gap" gorm:"index;notNull"`
+	PushGap      uint16     `json:"push_gap" gorm:"index;notNull"`
+	PullStatus   int        `json:"pull_status" gorm:"notNull"`
+	PushStatus   int        `json:"push_status" gorm:"notNull"`
+	LastPullAt   *time.Time `json:"last_pull_at"`
+	LastPushAt   *time.Time `json:"last_push_at"`
+	SrcRegs      []string   `json:"src_files" gorm:"-"`
+	SrcRegsBytes []byte     `json:"-" gorm:"column:src_regs"`
+	TrnReg       string     `json:"trn_file" gorm:"column:trn_reg"`
+	IgnRegs      []string   `json:"ign_regs" gorm:"-"`
+	IgnRegsBytes []byte     `json:"-" gorm:"column:ign_regs"`
 }
 
 //TableName return table name
@@ -52,7 +47,7 @@ func (cfg *ProjCfg) Write() {
 }
 
 func (cfg *ProjCfg) AfterFind(tx *gorm.DB) error {
-	json.Unmarshal(cfg.FileMapsBytes, &cfg.FileMaps)
+	json.Unmarshal(cfg.SrcRegsBytes, &cfg.SrcRegs)
 	json.Unmarshal(cfg.IgnRegsBytes, &cfg.IgnRegs)
 	return nil
 }
@@ -70,7 +65,7 @@ func (cfg *ProjCfg) UpdateProjCfg(req *UpdateProjCfgRequest) error {
 		needReprocess bool
 	)
 	if req.SrcBr != cfg.SrcBr ||
-		!bytes.Equal(req.FileMapsBytes, cfg.FileMapsBytes) ||
+		!bytes.Equal(req.SrcRegsBytes, cfg.SrcRegsBytes) ||
 		!bytes.Equal(req.IgnRegsBytes, cfg.IgnRegsBytes) {
 		needReprocess = true
 	}
@@ -97,14 +92,6 @@ func GetProjCfgByID(id int64) *ProjCfg {
 		return &pc[0]
 	}
 	return nil
-}
-
-//NewBrchRule create a new branch rule in DB
-func NewBrchRule(rule *FileMap) (*FileMap, error) {
-	if res := db.Create(rule); res.Error != nil {
-		return nil, res.Error
-	}
-	return rule, nil
 }
 
 //UpdateProjCfgPullStatus update a project cfg pull status
@@ -152,22 +139,6 @@ func (cfg *ProjCfg) Process() {
 	//TODO
 }
 
-func GetFileMapsSrcFiles(fms []FileMap) []string {
-	files := []string{}
-	for _, fm := range fms {
-		files = append(files, fm.SrcFileReg)
-	}
-	return files
-}
-
-func GetFileMapsTrnFiles(fms []FileMap) []string {
-	files := []string{}
-	for _, fm := range fms {
-		files = append(files, fm.TrnFileReg)
-	}
-	return files
-}
-
 func GenTrnFilesFromSrcFiles(src []string, trn string, lang *Language, proj *Project) (res []string) {
 	reg := regexp.MustCompile(`\$.*?\$`)
 	for _, str := range src {
@@ -196,24 +167,23 @@ func GenTrnFilesFromSrcFiles(src []string, trn string, lang *Language, proj *Pro
 	return res
 }
 
-func GenMultiTrnFilesFromSrcFiles(fmps []FileMap, ignores []string, proj *Project) ([]string, map[string][]string) {
+func GenMultiTrnFilesFromSrcFiles(srcRegs []string, trnReg string, ignores []string, proj *Project) ([]string, map[string][]string) {
 	var (
 		srcMap        = make(map[string]bool)
 		multiTrnFiles = make(map[string][]string)
 	)
-	for _, lang := range proj.TranslateLanguages {
-		trnMap := make(map[string]bool)
-		for _, fmp := range fmps {
-			src := util.ListMatchFiles(proj.Path, fmp.SrcFileReg, ignores)
-			trn := GenTrnFilesFromSrcFiles(src, fmp.TrnFileReg, &lang, proj)
-			for idx := range src {
-				srcMap[src[idx]] = true
-				trnMap[trn[idx]] = true
-			}
+	for _, reg := range srcRegs {
+		src := util.ListMatchFiles(proj.Path, reg, ignores)
+		for _, str := range src {
+			srcMap[str] = true
 		}
-		multiTrnFiles[lang.Code] = genKeySliceFromMap(trnMap)
 	}
-	return genKeySliceFromMap(srcMap), multiTrnFiles
+	srcFiles := genKeySliceFromMap(srcMap)
+	for _, lang := range proj.TranslateLanguages {
+		trn := GenTrnFilesFromSrcFiles(srcFiles, trnReg, &lang, proj)
+		multiTrnFiles[lang.Code] = trn
+	}
+	return srcFiles, multiTrnFiles
 }
 
 func genKeySliceFromMap(mp map[string]bool) []string {

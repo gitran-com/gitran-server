@@ -45,14 +45,15 @@ func (req *UpdateProfileRequest) Valid() bool {
 }
 
 type UpdateProjCfgRequest struct {
-	SrcBr         string    `json:"src_br"`
-	TrnBr         string    `json:"trn_br"`
-	PullGap       uint16    `json:"pull_interval"`
-	PushGap       uint16    `json:"push_interval"`
-	FileMaps      []FileMap `json:"file_maps"`
-	FileMapsBytes []byte    `json:"-"`
-	IgnRegs       []string  `json:"ignores"`
-	IgnRegsBytes  []byte    `json:"-"`
+	SrcBr        string   `json:"src_br"`
+	TrnBr        string   `json:"trn_br"`
+	PullGap      uint16   `json:"pull_interval"`
+	PushGap      uint16   `json:"push_interval"`
+	SrcRegs      []string `json:"src_files"`
+	SrcRegsBytes []byte   `json:"-"`
+	TrnReg       string   `json:"trn_file"`
+	IgnRegs      []string `json:"ign_regs"`
+	IgnRegsBytes []byte   `json:"-"`
 }
 
 func (req *UpdateProjCfgRequest) Valid() bool {
@@ -63,7 +64,7 @@ func (req *UpdateProjCfgRequest) Valid() bool {
 		req.PushGap < constant.MinProjPushGap {
 		return false
 	}
-	if req.FileMapsBytes, err = json.Marshal(req.FileMaps); err != nil {
+	if req.SrcRegsBytes, err = json.Marshal(req.SrcRegs); err != nil {
 		return false
 	}
 	if req.IgnRegsBytes, err = json.Marshal(req.IgnRegs); err != nil {
@@ -73,13 +74,13 @@ func (req *UpdateProjCfgRequest) Valid() bool {
 }
 
 func (req *UpdateProjCfgRequest) Map() map[string]interface{} {
-	json.Marshal(req.FileMaps)
 	return map[string]interface{}{
-		"src_br":    req.SrcBr,
-		"trn_br":    req.TrnBr,
-		"pull_gap":  req.PullGap,
-		"push_gap":  req.PushGap,
-		"file_maps": req.FileMapsBytes,
-		"ignores":   req.IgnRegsBytes,
+		"src_br":   req.SrcBr,
+		"trn_br":   req.TrnBr,
+		"pull_gap": req.PullGap,
+		"push_gap": req.PushGap,
+		"src_regs": req.SrcRegsBytes,
+		"trn_reg":  req.TrnReg,
+		"ign_regs": req.IgnRegsBytes,
 	}
 }
