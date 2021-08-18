@@ -6,6 +6,7 @@ import (
 	"regexp"
 	"strconv"
 	"strings"
+	"time"
 
 	"github.com/go-git/go-git/v5/plumbing"
 
@@ -169,4 +170,26 @@ func ProjExisted(ctx *gin.Context) {
 			"existed": model.ProjExisted(uri),
 		},
 	})
+}
+
+func ProjStatWS(ctx *gin.Context) {
+	ws, err := upGrader.Upgrade(ctx.Writer, ctx.Request, nil)
+	if err != nil {
+		return
+	}
+	proj := ctx.Keys["proj"].(*model.Project)
+	defer ws.Close() //返回前关闭
+	for {
+		newProj := model.GetProjByID(proj.ID)
+		if newProj.Status != proj.Status {
+			ws.WriteJSON(model.Response{
+				Success: true,
+				Data: gin.H{
+					"proj": newProj,
+				},
+			})
+			return
+		}
+		time.Sleep(time.Second)
+	}
 }

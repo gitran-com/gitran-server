@@ -63,6 +63,20 @@ func TryAuthUser() gin.HandlerFunc {
 	}
 }
 
+//MustGetProj get a project
+func MustGetProj() gin.HandlerFunc {
+	return func(ctx *gin.Context) {
+		uri := ctx.Param("uri")
+		proj := model.GetProjByURI(uri)
+		if proj == nil {
+			ctx.JSON(http.StatusNotFound, model.Resp404)
+			ctx.Abort()
+			return
+		}
+		ctx.Set("proj", proj)
+	}
+}
+
 //MustAuthProjAdmin verifies a jwt if can do something on a project
 func MustAuthProjAdmin() gin.HandlerFunc {
 	return func(ctx *gin.Context) {

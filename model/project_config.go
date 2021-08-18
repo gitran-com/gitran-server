@@ -175,10 +175,10 @@ func GenTrnFilesFromSrcFiles(src []string, trn string, lang *Language, proj *Pro
 			switch s {
 			case `$dir_name$`, `$dir$`:
 				return filepath.Dir(str)
-			case `$full_name$`, `$full$`:
+			case `$file_name$`, `$name$`:
 				return filepath.Base(str)
 			case `$base_name$`, `$base$`:
-				return util.FilenameNoExt(str)
+				return util.FilenameNoExt(filepath.Base(str))
 			case `$ext_name$`, `ext`:
 				return filepath.Ext(str)
 			case `$language$`, `lang`:

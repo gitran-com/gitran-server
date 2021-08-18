@@ -2,11 +2,13 @@ package service
 
 import (
 	"fmt"
+	"net/http"
 	"net/url"
 	"sync"
 
 	"github.com/gitran-com/gitran-server/config"
 	"github.com/gitran-com/gitran-server/model"
+	"github.com/gorilla/websocket"
 	"github.com/markbates/goth"
 	"github.com/markbates/goth/providers/github"
 	log "github.com/sirupsen/logrus"
@@ -16,6 +18,7 @@ var (
 	GithubUserProvider *github.Provider
 	GithubRepoProvider *github.Provider
 	GithubRoute        string
+	upGrader           websocket.Upgrader
 )
 
 //Init init the service
@@ -45,6 +48,7 @@ func Init() error {
 		}
 	}
 	InitGithubAuth()
+	InitWebsocket()
 	go InitProj()
 	return nil
 }
@@ -78,5 +82,21 @@ func InitGithubAuth() {
 		GithubRepoProvider = github.New(config.Github.ClientID, config.Github.ClientSecret, GithubRoute+"import", "repo")
 		GithubRepoProvider.SetName("github-repo")
 		goth.UseProviders(GithubUserProvider, GithubRepoProvider)
+	}
+}
+
+func InitWebsocket() {
+	if config.IsDebug {
+		upGrader = websocket.Upgrader{
+			CheckOrigin: func(r *http.Request) bool {
+				return false
+			},
+		}
+	} else {
+		upGrader = websocket.Upgrader{
+			CheckOrigin: func(r *http.Request) bool {
+				return true
+			},
+		}
 	}
 }

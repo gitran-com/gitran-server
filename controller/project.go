@@ -24,3 +24,7 @@ func ListProjBrch(ctx *gin.Context) {
 func ProjExisted(ctx *gin.Context) {
 	service.ProjExisted(ctx)
 }
+
+func ProjStatWS(ctx *gin.Context) {
+	service.ProjStatWS(ctx)
+}
