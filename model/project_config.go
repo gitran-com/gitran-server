@@ -179,9 +179,9 @@ func GenTrnFilesFromSrcFiles(src []string, trn string, lang *Language, proj *Pro
 				return filepath.Base(str)
 			case `$base_name$`, `$base$`:
 				return util.FilenameNoExt(filepath.Base(str))
-			case `$ext_name$`, `ext`:
+			case `$ext_name$`, `$ext$`:
 				return filepath.Ext(str)
-			case `$language$`, `lang`:
+			case `$language$`, `$lang$`:
 				return lang.ISO
 			case `$code$`:
 				return lang.Code
@@ -198,15 +198,30 @@ func GenTrnFilesFromSrcFiles(src []string, trn string, lang *Language, proj *Pro
 
 func GenMultiTrnFilesFromSrcFiles(fmps []FileMap, ignores []string, proj *Project) ([]string, map[string][]string) {
 	var (
-		srcFiles []string
-		trnMap   = make(map[string][]string)
+		srcMap        = make(map[string]bool)
+		multiTrnFiles = make(map[string][]string)
 	)
 	for _, lang := range proj.TranslateLanguages {
+		trnMap := make(map[string]bool)
 		for _, fmp := range fmps {
 			src := util.ListMatchFiles(proj.Path, fmp.SrcFileReg, ignores)
-			srcFiles = append(srcFiles, src...)
-			trnMap[lang.Code] = GenTrnFilesFromSrcFiles(src, fmp.TrnFileReg, &lang, proj)
+			trn := GenTrnFilesFromSrcFiles(src, fmp.TrnFileReg, &lang, proj)
+			for idx := range src {
+				srcMap[src[idx]] = true
+				trnMap[trn[idx]] = true
+			}
 		}
+		multiTrnFiles[lang.Code] = genKeySliceFromMap(trnMap)
 	}
-	return srcFiles, trnMap
+	return genKeySliceFromMap(srcMap), multiTrnFiles
+}
+
+func genKeySliceFromMap(mp map[string]bool) []string {
+	s := make([]string, len(mp))
+	cnt := 0
+	for key := range mp {
+		s[cnt] = key
+		cnt++
+	}
+	return s
 }
