@@ -48,13 +48,13 @@ func TryAuthUser() gin.HandlerFunc {
 	return func(ctx *gin.Context) {
 		auth := ctx.Request.Header.Get("Authorization")
 		if len(auth) <= 0 {
-			ctx.Set("user", nil)
+			ctx.Set("user", (*model.User)(nil))
 			return
 		}
 		token := strings.Fields(auth)[1]
 		clm, err := ParseToken(token) // 校验token
 		if err != nil {
-			ctx.Set("user", nil)
+			ctx.Set("user", (*model.User)(nil))
 			return
 		}
 		id, _ := strconv.ParseInt(clm.Id, 10, 64)
