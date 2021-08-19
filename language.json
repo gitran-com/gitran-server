@@ -6,10 +6,16 @@
         "name": "简体中文"
     },
     {
-        "code": "en",
+        "code": "en-GB",
         "code2": "en",
-        "iso": "English",
-        "name": "English"
+        "iso": "English, United Kingdom",
+        "name": "English, United Kingdom"
+    },
+    {
+        "code": "en-US",
+        "code2": "en",
+        "iso": "English, United States",
+        "name": "English, United States"
     },
     {
         "code": "ru",
