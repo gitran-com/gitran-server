@@ -1,9 +1,11 @@
 package model
 
 import (
+	"errors"
 	"time"
 
 	"github.com/gitran-com/gitran-server/config"
+	"gorm.io/gorm"
 	"gorm.io/gorm/clause"
 )
 
@@ -45,12 +47,12 @@ func (role *ProjRole) Create() error {
 }
 
 func GetUserProjRole(user_id int64, proj_id int64) *ProjRole {
-	var roles []ProjRole
-	db.Where("proj_id=? AND user_id=?", proj_id, user_id).First(&roles)
-	if len(roles) > 0 {
-		return &roles[0]
+	var role ProjRole
+	res := db.Where("proj_id=? AND user_id=?", proj_id, user_id).First(&role)
+	if errors.Is(res.Error, gorm.ErrRecordNotFound) {
+		return nil
 	}
-	return nil
+	return &role
 }
 
 func SetUserProjRole(user_id int64, proj_id int64, role Role) {

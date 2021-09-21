@@ -1,10 +1,11 @@
 package model
 
 import (
-	"bytes"
 	"encoding/json"
+	"errors"
 	"path/filepath"
 	"regexp"
+	"sync"
 	"time"
 
 	log "github.com/sirupsen/logrus"
@@ -61,20 +62,10 @@ func NewProjCfg(cfg *ProjCfg) (*ProjCfg, error) {
 }
 
 func (cfg *ProjCfg) UpdateProjCfg(req *UpdateProjCfgRequest) error {
-	var (
-		needReprocess bool
-	)
-	if req.SrcBr != cfg.SrcBr ||
-		!bytes.Equal(req.SrcRegsBytes, cfg.SrcRegsBytes) ||
-		!bytes.Equal(req.IgnRegsBytes, cfg.IgnRegsBytes) {
-		needReprocess = true
-	}
 	if err := db.Model(cfg).Updates(req.Map()).Error; err != nil {
 		return err
 	}
-	if needReprocess {
-		go cfg.Process()
-	}
+	go cfg.Process()
 	return nil
 }
 
@@ -86,12 +77,12 @@ func (cfg *ProjCfg) UpdateStatus(stat int) {
 
 //GetProjCfgByID get a project config by config id
 func GetProjCfgByID(id int64) *ProjCfg {
-	var pc []ProjCfg
-	db.Where("id=?", id).First(&pc)
-	if len(pc) > 0 {
-		return &pc[0]
+	var pc ProjCfg
+	res := db.Where("id=?", id).First(&pc)
+	if errors.Is(res.Error, gorm.ErrRecordNotFound) {
+		return nil
 	}
-	return nil
+	return &pc
 }
 
 //UpdateProjCfgPullStatus update a project cfg pull status
@@ -135,8 +126,15 @@ func (cfg *ProjCfg) Process() {
 		stat = constant.ProjStatFailed
 		return
 	}
-	// util.ListMatchFiles(proj.Path, GetFileMapsSrcFiles(cfg.FileMaps), cfg.IgnRegs)
-	//TODO
+	files := util.ListMultiMatchFiles(proj.Path, cfg.SrcRegs, cfg.IgnRegs)
+	SetAllFilesInvalid(proj.ID)
+	wg := sync.WaitGroup{}
+	wg.Add(len(files))
+	for _, file := range files {
+		file := MustGetValidProjFile(proj.ID, file)
+		go file.Process(&wg)
+	}
+	wg.Wait()
 }
 
 func GenTrnFilesFromSrcFiles(src []string, trn string, lang *Language, proj *Project) (res []string) {
@@ -169,29 +167,12 @@ func GenTrnFilesFromSrcFiles(src []string, trn string, lang *Language, proj *Pro
 
 func GenMultiTrnFilesFromSrcFiles(srcRegs []string, trnReg string, ignores []string, proj *Project) ([]string, map[string][]string) {
 	var (
-		srcMap        = make(map[string]bool)
 		multiTrnFiles = make(map[string][]string)
 	)
-	for _, reg := range srcRegs {
-		src := util.ListMatchFiles(proj.Path, reg, ignores)
-		for _, str := range src {
-			srcMap[str] = true
-		}
-	}
-	srcFiles := genKeySliceFromMap(srcMap)
+	srcFiles := util.ListMultiMatchFiles(proj.Path, srcRegs, ignores)
 	for _, lang := range proj.TranslateLanguages {
 		trn := GenTrnFilesFromSrcFiles(srcFiles, trnReg, &lang, proj)
 		multiTrnFiles[lang.Code] = trn
 	}
 	return srcFiles, multiTrnFiles
-}
-
-func genKeySliceFromMap(mp map[string]bool) []string {
-	s := make([]string, len(mp))
-	cnt := 0
-	for key := range mp {
-		s[cnt] = key
-		cnt++
-	}
-	return s
 }

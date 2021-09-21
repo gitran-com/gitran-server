@@ -1,6 +1,7 @@
 package model
 
 import (
+	"errors"
 	"fmt"
 	"os/exec"
 	"time"
@@ -9,6 +10,7 @@ import (
 	"github.com/gitran-com/gitran-server/constant"
 	"github.com/gitran-com/gitran-server/util"
 	log "github.com/sirupsen/logrus"
+	"gorm.io/gorm"
 )
 
 var (
@@ -118,12 +120,12 @@ func (proj *Project) FillLangs() {
 
 //GetProjByID get project by id
 func GetProjByID(id int64) *Project {
-	var proj []Project
-	db.Where("id=?", id).First(&proj)
-	if len(proj) > 0 {
-		return &proj[0]
+	var proj Project
+	res := db.Where("id=?", id).First(&proj)
+	if errors.Is(res.Error, gorm.ErrRecordNotFound) {
+		return nil
 	}
-	return nil
+	return &proj
 }
 
 //GetProjByURI get project by name

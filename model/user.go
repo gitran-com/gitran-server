@@ -3,12 +3,14 @@ package model
 import (
 	"bytes"
 	"crypto/sha512"
+	"errors"
 	"strconv"
 	"time"
 
 	"github.com/gitran-com/gitran-server/config"
 	"github.com/gitran-com/gitran-server/util"
 	"github.com/markbates/goth"
+	"gorm.io/gorm"
 )
 
 //User means user
@@ -49,32 +51,32 @@ func (user *User) UpdateProfile(mp map[string]interface{}) error {
 
 //GetUserByID gets a user by id
 func GetUserByID(id int64) *User {
-	var user []User
-	db.First(&user, id)
-	if len(user) > 0 {
-		return &user[0]
+	var user User
+	res := db.First(&user, id)
+	if errors.Is(res.Error, gorm.ErrRecordNotFound) {
+		return nil
 	}
-	return nil
+	return &user
 }
 
 //GetUserByEmail gets a user by email
 func GetUserByEmail(email string) *User {
-	var user []User
-	db.Where("email=?", email).First(&user)
-	if len(user) > 0 {
-		return &user[0]
+	var user User
+	res := db.Where("email=?", email).First(&user)
+	if errors.Is(res.Error, gorm.ErrRecordNotFound) {
+		return nil
 	}
-	return nil
+	return &user
 }
 
 //GetUserByGithubID gets a user by github id
 func GetUserByGithubID(ghid int64) *User {
-	var user []User
-	db.Where("github_id=?", ghid).First(&user)
-	if len(user) > 0 {
-		return &user[0]
+	var user User
+	res := db.Where("github_id=?", ghid).First(&user)
+	if errors.Is(res.Error, gorm.ErrRecordNotFound) {
+		return nil
 	}
-	return nil
+	return &user
 }
 
 //HashSalt calcs H(pass+salt)

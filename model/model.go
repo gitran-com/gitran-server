@@ -55,7 +55,7 @@ func initDB() error {
 		log.Fatalf("db connect ERROR : %v", err.Error())
 		return err
 	}
-	err = db.AutoMigrate(&User{}, &Project{}, &ProjCfg{}, &ProjRole{}, &Translation{})
+	err = db.AutoMigrate(&User{}, &Project{}, &ProjCfg{}, &ProjRole{}, &ProjFile{}, &Sentence{}, &Translation{})
 	if err != nil {
 		log.Fatalf("db migrate ERROR : %v", err.Error())
 		return err

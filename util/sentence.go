@@ -1,20 +1,34 @@
 package util
 
 import (
-	"encoding/xml"
-	"fmt"
+	"bytes"
+	"regexp"
+	"strings"
+
+	"github.com/antchfx/xmlquery"
 )
 
-func ProcessXML(file string) []string {
-	var out map[string]interface{}
-	if err := xml.Unmarshal([]byte(file), out); err != nil {
-		fmt.Printf("ProcessXML error: %+v\n", err.Error())
-		return nil
+var space = regexp.MustCompile(`\s+`)
+
+func ProcessXML(data []byte) []string {
+	doc, _ := xmlquery.Parse(bytes.NewReader(data))
+	res := xmlquery.Find(doc, "//*")
+	strs := []string{}
+	for _, node := range res {
+		text := strings.TrimSpace(node.InnerText())
+		sens := tokenizer.Tokenize(text)
+		for _, s := range sens {
+			strs = append(strs, space.ReplaceAllString(strings.TrimSpace(s.Text), " "))
+		}
 	}
-	fmt.Printf("out=%+v\n", out)
-	sentences := tokenizer.Tokenize(file)
-	for _, s := range sentences {
-		fmt.Printf("sen='%s'\n", s.Text)
+	return strs
+}
+
+func ProcessTXT(data []byte) []string {
+	strs := []string{}
+	sens := tokenizer.Tokenize(string(data))
+	for _, s := range sens {
+		strs = append(strs, space.ReplaceAllString(strings.TrimSpace(s.Text), " "))
 	}
-	return nil
+	return strs
 }

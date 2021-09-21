@@ -44,22 +44,6 @@ func UpdateProjCfg(ctx *gin.Context) {
 	})
 }
 
-// func processSrcFile(file string, cfg *model.ProjCfg, proj *model.Project, rule *model.FileMap) {
-// 	data, err := ioutil.ReadFile(file)
-// 	if err != nil {
-// 		return
-// 	}
-// 	ext := filepath.Ext(file)
-// 	var res []string
-// 	switch ext {
-// 	case ".xml":
-// 		res = util.ProcessXML(string(data))
-// 	}
-// 	for _, str := range res {
-// 		fmt.Printf("sen=%s\n", str)
-// 	}
-// }
-
 func PreviewProjCfg(ctx *gin.Context) {
 	var (
 		req  model.UpdateProjCfgRequest

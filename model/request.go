@@ -47,12 +47,12 @@ func (req *UpdateProfileRequest) Valid() bool {
 type UpdateProjCfgRequest struct {
 	SrcBr        string   `json:"src_br"`
 	TrnBr        string   `json:"trn_br"`
-	PullGap      uint16   `json:"pull_interval"`
-	PushGap      uint16   `json:"push_interval"`
+	PullGap      uint16   `json:"pull_gap"`
+	PushGap      uint16   `json:"push_gap"`
 	SrcRegs      []string `json:"src_files"`
 	SrcRegsBytes []byte   `json:"-"`
 	TrnReg       string   `json:"trn_file"`
-	IgnRegs      []string `json:"ign_regs"`
+	IgnRegs      []string `json:"ign_files"`
 	IgnRegsBytes []byte   `json:"-"`
 }
 
