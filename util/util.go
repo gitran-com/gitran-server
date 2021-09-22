@@ -14,3 +14,7 @@ func init() {
 	training, _ := sentences.LoadTraining(b)
 	tokenizer = sentences.NewSentenceTokenizer(training)
 }
+
+func Tokenize(text string) []*sentences.Sentence {
+	return tokenizer.Tokenize(text)
+}

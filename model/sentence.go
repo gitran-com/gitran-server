@@ -1,20 +1,19 @@
 package model
 
 import (
-	"crypto/md5"
-	"errors"
-	"fmt"
+	"bytes"
+	"regexp"
+	"strings"
 
 	"github.com/gitran-com/gitran-server/config"
-	"gorm.io/gorm"
+	"github.com/gitran-com/gitran-server/util"
 )
 
 type Sentence struct {
 	ID      int64  `json:"id" gorm:"primaryKey;autoIncrement"`
 	ProjID  int64  `json:"proj_id" gorm:"index"`
 	FileID  int64  `json:"file_id" gorm:"index"`
-	SeqNo   int    `json:"seq_no" gorm:"index"`
-	Offset  int    `json:"offset" gorm:""`
+	Offset  int    `json:"offset" gorm:"index"`
 	Valid   bool   `json:"-" gorm:"index"`
 	MD5     string `json:"-" gorm:"index;type:char(32)"`
 	Content string `json:"content" gorm:"type:text"`
@@ -37,27 +36,85 @@ func NewSentence(sent *Sentence) (*Sentence, error) {
 	return sent, nil
 }
 
-func MustGetValidSent(proj_id int64, file_id int64, seq_no int, content string) *Sentence {
-	sent := &Sentence{}
-	hash := fmt.Sprintf("%x", md5.Sum([]byte(content)))
-	res := db.Where("file_id=? AND md5=?", file_id, hash).First(sent)
-	if errors.Is(res.Error, gorm.ErrRecordNotFound) {
-		sent, _ = NewSentence(&Sentence{
-			ProjID:  proj_id,
-			FileID:  file_id,
-			SeqNo:   seq_no,
-			Valid:   true,
-			Content: content,
-			MD5:     hash,
-		})
-		return sent
-	}
-	sent.SeqNo = seq_no
-	sent.Valid = true
-	sent.Write()
-	return sent
-}
-
 func SetAllSentsInvalid(file_id int64) {
 	db.Model(&Sentence{}).Where("file_id=?", file_id).Updates(map[string]interface{}{"valid": false})
+}
+
+var (
+	xmlTagReg = regexp.MustCompile(`(<.[^(><.)]+>)`)
+)
+
+func commonProcess(str string) string {
+	return strings.TrimSpace(str)
+}
+
+func ProcessXML(cfg *ProjCfg, data []byte) ([]string, []int) {
+	strs := []string{}
+	offs := []int{}
+	tags := xmlTagReg.FindAll(data, -1)
+	allTags := make(map[string]bool)
+	ignoredTags := make(map[string]bool)
+	for _, tag := range cfg.Extra.XML.IgnoredTags {
+		ignoredTags[tag] = true
+		ignoredTags[tag+"/"] = true
+	}
+	for _, tag := range tags {
+		if bytes.HasPrefix(tag, []byte("</")) {
+			continue
+		}
+		allTags[string(tag[1:len(tag)-1])] = true
+	}
+	for tag := range allTags {
+		if ignoredTags[tag] {
+			continue
+		}
+		flag := true
+		reg := regexp.MustCompile(`<` + tag + `>[\s\S]*?<\/` + tag + `>`)
+		res := reg.FindAllIndex(data, -1)
+		for _, pair := range res {
+			start, end := pair[0]+len(tag)+2, pair[1]-len(tag)-3
+			content := string(data[start:end])
+			childs := xmlTagReg.FindAll([]byte(content), -1)
+			for _, child := range childs {
+				if bytes.HasPrefix(child, []byte("</")) {
+					continue
+				}
+				end := len(child) - 1
+				if bytes.HasSuffix(child, []byte("/>")) {
+					end--
+				}
+				if !ignoredTags[string(child[1:end])] {
+					flag = false
+					break
+				}
+			}
+			if flag {
+				sens := util.Tokenize(content)
+				for _, s := range sens {
+					sen := commonProcess(s.Text)
+					if sen == "" {
+						continue
+					}
+					strs = append(strs, sen)
+					offs = append(offs, start+s.Start)
+				}
+			}
+		}
+	}
+	return strs, offs
+}
+
+func ProcessTXT(data []byte) ([]string, []int) {
+	strs := []string{}
+	offs := []int{}
+	start := 0
+	sens := util.Tokenize(string(data))
+	for _, s := range sens {
+		sen := commonProcess(s.Text)
+		off := bytes.Index(data[start:], []byte(sen))
+		strs = append(strs, sen)
+		offs = append(offs, off+start)
+		start = off + 1
+	}
+	return strs, offs
 }

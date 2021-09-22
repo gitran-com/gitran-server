@@ -40,11 +40,11 @@ type ProjCfg struct {
 }
 
 type ExtraCfg struct {
-	XML *XMLCfg `json:"xml"`
+	XML XMLCfg `json:"xml"`
 }
 
 type XMLCfg struct {
-	OmitTags []string `json:"omit_tags" gorm:"-"`
+	IgnoredTags []string `json:"ignored_tags"`
 }
 
 //TableName return table name
@@ -138,7 +138,7 @@ func (cfg *ProjCfg) Process() {
 		return
 	}
 	files := util.ListMultiMatchFiles(proj.Path, cfg.SrcRegs, cfg.IgnRegs)
-	TxnUpdateFilesSents(proj, files)
+	cfg.TxnProcess(proj, files)
 }
 
 func GenTrnFilesFromSrcFiles(src []string, trn string, lang *Language, proj *Project) (res []string) {
@@ -181,14 +181,14 @@ func GenMultiTrnFilesFromSrcFiles(srcRegs []string, trnReg string, ignores []str
 	return srcFiles, multiTrnFiles
 }
 
-func TxnUpdateFilesSents(proj *Project, files []string) {
+func (cfg *ProjCfg) TxnProcess(proj *Project, files []string) {
 	db.Transaction(func(tx *gorm.DB) error {
 		tx.Model(&ProjFile{}).Where("proj_id=?", proj.ID).Updates(map[string]interface{}{"valid": false})
 		wg := sync.WaitGroup{}
 		wg.Add(len(files))
 		for _, file := range files {
 			pf := &ProjFile{
-				ProjID: proj.ID,
+				ProjID: cfg.ID,
 				Path:   file,
 				Valid:  true,
 			}
@@ -204,7 +204,7 @@ func TxnUpdateFilesSents(proj *Project, files []string) {
 				pf.Valid = true
 				tx.Save(pf)
 			}
-			go pf.TxnProcess(&wg, tx, proj)
+			go pf.TxnProcess(&wg, tx, cfg)
 		}
 		wg.Wait()
 		return nil

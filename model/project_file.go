@@ -11,7 +11,6 @@ import (
 	"sync"
 
 	"github.com/gitran-com/gitran-server/config"
-	"github.com/gitran-com/gitran-server/util"
 	"gorm.io/gorm"
 )
 
@@ -67,7 +66,7 @@ func MustGetValidProjFile(id int64, file string) *ProjFile {
 	return pf
 }
 
-func (file *ProjFile) TxnProcess(wg *sync.WaitGroup, tx *gorm.DB, proj *Project) {
+func (file *ProjFile) TxnProcess(wg *sync.WaitGroup, tx *gorm.DB, cfg *ProjCfg) {
 	defer wg.Done()
 	data := []byte(file.Content)
 	ext := filepath.Ext(file.Path)
@@ -77,21 +76,20 @@ func (file *ProjFile) TxnProcess(wg *sync.WaitGroup, tx *gorm.DB, proj *Project)
 	)
 	switch ext {
 	case ".xml":
-		sens, offs = util.ProcessXML(data)
+		sens, offs = ProcessXML(cfg, data)
 	default:
-		sens, offs = util.ProcessTXT(data)
+		sens, offs = ProcessTXT(data)
 	}
 	// SetAllSentsInvalid(file.ID)
-	tx.Model(&ProjFile{}).Where("proj_id=?", proj.ID).Updates(map[string]interface{}{"valid": false})
+	tx.Model(&ProjFile{}).Where("proj_id=?", cfg.ID).Updates(map[string]interface{}{"valid": false})
 	file.SentCnt = len(sens)
 	file.WordCnt = 0
 	for i, str := range sens {
 		file.WordCnt += len(strings.Fields(str))
 		hash := fmt.Sprintf("%x", md5.Sum([]byte(str)))
 		sent := &Sentence{
-			ProjID:  proj.ID,
+			ProjID:  cfg.ID,
 			FileID:  file.ID,
-			SeqNo:   i,
 			Offset:  offs[i],
 			Valid:   true,
 			Content: str,
