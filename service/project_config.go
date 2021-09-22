@@ -39,7 +39,7 @@ func UpdateProjCfg(ctx *gin.Context) {
 	ctx.JSON(http.StatusOK, model.Response{
 		Success: true,
 		Data: gin.H{
-			"proj_cfg": cfg,
+			"proj_cfg": model.GetProjCfgByID(cfg.ID),
 		},
 	})
 }

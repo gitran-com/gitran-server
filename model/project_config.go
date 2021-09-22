@@ -207,6 +207,7 @@ func (cfg *ProjCfg) TxnProcess(proj *Project, files []string) {
 			go pf.TxnProcess(&wg, tx, cfg)
 		}
 		wg.Wait()
+		tx.Save(cfg)
 		return nil
 	})
 }
