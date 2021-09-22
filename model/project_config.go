@@ -35,6 +35,16 @@ type ProjCfg struct {
 	TrnReg       string     `json:"trn_file" gorm:"column:trn_reg"`
 	IgnRegs      []string   `json:"ign_regs" gorm:"-"`
 	IgnRegsBytes []byte     `json:"-" gorm:"column:ign_regs"`
+	Extra        ExtraCfg   `json:"extra" gorm:"-"`
+	ExtraBytes   []byte     `json:"-" gorm:"column:extra"`
+}
+
+type ExtraCfg struct {
+	XML *XMLCfg `json:"xml"`
+}
+
+type XMLCfg struct {
+	OmitTags []string `json:"omit_tags" gorm:"-"`
 }
 
 //TableName return table name
@@ -50,6 +60,7 @@ func (cfg *ProjCfg) Write() {
 func (cfg *ProjCfg) AfterFind(tx *gorm.DB) error {
 	json.Unmarshal(cfg.SrcRegsBytes, &cfg.SrcRegs)
 	json.Unmarshal(cfg.IgnRegsBytes, &cfg.IgnRegs)
+	json.Unmarshal(cfg.ExtraBytes, &cfg.Extra)
 	return nil
 }
 
@@ -174,31 +185,26 @@ func TxnUpdateFilesSents(proj *Project, files []string) {
 	db.Transaction(func(tx *gorm.DB) error {
 		tx.Model(&ProjFile{}).Where("proj_id=?", proj.ID).Updates(map[string]interface{}{"valid": false})
 		wg := sync.WaitGroup{}
+		wg.Add(len(files))
 		for _, file := range files {
 			pf := &ProjFile{
 				ProjID: proj.ID,
 				Path:   file,
 				Valid:  true,
 			}
-			needProcess := false
 			res := tx.Where("proj_id=? AND path=?", proj.ID, file).First(pf)
 			if res.Error != nil {
 				pf.Content = string(readFile(proj.Path, file))
 				tx.Create(pf)
-				needProcess = true
 			} else {
 				content := string(readFile(proj.Path, file))
 				if pf.Content != content {
 					pf.Content = content
-					needProcess = true
 				}
 				pf.Valid = true
 				tx.Save(pf)
 			}
-			if needProcess {
-				wg.Add(1)
-				go pf.TxnProcess(&wg, tx, proj)
-			}
+			go pf.TxnProcess(&wg, tx, proj)
 		}
 		wg.Wait()
 		return nil

@@ -14,6 +14,7 @@ type Sentence struct {
 	ProjID  int64  `json:"proj_id" gorm:"index"`
 	FileID  int64  `json:"file_id" gorm:"index"`
 	SeqNo   int    `json:"seq_no" gorm:"index"`
+	Offset  int    `json:"offset" gorm:""`
 	Valid   bool   `json:"-" gorm:"index"`
 	MD5     string `json:"-" gorm:"index;type:char(32)"`
 	Content string `json:"content" gorm:"type:text"`

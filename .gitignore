@@ -3,6 +3,8 @@ config*.json
 *.exe
 gitran-server
 nohup.out
+log.*
+*.log
 
 bin/
 log/

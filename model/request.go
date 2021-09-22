@@ -54,6 +54,8 @@ type UpdateProjCfgRequest struct {
 	TrnReg       string   `json:"trn_file"`
 	IgnRegs      []string `json:"ign_files"`
 	IgnRegsBytes []byte   `json:"-"`
+	Extra        ExtraCfg `json:"extra"`
+	ExtraBytes   []byte   `json:"-"`
 }
 
 func (req *UpdateProjCfgRequest) Valid() bool {
@@ -70,6 +72,9 @@ func (req *UpdateProjCfgRequest) Valid() bool {
 	if req.IgnRegsBytes, err = json.Marshal(req.IgnRegs); err != nil {
 		return false
 	}
+	if req.ExtraBytes, err = json.Marshal(&req.Extra); err != nil {
+		return false
+	}
 	return true
 }
 
@@ -82,5 +87,6 @@ func (req *UpdateProjCfgRequest) Map() map[string]interface{} {
 		"src_regs": req.SrcRegsBytes,
 		"trn_reg":  req.TrnReg,
 		"ign_regs": req.IgnRegsBytes,
+		"extra":    req.ExtraBytes,
 	}
 }

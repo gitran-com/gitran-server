@@ -71,24 +71,28 @@ func (file *ProjFile) TxnProcess(wg *sync.WaitGroup, tx *gorm.DB, proj *Project)
 	defer wg.Done()
 	data := []byte(file.Content)
 	ext := filepath.Ext(file.Path)
-	var res []string
+	var (
+		sens []string
+		offs []int
+	)
 	switch ext {
 	case ".xml":
-		res = util.ProcessXML(data)
+		sens, offs = util.ProcessXML(data)
 	default:
-		res = util.ProcessTXT(data)
+		sens, offs = util.ProcessTXT(data)
 	}
 	// SetAllSentsInvalid(file.ID)
 	tx.Model(&ProjFile{}).Where("proj_id=?", proj.ID).Updates(map[string]interface{}{"valid": false})
-	file.SentCnt = len(res)
+	file.SentCnt = len(sens)
 	file.WordCnt = 0
-	for i, str := range res {
+	for i, str := range sens {
 		file.WordCnt += len(strings.Fields(str))
 		hash := fmt.Sprintf("%x", md5.Sum([]byte(str)))
 		sent := &Sentence{
 			ProjID:  proj.ID,
 			FileID:  file.ID,
 			SeqNo:   i,
+			Offset:  offs[i],
 			Valid:   true,
 			Content: str,
 			MD5:     hash,
