@@ -1,7 +1,9 @@
 package model
 
 import (
+	"crypto/md5"
 	"errors"
+	"fmt"
 	"io/ioutil"
 	"path"
 	"path/filepath"
@@ -20,6 +22,7 @@ type ProjFile struct {
 	Valid   bool   `json:"-" gorm:"index"`
 	SentCnt int    `json:"sent_cnt" gorm:""`
 	WordCnt int    `json:"word_cnt" gorm:""`
+	Content string `json:"-" gorm:"type:text"`
 }
 
 //TableName return table name
@@ -64,14 +67,9 @@ func MustGetValidProjFile(id int64, file string) *ProjFile {
 	return pf
 }
 
-func (file *ProjFile) Process(wg *sync.WaitGroup) {
+func (file *ProjFile) TxnProcess(wg *sync.WaitGroup, tx *gorm.DB, proj *Project) {
 	defer wg.Done()
-	proj := GetProjByID(file.ProjID)
-	abs := path.Join(proj.Path, file.Path)
-	data, err := ioutil.ReadFile(abs)
-	if err != nil {
-		return
-	}
+	data := []byte(file.Content)
 	ext := filepath.Ext(file.Path)
 	var res []string
 	switch ext {
@@ -80,16 +78,38 @@ func (file *ProjFile) Process(wg *sync.WaitGroup) {
 	default:
 		res = util.ProcessTXT(data)
 	}
-	SetAllSentsInvalid(file.ID)
+	// SetAllSentsInvalid(file.ID)
+	tx.Model(&ProjFile{}).Where("proj_id=?", proj.ID).Updates(map[string]interface{}{"valid": false})
 	file.SentCnt = len(res)
 	file.WordCnt = 0
 	for i, str := range res {
 		file.WordCnt += len(strings.Fields(str))
-		MustGetValidSent(file.ProjID, file.ID, i, str)
+		hash := fmt.Sprintf("%x", md5.Sum([]byte(str)))
+		sent := &Sentence{
+			ProjID:  proj.ID,
+			FileID:  file.ID,
+			SeqNo:   i,
+			Valid:   true,
+			Content: str,
+			MD5:     hash,
+		}
+		res := tx.Where("file_id=? AND md5=?", file.ID, hash).First(sent)
+		if res.Error != nil {
+			tx.Create(sent)
+		} else {
+			sent.Valid = true
+			tx.Save(sent)
+		}
 	}
-	file.Write()
+	tx.Save(file)
 }
 
 func SetAllFilesInvalid(proj_id int64) {
 	db.Model(&ProjFile{}).Where("proj_id=?", proj_id).Updates(map[string]interface{}{"valid": false})
+}
+
+func readFile(root string, rel string) []byte {
+	abs := path.Join(root, rel)
+	data, _ := ioutil.ReadFile(abs)
+	return data
 }

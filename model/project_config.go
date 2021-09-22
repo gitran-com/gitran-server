@@ -127,14 +127,7 @@ func (cfg *ProjCfg) Process() {
 		return
 	}
 	files := util.ListMultiMatchFiles(proj.Path, cfg.SrcRegs, cfg.IgnRegs)
-	SetAllFilesInvalid(proj.ID)
-	wg := sync.WaitGroup{}
-	wg.Add(len(files))
-	for _, file := range files {
-		file := MustGetValidProjFile(proj.ID, file)
-		go file.Process(&wg)
-	}
-	wg.Wait()
+	TxnUpdateFilesSents(proj, files)
 }
 
 func GenTrnFilesFromSrcFiles(src []string, trn string, lang *Language, proj *Project) (res []string) {
@@ -175,4 +168,39 @@ func GenMultiTrnFilesFromSrcFiles(srcRegs []string, trnReg string, ignores []str
 		multiTrnFiles[lang.Code] = trn
 	}
 	return srcFiles, multiTrnFiles
+}
+
+func TxnUpdateFilesSents(proj *Project, files []string) {
+	db.Transaction(func(tx *gorm.DB) error {
+		tx.Model(&ProjFile{}).Where("proj_id=?", proj.ID).Updates(map[string]interface{}{"valid": false})
+		wg := sync.WaitGroup{}
+		for _, file := range files {
+			pf := &ProjFile{
+				ProjID: proj.ID,
+				Path:   file,
+				Valid:  true,
+			}
+			needProcess := false
+			res := tx.Where("proj_id=? AND path=?", proj.ID, file).First(pf)
+			if res.Error != nil {
+				pf.Content = string(readFile(proj.Path, file))
+				tx.Create(pf)
+				needProcess = true
+			} else {
+				content := string(readFile(proj.Path, file))
+				if pf.Content != content {
+					pf.Content = content
+					needProcess = true
+				}
+				pf.Valid = true
+				tx.Save(pf)
+			}
+			if needProcess {
+				wg.Add(1)
+				go pf.TxnProcess(&wg, tx, proj)
+			}
+		}
+		wg.Wait()
+		return nil
+	})
 }
