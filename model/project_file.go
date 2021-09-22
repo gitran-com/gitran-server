@@ -14,12 +14,12 @@ import (
 )
 
 type ProjFile struct {
-	ID      int64  `gorm:"primaryKey"`
-	ProjID  int64  `gorm:"index"`
-	Path    string `gorm:"index"`
-	Valid   bool   `gorm:"index"`
-	SentCnt int    `gorm:""`
-	WordCnt int    `gorm:""`
+	ID      int64  `json:"id" gorm:"primaryKey"`
+	ProjID  int64  `json:"proj_id" gorm:"index"`
+	Path    string `json:"path" gorm:"index"`
+	Valid   bool   `json:"-" gorm:"index"`
+	SentCnt int    `json:"sent_cnt" gorm:""`
+	WordCnt int    `json:"word_cnt" gorm:""`
 }
 
 //TableName return table name
@@ -41,7 +41,7 @@ func NewProjFile(file *ProjFile) (*ProjFile, error) {
 
 func GetProjFileByPath(proj_id int64, file string) *ProjFile {
 	var pf ProjFile
-	res := db.Where("proj_id=? AND file=?", proj_id, file).First(&pf)
+	res := db.Where("proj_id=? AND path=?", proj_id, file).First(&pf)
 	if errors.Is(res.Error, gorm.ErrRecordNotFound) {
 		return nil
 	}
@@ -83,9 +83,9 @@ func (file *ProjFile) Process(wg *sync.WaitGroup) {
 	SetAllSentsInvalid(file.ID)
 	file.SentCnt = len(res)
 	file.WordCnt = 0
-	for _, str := range res {
+	for i, str := range res {
 		file.WordCnt += len(strings.Fields(str))
-		MustGetValidSent(file.ProjID, file.ID, str)
+		MustGetValidSent(file.ProjID, file.ID, i, str)
 	}
 	file.Write()
 }
