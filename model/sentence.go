@@ -107,14 +107,11 @@ func ProcessXML(cfg *ProjCfg, data []byte) ([]string, []int) {
 func ProcessTXT(data []byte) ([]string, []int) {
 	strs := []string{}
 	offs := []int{}
-	start := 0
 	sens := util.Tokenize(string(data))
 	for _, s := range sens {
 		sen := commonProcess(s.Text)
-		off := bytes.Index(data[start:], []byte(sen))
 		strs = append(strs, sen)
-		offs = append(offs, off+start)
-		start = off + 1
+		offs = append(offs, s.Start)
 	}
 	return strs, offs
 }
