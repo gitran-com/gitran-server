@@ -115,3 +115,9 @@ func ProcessTXT(data []byte) ([]string, []int) {
 	}
 	return strs, offs
 }
+
+func ListValidSents(file_id int64) []Sentence {
+	var sens []Sentence
+	db.Where("file_id=? AND valid=?", file_id, true).Find(&sens)
+	return sens
+}

@@ -30,6 +30,7 @@ func GetProjFile(ctx *gin.Context) {
 			Data: gin.H{
 				"proj_file": pf,
 				"content":   string(pf.ReadContent()),
+				"sentences": model.ListValidSents(pf.ID),
 			},
 		})
 	}
