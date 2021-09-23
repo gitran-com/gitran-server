@@ -16,6 +16,7 @@ func Init(g *gin.RouterGroup) {
 	initUsers(g)
 	initProj(g)
 	initFile(g)
+	initTran(g)
 	initLang(g)
 }
 
@@ -77,6 +78,12 @@ func initFile(g *gin.RouterGroup) {
 	gg := g.Group("/projects/:uri/files", middleware.MustAuthUser(), middleware.MustAuthProjViewer())
 	gg.GET("", controller.ListProjFiles)
 	gg.GET("/:file_id", controller.GetProjFile)
+}
+
+func initTran(g *gin.RouterGroup) {
+	gg := g.Group("/projects/:uri/translations", middleware.MustAuthUser(), middleware.MustAuthProjViewer())
+	gg.GET("/:sent_id", controller.ListSentTrans)
+	gg.POST("/:sent_id", middleware.MustAuthProjContributor(), controller.PostTran)
 }
 
 func initLang(g *gin.RouterGroup) {

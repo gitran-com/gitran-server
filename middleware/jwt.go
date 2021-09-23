@@ -85,6 +85,58 @@ func MustAuthProjAdmin() gin.HandlerFunc {
 	}
 }
 
+//MustAuthProjCommiter verifies a jwt if can do something on a project
+func MustAuthProjCommiter() gin.HandlerFunc {
+	return func(ctx *gin.Context) {
+		uri := ctx.Param("uri")
+		proj := model.GetProjByURI(uri)
+		if proj == nil {
+			ctx.JSON(http.StatusNotFound, model.Resp404)
+			ctx.Abort()
+			return
+		}
+		user := ctx.Keys["user"].(*model.User)
+		role := model.GetUserProjRole(user.ID, proj.ID)
+		if role == nil || role.Role > model.RoleCommitter {
+			ctx.JSON(http.StatusForbidden, model.RespInvalidToken)
+			ctx.Abort()
+			return
+		}
+		ctx.Set("proj", proj)
+		ctx.Next()
+	}
+}
+
+//MustAuthProjContributor verifies a jwt if can do something on a project
+func MustAuthProjContributor() gin.HandlerFunc {
+	return func(ctx *gin.Context) {
+		uri := ctx.Param("uri")
+		proj := model.GetProjByURI(uri)
+		if proj == nil {
+			ctx.JSON(http.StatusNotFound, model.Resp404)
+			ctx.Abort()
+			return
+		}
+		user := ctx.Keys["user"].(*model.User)
+		role := model.GetUserProjRole(user.ID, proj.ID)
+		flag := true
+		if role == nil {
+			if !proj.PublicContribute {
+				flag = false
+			}
+		} else if role.Role > model.RoleContributor {
+			flag = false
+		}
+		if !flag {
+			ctx.JSON(http.StatusForbidden, model.RespInvalidToken)
+			ctx.Abort()
+			return
+		}
+		ctx.Set("proj", proj)
+		ctx.Next()
+	}
+}
+
 //MustAuthProjViewer verifies a jwt if can do something on a project
 func MustAuthProjViewer() gin.HandlerFunc {
 	return func(ctx *gin.Context) {
@@ -97,7 +149,15 @@ func MustAuthProjViewer() gin.HandlerFunc {
 		}
 		user := ctx.Keys["user"].(*model.User)
 		role := model.GetUserProjRole(user.ID, proj.ID)
-		if role == nil || role.Role > model.RoleViewer {
+		flag := true
+		if role == nil {
+			if !proj.PublicView && !proj.PublicContribute {
+				flag = false
+			}
+		} else if role.Role > model.RoleViewer {
+			flag = false
+		}
+		if !flag {
 			ctx.JSON(http.StatusForbidden, model.RespInvalidToken)
 			ctx.Abort()
 			return

@@ -90,3 +90,9 @@ func (req *UpdateProjCfgRequest) Map() map[string]interface{} {
 		"extra":    req.ExtraBytes,
 	}
 }
+
+type PostTranRequest struct {
+	FileID   int64  `json:"file_id"`
+	Content  string `json:"content"`
+	LangCode string `json:"lang_code"`
+}
