@@ -33,6 +33,14 @@ func (file *ProjFile) Write() {
 	db.Save(file)
 }
 
+func (file *ProjFile) ReadContent() []byte {
+	proj := GetProjByID(file.ProjID)
+	if proj == nil {
+		return nil
+	}
+	return readFile(proj.Path, file.Path)
+}
+
 //NewProjFile creates a new file for project
 func NewProjFile(file *ProjFile) (*ProjFile, error) {
 	if result := db.Create(file); result.Error != nil {
@@ -114,4 +122,19 @@ func readFile(root string, rel string) []byte {
 	abs := path.Join(root, rel)
 	data, _ := ioutil.ReadFile(abs)
 	return data
+}
+
+func ListProjFiles(proj_id int64) []ProjFile {
+	var pfs []ProjFile
+	db.Where("proj_id=?", proj_id).Find(&pfs)
+	return pfs
+}
+
+func GetProjFileByID(proj_id int64, file_id int64) *ProjFile {
+	var pf ProjFile
+	res := db.Where("proj_id=? AND id=?", proj_id, file_id).First(&pf)
+	if res.Error != nil {
+		return nil
+	}
+	return &pf
 }

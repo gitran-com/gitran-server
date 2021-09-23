@@ -15,6 +15,7 @@ func Init(g *gin.RouterGroup) {
 	initUser(g)
 	initUsers(g)
 	initProj(g)
+	initFile(g)
 	initLang(g)
 }
 
@@ -70,6 +71,12 @@ func initProj(g *gin.RouterGroup) {
 		gg.PUT("/:uri/config", controller.UpdateProjCfg)
 		gg.GET("/:uri/config/preview", controller.PreviewProjCfg)
 	}
+}
+
+func initFile(g *gin.RouterGroup) {
+	gg := g.Group("/projects/:uri/files", middleware.MustAuthUser(), middleware.MustAuthProjViewer())
+	gg.GET("", controller.ListProjFiles)
+	gg.GET("/:file_id", controller.GetProjFile)
 }
 
 func initLang(g *gin.RouterGroup) {

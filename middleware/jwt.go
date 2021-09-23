@@ -85,6 +85,28 @@ func MustAuthProjAdmin() gin.HandlerFunc {
 	}
 }
 
+//MustAuthProjViewer verifies a jwt if can do something on a project
+func MustAuthProjViewer() gin.HandlerFunc {
+	return func(ctx *gin.Context) {
+		uri := ctx.Param("uri")
+		proj := model.GetProjByURI(uri)
+		if proj == nil {
+			ctx.JSON(http.StatusNotFound, model.Resp404)
+			ctx.Abort()
+			return
+		}
+		user := ctx.Keys["user"].(*model.User)
+		role := model.GetUserProjRole(user.ID, proj.ID)
+		if role == nil || role.Role > model.RoleViewer {
+			ctx.JSON(http.StatusForbidden, model.RespInvalidToken)
+			ctx.Abort()
+			return
+		}
+		ctx.Set("proj", proj)
+		ctx.Next()
+	}
+}
+
 //MustAuthNewGithubUser verifies a token
 func MustAuthNewGithubUser() gin.HandlerFunc {
 	return func(ctx *gin.Context) {
