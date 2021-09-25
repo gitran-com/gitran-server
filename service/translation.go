@@ -13,7 +13,7 @@ func ListSentTrans(ctx *gin.Context) {
 	ctx.JSON(http.StatusOK, model.Response{
 		Success: true,
 		Data: gin.H{
-			"translations": model.ListSentTrans(sent_id),
+			"trans": model.ListSentTrans(sent_id),
 		},
 	})
 }
@@ -29,7 +29,7 @@ func PostTran(ctx *gin.Context) {
 		return
 	}
 	sent_id, _ := strconv.ParseInt(ctx.Param("sent_id"), 10, 64)
-	tran := model.GetTran(sent_id, user.ID, req.LangCode)
+	tran := model.GetTran(sent_id, user, req.LangCode)
 	if tran == nil {
 		tran = &model.Translation{
 			ID:       sent_id,
@@ -44,10 +44,10 @@ func PostTran(ctx *gin.Context) {
 		tran.Content = req.Content
 	}
 	tran.Write()
-	ctx.JSON(http.StatusOK, model.Response{
+	ctx.JSON(http.StatusCreated, model.Response{
 		Success: true,
 		Data: gin.H{
-			"translation": tran,
+			"tran": tran,
 		},
 	})
 }
