@@ -44,7 +44,7 @@ func PostTran(ctx *gin.Context) {
 		ctx.JSON(http.StatusForbidden, model.Resp403)
 		return
 	}
-	tran := model.GetTran(sent_id, user, lang.Code)
+	tran := model.GetTran(sent_id, user.ID, lang.Code)
 	if tran == nil {
 		tran = &model.Translation{
 			ID:       sent_id,
@@ -59,10 +59,5 @@ func PostTran(ctx *gin.Context) {
 		tran.Content = req.Content
 	}
 	tran.Write()
-	ctx.JSON(http.StatusCreated, model.Response{
-		Success: true,
-		Data: gin.H{
-			"tran": tran,
-		},
-	})
+	ctx.JSON(http.StatusCreated, model.Response{Success: true})
 }
