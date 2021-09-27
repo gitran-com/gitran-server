@@ -82,9 +82,6 @@ func TxnVote(user_id int64, tran_id int64, vote int) (likes int) {
 		if res := tx.First(&sent, tran.SentID); res.Error != nil {
 			return res.Error
 		}
-		if sent.Locked {
-			return nil
-		}
 		if res := tx.First(&oldVote); res.Error != nil {
 			tx.Create(&oldVote)
 			if vote == VoteLike {
