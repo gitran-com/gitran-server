@@ -17,6 +17,7 @@ func Init(g *gin.RouterGroup) {
 	initProj(g)
 	initFile(g)
 	initTran(g)
+	initVote(g)
 	initLang(g)
 }
 
@@ -84,6 +85,13 @@ func initTran(g *gin.RouterGroup) {
 	gg := g.Group("/projects/:uri/translations", middleware.MustAuthUser(), middleware.MustAuthProjViewer())
 	gg.GET("/:code/:sent_id", controller.ListSentTrans)
 	gg.POST("/:code/:sent_id", middleware.MustAuthProjContributor(), controller.PostTran)
+}
+
+func initVote(g *gin.RouterGroup) {
+	gg := g.Group("/projects/:uri/votings", middleware.MustAuthUser(), middleware.MustAuthProjContributor())
+	gg.POST("/:tran_id/likes", controller.AddLikes)
+	gg.POST("/:tran_id/unlikes", controller.AddUnlikes)
+	gg.DELETE("/:tran_id", controller.DelVote)
 }
 
 func initLang(g *gin.RouterGroup) {

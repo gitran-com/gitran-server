@@ -9,7 +9,7 @@ type Translation struct {
 	FileID   int64  `gorm:"index"`
 	SentID   int64  `gorm:"index"`
 	Likes    int64  `gorm:""`
-	Unlikes  int64  `gorm:""`
+	Unlikes  int64  `json:"-" gorm:""`
 	LangCode string `gorm:"index;type:varchar(8)"`
 	Content  string `gorm:"type:text"`
 }
@@ -23,6 +23,7 @@ type TranRes struct {
 	FileID   int64  `json:"file_id"`
 	SentID   int64  `json:"sent_id"`
 	LangCode string `json:"lang_code"`
+	Likes    int64  `json:"likes"`
 	Content  string `json:"content"`
 }
 
@@ -34,9 +35,18 @@ func (tran *Translation) Write() {
 	db.Save(tran)
 }
 
+func GetTranByID(id int64) *Translation {
+	var tran Translation
+	res := db.First(&tran, id)
+	if res.Error != nil {
+		return nil
+	}
+	return &tran
+}
+
 func ListSentTrans(lang_code string, sent_id int64) []TranRes {
 	var trans []TranRes
-	res := db.Raw("SELECT translations.id, users.id AS user_id, users.name AS user_name, vote, proj_id, file_id, sent_id, content, lang_code FROM translations LEFT JOIN users ON users.id=translations.user_id LEFT JOIN votings ON users.id=votings.user_id AND translations.id=votings.tran_id WHERE sent_id=? AND lang_code=?", sent_id, lang_code).Scan(&trans)
+	res := db.Raw("SELECT translations.id, users.id AS user_id, users.name AS user_name, vote, proj_id, file_id, sent_id, content, lang_code, likes FROM translations LEFT JOIN users ON users.id=translations.user_id LEFT JOIN votings ON users.id=votings.user_id AND translations.id=votings.tran_id WHERE sent_id=? AND lang_code=?", sent_id, lang_code).Scan(&trans)
 	if res.Error != nil {
 		return nil
 	}
