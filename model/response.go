@@ -8,21 +8,28 @@ type Response struct {
 	Msg     string                 `json:"message"`
 }
 
-//Resp400 is 400 JSON response for 'Bad Request'
+//Resp400 is for 'Bad Request'
 var Resp400 = Response{
 	Success: false,
 	Code:    400,
 	Msg:     "bad request",
 }
 
-//Resp404 is 404 JSON response for 'Not Found'
+//Resp403 is for 'Forbidden'
+var Resp403 = Response{
+	Success: false,
+	Code:    403,
+	Msg:     "forbidden",
+}
+
+//Resp404 is for 'Not Found'
 var Resp404 = Response{
 	Success: false,
 	Code:    404,
 	Msg:     "not found",
 }
 
-//RespInvalidToken is JSON response when token is invalid
+//RespInvalidToken when token is invalid
 var RespInvalidToken = Response{
 	Success: false,
 	Code:    401,

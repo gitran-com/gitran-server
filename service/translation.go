@@ -29,11 +29,21 @@ func PostTran(ctx *gin.Context) {
 		return
 	}
 	sent_id, _ := strconv.ParseInt(ctx.Param("sent_id"), 10, 64)
+	sent := model.GetSentByID(sent_id)
+	if sent == nil {
+		ctx.JSON(http.StatusNotFound, model.Resp404)
+		return
+	}
+	if sent.Locked {
+		ctx.JSON(http.StatusForbidden, model.Resp403)
+		return
+	}
 	tran := model.GetTran(sent_id, user, req.LangCode)
 	if tran == nil {
 		tran = &model.Translation{
 			ID:       sent_id,
 			UserID:   user.ID,
+			UserName: user.Name,
 			ProjID:   proj.ID,
 			FileID:   req.FileID,
 			SentID:   sent_id,

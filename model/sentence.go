@@ -15,6 +15,7 @@ type Sentence struct {
 	FileID  int64  `json:"file_id" gorm:"index"`
 	Offset  int    `json:"offset" gorm:"index"`
 	Valid   bool   `json:"-" gorm:"index"`
+	Locked  bool   `json:"locked" gorm:""`
 	MD5     string `json:"-" gorm:"index;type:char(32)"`
 	Content string `json:"content" gorm:"type:text"`
 }
@@ -120,4 +121,13 @@ func ListValidSents(file_id int64) []Sentence {
 	var sens []Sentence
 	db.Where("file_id=? AND valid=?", file_id, true).Find(&sens)
 	return sens
+}
+
+func GetSentByID(sent_id int64) *Sentence {
+	var sent Sentence
+	res := db.Where("id=?", sent_id).First(&sent)
+	if res.Error != nil {
+		return nil
+	}
+	return &sent
 }
