@@ -23,37 +23,14 @@ var (
 
 //Init init the service
 func Init() error {
-	pullSchd.StartAsync()
-	pushSchd.StartAsync()
-	cfgs := model.ListSyncProjCfg()
-	for _, cfg := range cfgs {
-		proj := model.GetProjByID(cfg.ID)
-		if proj == nil {
-			log.Warnf("proj %v not found", cfg.ID)
-		} else {
-			if cfg.PullGap != 0 {
-				// log.Infof("add pull task %+v", cfg)
-				_, err := pullSchd.Every(uint64(cfg.PullGap)).Minutes().Do(pullGit, &cfg)
-				if err != nil {
-					log.Warnf("add pull task err : %+v", err.Error())
-				}
-			}
-			if cfg.PushGap != 0 {
-				// log.Infof("add push task %+v", cfg)
-				_, err := pushSchd.Every(uint64(cfg.PushGap)).Minutes().Do(pushGit, &cfg)
-				if err != nil {
-					log.Warnf("add push task err : %+v", err.Error())
-				}
-			}
-		}
-	}
-	InitGithubAuth()
-	InitWebsocket()
-	go InitProj()
+	initGithubAuth()
+	initWebsocket()
+	go initSync()
+	go initProj()
 	return nil
 }
 
-func InitProj() {
+func initProj() {
 	projs := model.ListUninitProj()
 	wg := sync.WaitGroup{}
 	wg.Add(len(projs))
@@ -66,7 +43,7 @@ func InitProj() {
 	wg.Wait()
 }
 
-func InitGithubAuth() {
+func initGithubAuth() {
 	if config.Github.Enable {
 		url, err := url.Parse(config.APP.URL)
 		if err != nil {
@@ -85,7 +62,7 @@ func InitGithubAuth() {
 	}
 }
 
-func InitWebsocket() {
+func initWebsocket() {
 	if config.IsDebug {
 		upGrader = websocket.Upgrader{
 			CheckOrigin: func(r *http.Request) bool {
@@ -97,6 +74,18 @@ func InitWebsocket() {
 			CheckOrigin: func(r *http.Request) bool {
 				return true
 			},
+		}
+	}
+}
+
+func initSync() {
+	cfgs := model.ListSyncProjCfg()
+	for _, cfg := range cfgs {
+		if cfg.PushGap != 0 {
+			go pushGit(cfg.ID)
+		}
+		if cfg.PullGap != 0 {
+			go pullGit(cfg.ID)
 		}
 	}
 }
