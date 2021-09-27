@@ -48,7 +48,7 @@ func GetProj(ctx *gin.Context) {
 
 //ListUserProj list all projects
 func ListUserProj(ctx *gin.Context) {
-	user_id, _ := strconv.ParseInt(ctx.Param("id"), 10, 64)
+	user_id, _ := strconv.ParseInt(ctx.Param("user_id"), 10, 64)
 	projs := model.ListUserProj(user_id)
 	ctx.JSON(http.StatusOK, model.Response{
 		Success: true,

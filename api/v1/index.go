@@ -50,8 +50,8 @@ func initUser(g *gin.RouterGroup) {
 
 func initUsers(g *gin.RouterGroup) {
 	gg := g.Group("/users")
-	gg.GET("/:id", controller.GetUser)
-	gg.GET("/:id/projects", controller.ListUserProj)
+	gg.GET("/:user_id", controller.GetUser)
+	gg.GET("/:user_id/projects", controller.ListUserProj)
 }
 
 func initProj(g *gin.RouterGroup) {
@@ -82,8 +82,8 @@ func initFile(g *gin.RouterGroup) {
 
 func initTran(g *gin.RouterGroup) {
 	gg := g.Group("/projects/:uri/translations", middleware.MustAuthUser(), middleware.MustAuthProjViewer())
-	gg.GET("/:sent_id", controller.ListSentTrans)
-	gg.POST("/:sent_id", middleware.MustAuthProjContributor(), controller.PostTran)
+	gg.GET("/:code/:sent_id", controller.ListSentTrans)
+	gg.POST("/:code/:sent_id", middleware.MustAuthProjContributor(), controller.PostTran)
 }
 
 func initLang(g *gin.RouterGroup) {

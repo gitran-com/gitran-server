@@ -92,7 +92,6 @@ func (req *UpdateProjCfgRequest) Map() map[string]interface{} {
 }
 
 type PostTranRequest struct {
-	FileID   int64  `json:"file_id"`
-	Content  string `json:"content"`
-	LangCode string `json:"lang_code"`
+	FileID  int64  `json:"file_id"`
+	Content string `json:"content"`
 }

@@ -9,8 +9,8 @@ type Translation struct {
 	ProjID   int64  `json:"proj_id" gorm:""`
 	FileID   int64  `json:"file_id" gorm:"index"`
 	SentID   int64  `json:"sent_id" gorm:"index"`
-	Content  string `json:"content" gorm:"type:text"`
 	LangCode string `json:"lang_code" gorm:"index"`
+	Content  string `json:"content" gorm:"type:text"`
 }
 
 func (*Translation) TableName() string {
@@ -21,9 +21,9 @@ func (tran *Translation) Write() {
 	db.Save(tran)
 }
 
-func ListSentTrans(sent_id int64) []Translation {
+func ListSentTrans(lang_code string, sent_id int64) []Translation {
 	var trans []Translation
-	res := db.Raw("SELECT translations.id, users.id AS user_id, users.name AS user_name, proj_id, file_id, sent_id, content, lang_code FROM translations LEFT JOIN users ON users.id=translations.user_id WHERE sent_id=?", sent_id).Scan(&trans)
+	res := db.Raw("SELECT translations.id, users.id AS user_id, users.name AS user_name, proj_id, file_id, sent_id, content, lang_code FROM translations LEFT JOIN users ON users.id=translations.user_id WHERE sent_id=? AND lang_code=?", sent_id, lang_code).Scan(&trans)
 	if res.Error != nil {
 		return nil
 	}

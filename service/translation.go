@@ -10,10 +10,11 @@ import (
 
 func ListSentTrans(ctx *gin.Context) {
 	sent_id, _ := strconv.ParseInt(ctx.Param("sent_id"), 10, 64)
+	lang := ctx.Param("code")
 	ctx.JSON(http.StatusOK, model.Response{
 		Success: true,
 		Data: gin.H{
-			"trans": model.ListSentTrans(sent_id),
+			"trans": model.ListSentTrans(lang, sent_id),
 		},
 	})
 }
@@ -29,6 +30,11 @@ func PostTran(ctx *gin.Context) {
 		return
 	}
 	sent_id, _ := strconv.ParseInt(ctx.Param("sent_id"), 10, 64)
+	lang, ok := model.GetLangByCode(ctx.Param("code"))
+	if !ok {
+		ctx.JSON(http.StatusBadRequest, model.Resp400)
+		return
+	}
 	sent := model.GetSentByID(sent_id)
 	if sent == nil {
 		ctx.JSON(http.StatusNotFound, model.Resp404)
@@ -38,7 +44,7 @@ func PostTran(ctx *gin.Context) {
 		ctx.JSON(http.StatusForbidden, model.Resp403)
 		return
 	}
-	tran := model.GetTran(sent_id, user, req.LangCode)
+	tran := model.GetTran(sent_id, user, lang.Code)
 	if tran == nil {
 		tran = &model.Translation{
 			ID:       sent_id,
@@ -48,7 +54,7 @@ func PostTran(ctx *gin.Context) {
 			FileID:   req.FileID,
 			SentID:   sent_id,
 			Content:  req.Content,
-			LangCode: req.LangCode,
+			LangCode: lang.Code,
 		}
 	} else {
 		tran.Content = req.Content
