@@ -49,7 +49,6 @@ func PostTran(ctx *gin.Context) {
 		tran = &model.Translation{
 			ID:       sent_id,
 			UserID:   user.ID,
-			UserName: user.Name,
 			ProjID:   proj.ID,
 			FileID:   req.FileID,
 			SentID:   sent_id,
