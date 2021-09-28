@@ -1,6 +1,7 @@
 package service
 
 import (
+	"os"
 	"os/exec"
 	"time"
 
@@ -44,9 +45,11 @@ func doPush(proj_id int64) (gap int, ok bool) {
 	}
 	push := exec.Command("git", "push", "origin", cfg.TrnBr)
 	push.Dir = proj.Path
+	push.Stderr = os.Stderr
 	if err := push.Run(); err != nil {
-		log.Warnf("project %v push failed: %v", proj_id, err.Error())
+		log.Warnf("project %v push failed: %v; will retry...", proj_id, err.Error())
 		model.UpdateProjCfgPushStatus(cfg, constant.SyncStatFail)
+		ok = true
 		return
 	}
 	log.Infof("project %v push successfully", proj_id)
@@ -89,9 +92,11 @@ func doPull(proj_id int64) (gap int, ok bool) {
 	}
 	pull := exec.Command("git", "pull")
 	pull.Dir = proj.Path
+	pull.Stderr = os.Stderr
 	if err := pull.Run(); err != nil {
-		log.Warnf("project %v pull failed : %v", proj_id, err.Error())
+		log.Warnf("project %v pull failed : %v; will retry...", proj_id, err.Error())
 		model.UpdateProjCfgPullStatus(cfg, constant.SyncStatFail)
+		ok = true
 		return
 	}
 	log.Infof("project %v pull successfully", proj_id)

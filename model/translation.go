@@ -3,15 +3,16 @@ package model
 import "github.com/gitran-com/gitran-server/config"
 
 type Translation struct {
-	ID       int64  `gorm:"primaryKey;autoIncrement"`
-	UserID   int64  `gorm:"index"`
-	ProjID   int64  `gorm:""`
-	FileID   int64  `gorm:"index"`
-	SentID   int64  `gorm:"index"`
-	Likes    int64  `gorm:""`
-	Unlikes  int64  `json:"-" gorm:""`
-	LangCode string `gorm:"index;type:varchar(8)"`
-	Content  string `gorm:"type:text"`
+	ID       int64   `gorm:"primaryKey;autoIncrement"`
+	UserID   int64   `gorm:"index"`
+	ProjID   int64   `gorm:""`
+	FileID   int64   `gorm:"index"`
+	SentID   int64   `gorm:"index"`
+	Likes    int64   `gorm:""`
+	Unlikes  int64   `json:"-" gorm:""`
+	Score    float64 `json:"-" gorm:"index"`
+	LangCode string  `gorm:"index;type:varchar(8)"`
+	Content  string  `gorm:"type:text"`
 }
 
 type TranRes struct {
@@ -46,7 +47,7 @@ func GetTranByID(id int64) *Translation {
 
 func ListSentTrans(lang_code string, sent_id int64) []TranRes {
 	var trans []TranRes
-	res := db.Raw("SELECT translations.id, users.id AS user_id, users.name AS user_name, vote, proj_id, file_id, sent_id, content, lang_code, likes FROM translations LEFT JOIN users ON users.id=translations.user_id LEFT JOIN votings ON users.id=votings.user_id AND translations.id=votings.tran_id WHERE sent_id=? AND lang_code=?", sent_id, lang_code).Scan(&trans)
+	res := db.Raw("SELECT translations.id, users.id AS user_id, users.name AS user_name, vote, proj_id, file_id, sent_id, content, lang_code, likes FROM translations LEFT JOIN users ON users.id=translations.user_id LEFT JOIN votings ON users.id=votings.user_id AND translations.id=votings.tran_id WHERE sent_id=? AND lang_code=? ORDER BY score DESC, unlikes ASC", sent_id, lang_code).Scan(&trans)
 	if res.Error != nil {
 		return nil
 	}

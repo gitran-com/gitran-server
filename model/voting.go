@@ -1,7 +1,10 @@
 package model
 
 import (
+	"math"
+
 	"github.com/gitran-com/gitran-server/config"
+	log "github.com/sirupsen/logrus"
 	"gorm.io/gorm"
 )
 
@@ -63,6 +66,19 @@ func calcUnlikesDelta(x, y int) int {
 	return 0
 }
 
+func wilsonScore(pos int, neg int) (score float64) {
+	return func(pos int, total int, pz float64) float64 {
+		if total == 0 {
+			return 0.0
+		}
+		//https://en.wikipedia.org/wiki/Binomial_proportion_confidence_interval
+		pos_rat := float64(pos) / float64(total)
+		pz2 := pz * pz
+		score := (pos_rat + (pz2 / (2.0 * float64(total))) - ((pz / (2.0 * float64(total))) * math.Sqrt(4.0*float64(total)*(1.0-pos_rat)*pos_rat+pz2))) / (1.0 + pz2/float64(total))
+		return score
+	}(pos, pos+neg, 2.0)
+}
+
 func TxnVote(user_id int64, tran_id int64, vote int) (likes int) {
 	db.Transaction(func(tx *gorm.DB) error {
 		var (
@@ -83,7 +99,9 @@ func TxnVote(user_id int64, tran_id int64, vote int) (likes int) {
 			return res.Error
 		}
 		if res := tx.First(&oldVote); res.Error != nil {
-			tx.Create(&oldVote)
+			if res := tx.Create(&oldVote); res.Error != nil {
+				return res.Error
+			}
 			if vote == VoteLike {
 				likes_delta = 1
 			} else if vote == VoteUnlike {
@@ -93,11 +111,19 @@ func TxnVote(user_id int64, tran_id int64, vote int) (likes int) {
 			if oldVote.Vote != vote {
 				likes_delta = calcLikesDelta(oldVote.Vote, vote)
 				unlikes_delta = calcUnlikesDelta(oldVote.Vote, vote)
-				tx.Model(&oldVote).Update("vote", vote)
+				if res := tx.Model(&oldVote).Update("vote", vote); res.Error != nil {
+					return res.Error
+				}
 			}
 		}
 		if likes_delta != 0 || unlikes_delta != 0 {
-			tx.Model(&tran).Updates(map[string]interface{}{"likes": gorm.Expr("likes+(?)", likes_delta), "unlikes": gorm.Expr("unlikes+(?)", unlikes_delta)})
+			score := wilsonScore(likes+likes_delta, int(tran.Unlikes)+unlikes_delta)
+			// fmt.Printf("score(%v,%v)=%v\n", likes+likes_delta, int(tran.Unlikes)+unlikes_delta, score)
+			res := tx.Model(&tran).Updates(map[string]interface{}{"likes": gorm.Expr("likes+(?)", likes_delta), "unlikes": gorm.Expr("unlikes+(?)", unlikes_delta), "score": score})
+			if res.Error != nil {
+				log.Warnf("TxnVote UPDATE ERROR: %v", res.Error.Error())
+				return res.Error
+			}
 		}
 		likes = int(tran.Likes) + likes_delta
 		return nil
