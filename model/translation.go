@@ -1,6 +1,9 @@
 package model
 
-import "github.com/gitran-com/gitran-server/config"
+import (
+	"github.com/gitran-com/gitran-server/config"
+	"gorm.io/gorm"
+)
 
 type Translation struct {
 	ID       int64   `gorm:"primaryKey;autoIncrement"`
@@ -61,4 +64,12 @@ func GetTran(sent_id int64, user_id int64, lang_code string) *Translation {
 		return nil
 	}
 	return &tran
+}
+
+func (tran *Translation) Delete() {
+	db.Transaction(func(tx *gorm.DB) error {
+		tx.Delete(tran)
+		tx.Where("tran_id=?", tran.ID).Delete(&Voting{})
+		return nil
+	})
 }

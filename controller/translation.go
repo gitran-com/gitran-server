@@ -12,3 +12,7 @@ func ListSentTrans(ctx *gin.Context) {
 func PostTran(ctx *gin.Context) {
 	service.PostTran(ctx)
 }
+
+func DelTran(ctx *gin.Context) {
+	service.DelTran(ctx)
+}

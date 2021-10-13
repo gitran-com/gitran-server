@@ -2,7 +2,6 @@ package model
 
 import (
 	"encoding/json"
-	"errors"
 	"path/filepath"
 	"regexp"
 	"sync"
@@ -90,7 +89,7 @@ func (cfg *ProjCfg) UpdateStatus(stat int) {
 func GetProjCfgByID(id int64) *ProjCfg {
 	var pc ProjCfg
 	res := db.Where("id=?", id).First(&pc)
-	if errors.Is(res.Error, gorm.ErrRecordNotFound) {
+	if res.Error != nil {
 		return nil
 	}
 	return &pc

@@ -61,3 +61,9 @@ func PostTran(ctx *gin.Context) {
 	tran.Write()
 	ctx.JSON(http.StatusCreated, model.Response{Success: true})
 }
+
+func DelTran(ctx *gin.Context) {
+	tran := ctx.Keys["tran"].(*model.Translation)
+	tran.Delete()
+	ctx.JSON(http.StatusNoContent, model.Response{Success: true})
+}

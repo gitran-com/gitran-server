@@ -85,6 +85,7 @@ func initTran(g *gin.RouterGroup) {
 	gg := g.Group("/projects/:uri/translations", middleware.MustAuthUser(), middleware.MustAuthProjViewer())
 	gg.GET("/:code/:sent_id", controller.ListSentTrans)
 	gg.POST("/:code/:sent_id", middleware.MustAuthProjContributor(), controller.PostTran)
+	gg.DELETE("/:tran_id", middleware.MustAuthProjCommitterOrTranCommitter(), controller.DelTran)
 }
 
 func initVote(g *gin.RouterGroup) {

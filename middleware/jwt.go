@@ -85,6 +85,36 @@ func MustAuthProjAdmin() gin.HandlerFunc {
 	}
 }
 
+//MustAuthProjCommitterOrTranCommitter verifies a jwt if can do something on a project
+func MustAuthProjCommitterOrTranCommitter() gin.HandlerFunc {
+	return func(ctx *gin.Context) {
+		uri := ctx.Param("uri")
+		proj := model.GetProjByURI(uri)
+		if proj == nil {
+			ctx.JSON(http.StatusNotFound, model.Resp404)
+			ctx.Abort()
+			return
+		}
+		user := ctx.Keys["user"].(*model.User)
+		tran_id, _ := strconv.ParseInt(ctx.Param("tran_id"), 10, 64)
+		tran := model.GetTranByID(tran_id)
+		if tran == nil {
+			ctx.JSON(http.StatusNotFound, model.Resp404)
+			ctx.Abort()
+			return
+		}
+		role := model.GetUserProjRole(user.ID, proj.ID)
+		if role == nil || role.Role > model.RoleCommitter {
+			ctx.JSON(http.StatusForbidden, model.RespInvalidToken)
+			ctx.Abort()
+			return
+		}
+		ctx.Set("proj", proj)
+		ctx.Set("tran", tran)
+		ctx.Next()
+	}
+}
+
 //MustAuthProjCommiter verifies a jwt if can do something on a project
 func MustAuthProjCommiter() gin.HandlerFunc {
 	return func(ctx *gin.Context) {
