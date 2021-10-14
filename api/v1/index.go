@@ -18,6 +18,7 @@ func Init(g *gin.RouterGroup) {
 	initFile(g)
 	initTran(g)
 	initVote(g)
+	initPin(g)
 	initLang(g)
 }
 
@@ -86,6 +87,12 @@ func initTran(g *gin.RouterGroup) {
 	gg.GET("/:code/:sent_id", controller.ListSentTrans)
 	gg.POST("/:code/:sent_id", middleware.MustAuthProjContributor(), controller.PostTran)
 	gg.DELETE("/:tran_id", middleware.MustAuthProjCommitterOrTranCommitter(), controller.DelTran)
+}
+
+func initPin(g *gin.RouterGroup) {
+	gg := g.Group("/projects/:uri/pins", middleware.MustAuthUser(), middleware.MustAuthProjCommitter())
+	gg.POST("/:tran_id", controller.PinTran)
+	gg.DELETE("/:tran_id", controller.UnpinTran)
 }
 
 func initVote(g *gin.RouterGroup) {

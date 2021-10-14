@@ -16,3 +16,11 @@ func PostTran(ctx *gin.Context) {
 func DelTran(ctx *gin.Context) {
 	service.DelTran(ctx)
 }
+
+func PinTran(ctx *gin.Context) {
+	service.PinTran(ctx)
+}
+
+func UnpinTran(ctx *gin.Context) {
+	service.UnpinTran(ctx)
+}

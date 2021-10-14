@@ -68,8 +68,8 @@ func GetTran(sent_id int64, user_id int64, lang_code string) *Translation {
 
 func (tran *Translation) Delete() {
 	db.Transaction(func(tx *gorm.DB) error {
-		tx.Delete(tran)
 		tx.Where("tran_id=?", tran.ID).Delete(&Voting{})
+		tx.Delete(tran)
 		return nil
 	})
 }

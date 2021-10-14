@@ -10,14 +10,15 @@ import (
 )
 
 type Sentence struct {
-	ID      int64  `json:"id" gorm:"primaryKey;autoIncrement"`
-	ProjID  int64  `json:"proj_id" gorm:"index"`
-	FileID  int64  `json:"file_id" gorm:"index"`
-	Offset  int    `json:"offset" gorm:"index"`
-	Valid   bool   `json:"-" gorm:"index"`
-	Locked  bool   `json:"locked" gorm:""`
-	MD5     string `json:"-" gorm:"index;type:char(32)"`
-	Content string `json:"content" gorm:"type:text"`
+	ID           int64  `json:"id" gorm:"primaryKey;autoIncrement"`
+	ProjID       int64  `json:"proj_id" gorm:"index"`
+	FileID       int64  `json:"file_id" gorm:"index"`
+	PinnedTranID int64  `json:"pinned_tran_id"`
+	Offset       int    `json:"offset" gorm:"index"`
+	Valid        bool   `json:"-" gorm:"index"`
+	Locked       bool   `json:"locked" gorm:""`
+	MD5          string `json:"-" gorm:"index;type:char(32)"`
+	Content      string `json:"content" gorm:"type:text"`
 }
 
 //TableName return table name
@@ -130,4 +131,14 @@ func GetSentByID(sent_id int64) *Sentence {
 		return nil
 	}
 	return &sent
+}
+
+func (sent *Sentence) PinTran(tran *Translation) {
+	sent.PinnedTranID = tran.ID
+	db.Save(sent)
+}
+
+func (sent *Sentence) UnpinTran() {
+	sent.PinnedTranID = 0
+	db.Save(sent)
 }

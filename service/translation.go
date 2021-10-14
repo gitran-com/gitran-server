@@ -67,3 +67,31 @@ func DelTran(ctx *gin.Context) {
 	tran.Delete()
 	ctx.JSON(http.StatusNoContent, model.Response{Success: true})
 }
+
+func PinTran(ctx *gin.Context) {
+	tran_id, _ := strconv.ParseInt(ctx.Param("tran_id"), 10, 64)
+	tran := model.GetTranByID(tran_id)
+	if tran == nil {
+		ctx.JSON(http.StatusNotFound, model.Resp404)
+		return
+	}
+	sent := model.GetSentByID(tran.SentID)
+	sent.PinTran(tran)
+	ctx.JSON(http.StatusOK, model.Response{
+		Success: true,
+	})
+}
+
+func UnpinTran(ctx *gin.Context) {
+	tran_id, _ := strconv.ParseInt(ctx.Param("tran_id"), 10, 64)
+	tran := model.GetTranByID(tran_id)
+	if tran == nil {
+		ctx.JSON(http.StatusNotFound, model.Resp404)
+		return
+	}
+	sent := model.GetSentByID(tran.SentID)
+	sent.UnpinTran()
+	ctx.JSON(http.StatusOK, model.Response{
+		Success: true,
+	})
+}

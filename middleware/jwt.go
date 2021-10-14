@@ -115,8 +115,8 @@ func MustAuthProjCommitterOrTranCommitter() gin.HandlerFunc {
 	}
 }
 
-//MustAuthProjCommiter verifies a jwt if can do something on a project
-func MustAuthProjCommiter() gin.HandlerFunc {
+//MustAuthProjCommitter verifies a jwt if can do something on a project
+func MustAuthProjCommitter() gin.HandlerFunc {
 	return func(ctx *gin.Context) {
 		uri := ctx.Param("uri")
 		proj := model.GetProjByURI(uri)
