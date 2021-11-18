@@ -40,6 +40,7 @@ type jwt struct {
 type app struct {
 	Name          string `json:"name"`
 	URL           string `json:"url"`
+	Domain        string `json:"-"`
 	Addr          string `json:"addr"`
 	APIPrefix     string `json:"api_prefix"`
 	SessionSecret string `json:"session_secret"`

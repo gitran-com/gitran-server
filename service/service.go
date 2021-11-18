@@ -49,10 +49,10 @@ func initGithubAuth() {
 		if err != nil {
 			log.Errorf("service/init parse url error: %+v", err.Error())
 		}
+		config.APP.Domain = url.Host
 		if url.Scheme != "http" && url.Scheme != "https" {
 			url.Scheme = "http"
 		}
-		fmt.Printf("url[%s]=%+v\n", config.APP.URL, *url)
 		GithubRoute = fmt.Sprintf("%s://%s%s/api/v1/auth/github/", url.Scheme, url.Host, config.APP.APIPrefix)
 		GithubUserProvider = github.New(config.Github.ClientID, config.Github.ClientSecret, GithubRoute+"login", "user")
 		GithubUserProvider.SetName("github-user")

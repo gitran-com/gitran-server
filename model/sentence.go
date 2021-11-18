@@ -4,21 +4,21 @@ import (
 	"bytes"
 	"regexp"
 	"strings"
+	"unicode"
 
 	"github.com/gitran-com/gitran-server/config"
 	"github.com/gitran-com/gitran-server/util"
 )
 
 type Sentence struct {
-	ID           int64  `json:"id" gorm:"primaryKey;autoIncrement"`
-	ProjID       int64  `json:"proj_id" gorm:"index"`
-	FileID       int64  `json:"file_id" gorm:"index"`
-	PinnedTranID int64  `json:"pinned_tran_id"`
-	Offset       int    `json:"offset" gorm:"index"`
-	Valid        bool   `json:"-" gorm:"index"`
-	Locked       bool   `json:"locked" gorm:""`
-	MD5          string `json:"-" gorm:"index;type:char(32)"`
-	Content      string `json:"content" gorm:"type:text"`
+	ID      int64  `json:"id" gorm:"primaryKey;autoIncrement"`
+	ProjID  int64  `json:"proj_id" gorm:"index"`
+	FileID  int64  `json:"file_id" gorm:"index"`
+	Offset  int    `json:"offset" gorm:"index"`
+	Valid   bool   `json:"-" gorm:"index"`
+	Locked  bool   `json:"locked" gorm:""`
+	MD5     string `json:"-" gorm:"index;type:char(32)"`
+	Content string `json:"content" gorm:"type:text"`
 }
 
 //TableName return table name
@@ -46,8 +46,10 @@ var (
 	xmlTagReg = regexp.MustCompile(`(<.[^(><.)]+>)`)
 )
 
-func commonProcess(str string) string {
-	return strings.TrimSpace(str)
+func commonProcess(str string) (after string, off int) {
+	after = strings.TrimSpace(str)
+	off = len(str) - len(strings.TrimLeftFunc(str, unicode.IsSpace))
+	return
 }
 
 func ProcessXML(cfg *ProjCfg, data []byte) ([]string, []int) {
@@ -93,12 +95,12 @@ func ProcessXML(cfg *ProjCfg, data []byte) ([]string, []int) {
 			if flag {
 				sens := util.Tokenize(content)
 				for _, s := range sens {
-					sen := commonProcess(s.Text)
+					sen, off := commonProcess(s.Text)
 					if sen == "" {
 						continue
 					}
 					strs = append(strs, sen)
-					offs = append(offs, start+s.Start)
+					offs = append(offs, start+s.Start+off)
 				}
 			}
 		}
@@ -111,9 +113,9 @@ func ProcessTXT(data []byte) ([]string, []int) {
 	offs := []int{}
 	sens := util.Tokenize(string(data))
 	for _, s := range sens {
-		sen := commonProcess(s.Text)
+		sen, off := commonProcess(s.Text)
 		strs = append(strs, sen)
-		offs = append(offs, s.Start)
+		offs = append(offs, s.Start+off)
 	}
 	return strs, offs
 }
@@ -121,6 +123,12 @@ func ProcessTXT(data []byte) ([]string, []int) {
 func ListValidSents(file_id int64) []Sentence {
 	var sens []Sentence
 	db.Where("file_id=? AND valid=?", file_id, true).Find(&sens)
+	return sens
+}
+
+func ListValidSentsOrderByOffset(file_id int64) []Sentence {
+	var sens []Sentence
+	db.Order("offset ASC").Where("file_id=? AND valid=?", file_id, true).Find(&sens)
 	return sens
 }
 
@@ -133,12 +141,11 @@ func GetSentByID(sent_id int64) *Sentence {
 	return &sent
 }
 
-func (sent *Sentence) PinTran(tran *Translation) {
-	sent.PinnedTranID = tran.ID
-	db.Save(sent)
-}
-
-func (sent *Sentence) UnpinTran() {
-	sent.PinnedTranID = 0
-	db.Save(sent)
+func (sent *Sentence) TopTran(lang_code string) *Translation {
+	var tran Translation
+	res := db.Debug().Order("pinned DESC").Order("score DESC").Where("sent_id=? AND lang_code=?", sent.ID, lang_code).First(&tran)
+	if res.Error != nil {
+		return nil
+	}
+	return &tran
 }

@@ -19,6 +19,7 @@ func Init(g *gin.RouterGroup) {
 	initTran(g)
 	initVote(g)
 	initPin(g)
+	initBuild(g)
 	initLang(g)
 }
 
@@ -100,6 +101,11 @@ func initVote(g *gin.RouterGroup) {
 	gg.POST("/:tran_id/likes", controller.AddLikes)
 	gg.POST("/:tran_id/unlikes", controller.AddUnlikes)
 	gg.DELETE("/:tran_id", controller.DelVote)
+}
+
+func initBuild(g *gin.RouterGroup) {
+	gg := g.Group("/projects/:uri/builds", middleware.MustAuthUser(), middleware.MustAuthProjContributor())
+	gg.POST("", controller.NewBuild)
 }
 
 func initLang(g *gin.RouterGroup) {

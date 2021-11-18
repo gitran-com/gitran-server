@@ -33,6 +33,11 @@ func (file *ProjFile) Write() {
 	db.Save(file)
 }
 
+func (file *ProjFile) AbsPath() string {
+	proj := GetProjByID(file.ProjID)
+	return path.Join(proj.Path, file.Path)
+}
+
 func (file *ProjFile) ReadContent() []byte {
 	proj := GetProjByID(file.ProjID)
 	if proj == nil {

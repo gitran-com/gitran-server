@@ -15,6 +15,7 @@ type Translation struct {
 	Unlikes  int64   `json:"-" gorm:""`
 	Score    float64 `json:"-" gorm:"index"`
 	LangCode string  `gorm:"index;type:varchar(8)"`
+	Pinned   bool    `json:"pinned" gorm:"index"`
 	Content  string  `gorm:"type:text"`
 }
 
@@ -72,4 +73,14 @@ func (tran *Translation) Delete() {
 		tx.Delete(tran)
 		return nil
 	})
+}
+
+func (tran *Translation) Pin() {
+	tran.Pinned = true
+	tran.Write()
+}
+
+func (tran *Translation) Unpin() {
+	tran.Pinned = false
+	tran.Write()
 }

@@ -1,8 +1,8 @@
 package util
 
 import (
-	"gopkg.in/wzru/sentences.v1"
-	"gopkg.in/wzru/sentences.v1/data"
+	"github.com/neurosnap/sentences"
+	"github.com/neurosnap/sentences/data"
 )
 
 var (

@@ -75,8 +75,7 @@ func PinTran(ctx *gin.Context) {
 		ctx.JSON(http.StatusNotFound, model.Resp404)
 		return
 	}
-	sent := model.GetSentByID(tran.SentID)
-	sent.PinTran(tran)
+	tran.Pin()
 	ctx.JSON(http.StatusOK, model.Response{
 		Success: true,
 	})
@@ -89,8 +88,7 @@ func UnpinTran(ctx *gin.Context) {
 		ctx.JSON(http.StatusNotFound, model.Resp404)
 		return
 	}
-	sent := model.GetSentByID(tran.SentID)
-	sent.UnpinTran()
+	tran.Unpin()
 	ctx.JSON(http.StatusOK, model.Response{
 		Success: true,
 	})
