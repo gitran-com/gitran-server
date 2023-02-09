@@ -6,7 +6,7 @@ require (
 	github.com/ProtonMail/go-crypto v0.0.0-20210707164159-52430bf6b52c // indirect
 	github.com/gin-contrib/cors v1.3.1
 	github.com/gin-contrib/sessions v0.0.3
-	github.com/gin-gonic/gin v1.7.3
+	github.com/gin-gonic/gin v1.7.7
 	github.com/go-git/go-git/v5 v5.4.2
 	github.com/golang-jwt/jwt v3.2.1+incompatible
 	github.com/golang/protobuf v1.5.2 // indirect
@@ -18,7 +18,7 @@ require (
 	github.com/lestrrat-go/file-rotatelogs v2.4.0+incompatible
 	github.com/lestrrat-go/strftime v1.0.5 // indirect
 	github.com/markbates/goth v1.68.0
-	github.com/neurosnap/sentences v1.0.9 // indirect
+	github.com/neurosnap/sentences v1.0.9
 	github.com/rifflock/lfshook v0.0.0-20180920164130-b9218ef580f5
 	github.com/sergi/go-diff v1.2.0 // indirect
 	github.com/sirupsen/logrus v1.8.1
@@ -29,7 +29,6 @@ require (
 	golang.org/x/oauth2 v0.0.0-20210628180205-a41e5a781914
 	golang.org/x/sys v0.0.0-20210809222454-d867a43fc93e // indirect
 	google.golang.org/appengine v1.6.7 // indirect
-	gopkg.in/wzru/sentences.v1 v1.0.6
 	gorm.io/driver/mysql v1.1.1
 	gorm.io/driver/postgres v1.1.0
 	gorm.io/gorm v1.21.12
