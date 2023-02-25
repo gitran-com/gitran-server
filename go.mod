@@ -18,7 +18,7 @@ require (
 	github.com/lestrrat-go/file-rotatelogs v2.4.0+incompatible
 	github.com/lestrrat-go/strftime v1.0.5 // indirect
 	github.com/markbates/goth v1.68.0
-	github.com/neurosnap/sentences v1.0.9 // indirect
+	github.com/neurosnap/sentences v1.0.9
 	github.com/rifflock/lfshook v0.0.0-20180920164130-b9218ef580f5
 	github.com/sergi/go-diff v1.2.0 // indirect
 	github.com/sirupsen/logrus v1.8.1
@@ -27,9 +27,8 @@ require (
 	golang.org/x/crypto v0.0.0-20210813211128-0a44fdfbc16e // indirect
 	golang.org/x/net v0.0.0-20210813160813-60bc85c4be6d // indirect
 	golang.org/x/oauth2 v0.0.0-20210628180205-a41e5a781914
-	golang.org/x/sys v0.0.0-20210809222454-d867a43fc93e // indirect
+	golang.org/x/sys v0.1.0 // indirect
 	google.golang.org/appengine v1.6.7 // indirect
-	gopkg.in/wzru/sentences.v1 v1.0.6
 	gorm.io/driver/mysql v1.1.1
 	gorm.io/driver/postgres v1.1.0
 	gorm.io/gorm v1.21.12
